@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
     try {
       // Get customer details from Stripe
       const customer = await stripe.customers.retrieve(session.customer as string);
-      const customerEmail = typeof customer !== 'string' && customer.email ? customer.email : session.customer_email;
-      const customerName = typeof customer !== 'string' && customer.name ? customer.name : session.customer_details?.name || 'Cliente';
+      const customerEmail = typeof customer !== 'string' && !customer.deleted && customer.email ? customer.email : session.customer_email;
+      const customerName = typeof customer !== 'string' && !customer.deleted && customer.name ? customer.name : session.customer_details?.name || 'Cliente';
       const country = session.customer_details?.address?.country || 'Unknown';
 
       if (!customerEmail) {
