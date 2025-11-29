@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --eslint --turbopack)",
+      "Bash(npm install:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx prisma migrate diff:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(if not exist scripts mkdir scripts)",
+      "Bash(npm run db:seed:*)",
+      "Bash(node -e:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npx prisma db pull:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(if exist prisma rmdir /s /q prisma)",
+      "Bash(if exist libprisma.ts del libprisma.ts)",
+      "Bash(find:*)",
+      "Bash(xargs sed:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
