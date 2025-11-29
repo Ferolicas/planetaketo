@@ -7,7 +7,7 @@ VALUES (
   gen_random_uuid()::text,
   'admin@planetaketo.es',
   'Administrador',
-  '$2a$10$s9un9QzUtkkg9h2fbnPJ5.a2E0YGP3KxMSnLBe6.DqoBBVdrJvTgy',
+  '$2a$10$M/7WDC.EeBmFfTAeKhk7eut2OLV3ur11G0myn5MkBuQXN6yEV1vgq',
   'admin',
   NOW(),
   NOW()
