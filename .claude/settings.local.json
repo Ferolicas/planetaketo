@@ -23,7 +23,10 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git remote add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(if [ -d \"prisma\" ])",
+      "Bash(then rm -rf prisma)",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []
