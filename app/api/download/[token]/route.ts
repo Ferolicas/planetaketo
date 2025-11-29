@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAndIncrementDownload } from '@/lib/downloads/magic-link';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
@@ -25,7 +20,7 @@ export async function GET(
     }
 
     // Download file from Supabase Storage
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseAdmin.storage
       .from('producto')
       .download('El Metodo keto Definitivo - Planeta Keto.pdf');
 

@@ -26,7 +26,11 @@
       "Bash(git push:*)",
       "Bash(if [ -d \"prisma\" ])",
       "Bash(then rm -rf prisma)",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(node check_tables.js:*)",
+      "Bash(cat:*)",
+      "Bash(node setup_database.js:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
