@@ -8,41 +8,23 @@ import { supabaseAdmin } from '@/lib/supabase';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { amount, currency, customerEmail, customerName } = await request.json();
+    const { amount, currency } = await request.json();
 
-    console.log(`📝 Creating Payment Intent: ${amount} ${currency} for ${customerEmail}`);
+    console.log(`📝 Creating Payment Intent: ${amount} ${currency}`);
 
     // Validate inputs
-    if (!amount || !currency || !customerEmail) {
+    if (!amount || !currency) {
       return NextResponse.json(
-        { error: 'Missing required fields: amount, currency, customerEmail' },
+        { error: 'Missing required fields: amount, currency' },
         { status: 400 }
       );
     }
 
-    // Create or retrieve customer
-    let stripeCustomer;
-    const customers = await stripe.customers.list({
-      email: customerEmail,
-      limit: 1,
-    });
-
-    if (customers.data.length > 0) {
-      stripeCustomer = customers.data[0];
-      console.log('✓ Existing Stripe customer:', stripeCustomer.id);
-    } else {
-      stripeCustomer = await stripe.customers.create({
-        email: customerEmail,
-        name: customerName || undefined,
-      });
-      console.log('✓ New Stripe customer created:', stripeCustomer.id);
-    }
-
     // Create Payment Intent with automatic payment methods
+    // NO creamos customer aún, Stripe lo hará cuando el usuario pague
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
       currency: currency.toLowerCase(),
-      customer: stripeCustomer.id,
       automatic_payment_methods: {
         enabled: true,
         allow_redirects: 'never', // No redirects, embedded flow only
@@ -50,20 +32,15 @@ export async function POST(request: NextRequest) {
       metadata: {
         productName: PRODUCT_CONFIG.name,
         pdfFileName: PRODUCT_CONFIG.pdfFileName,
-        customerEmail,
-        customerName: customerName || '',
       },
-      description: `${PRODUCT_CONFIG.name} - ${customerEmail}`,
-      receipt_email: customerEmail,
+      description: PRODUCT_CONFIG.name,
     });
 
     console.log('✓ Payment Intent created:', paymentIntent.id);
-    console.log('✓ Client secret:', paymentIntent.client_secret?.substring(0, 20) + '...');
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
-      customerId: stripeCustomer.id,
     });
 
   } catch (error: any) {

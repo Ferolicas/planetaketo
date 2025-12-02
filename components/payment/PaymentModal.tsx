@@ -99,8 +99,9 @@ function CheckoutForm({ amount, currency, onSuccess, onClose }: {
           fields: {
             billingDetails: {
               email: 'auto',
-              name: 'auto',
+              name: 'never',
               address: 'never',
+              phone: 'never',
             },
           },
         }}
@@ -155,69 +156,60 @@ export default function PaymentModal({
   productName = 'Método Keto 70 Días',
 }: PaymentModalProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerName, setCustomerName] = useState('');
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [detectedCurrency, setDetectedCurrency] = useState(currency);
   const [detectedAmount, setDetectedAmount] = useState(amount);
 
-  // Detect user's currency based on location
+  // Detect user's currency and create payment intent immediately
   useEffect(() => {
-    if (isOpen) {
-      detectUserCurrency();
+    if (isOpen && !clientSecret) {
+      detectUserCurrencyAndCreatePayment();
     }
   }, [isOpen]);
 
-  const detectUserCurrency = async () => {
-    try {
-      // Use a geolocation API to detect currency
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-
-      // Map country codes to currencies
-      const currencyMap: Record<string, { currency: string; rate: number }> = {
-        'US': { currency: 'usd', rate: 1.1 },
-        'GB': { currency: 'gbp', rate: 0.85 },
-        'MX': { currency: 'mxn', rate: 22 },
-        'CO': { currency: 'cop', rate: 4500 },
-        'AR': { currency: 'ars', rate: 350 },
-        'CL': { currency: 'clp', rate: 950 },
-        'PE': { currency: 'pen', rate: 4 },
-        // Default to EUR for Spain and other EU countries
-      };
-
-      const countryCode = data.country_code;
-      if (currencyMap[countryCode]) {
-        const { currency: newCurrency, rate } = currencyMap[countryCode];
-        setDetectedCurrency(newCurrency);
-        setDetectedAmount(amount * rate);
-        console.log(`✓ Detected currency: ${newCurrency} (${countryCode})`);
-      }
-    } catch (error) {
-      console.error('Failed to detect currency:', error);
-      // Default to EUR
-    }
-  };
-
-  const handleStartPayment = async () => {
-    if (!customerEmail || !customerName) {
-      alert('Por favor ingresa tu email y nombre');
-      return;
-    }
-
+  const detectUserCurrencyAndCreatePayment = async () => {
     setIsLoading(true);
 
     try {
-      // Create Payment Intent
+      // Detect currency
+      let finalCurrency = currency;
+      let finalAmount = amount;
+
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+
+        const currencyMap: Record<string, { currency: string; rate: number }> = {
+          'US': { currency: 'usd', rate: 1.1 },
+          'GB': { currency: 'gbp', rate: 0.85 },
+          'MX': { currency: 'mxn', rate: 22 },
+          'CO': { currency: 'cop', rate: 4500 },
+          'AR': { currency: 'ars', rate: 350 },
+          'CL': { currency: 'clp', rate: 950 },
+          'PE': { currency: 'pen', rate: 4 },
+        };
+
+        const countryCode = data.country_code;
+        if (currencyMap[countryCode]) {
+          const { currency: newCurrency, rate } = currencyMap[countryCode];
+          finalCurrency = newCurrency;
+          finalAmount = amount * rate;
+          console.log(`✓ Detected: ${newCurrency} (${countryCode})`);
+        }
+      } catch (error) {
+        console.log('Using default currency:', currency);
+      }
+
+      setDetectedCurrency(finalCurrency);
+      setDetectedAmount(finalAmount);
+
+      // Create Payment Intent immediately
       const response = await fetch('/api/stripe/payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: detectedAmount,
-          currency: detectedCurrency,
-          customerEmail,
-          customerName,
+          amount: finalAmount,
+          currency: finalCurrency,
         }),
       });
 
@@ -228,11 +220,11 @@ export default function PaymentModal({
       }
 
       setClientSecret(data.clientSecret);
-      setShowPaymentForm(true);
-      console.log('✓ Payment Intent created, showing form');
+      console.log('✓ Payment ready');
     } catch (error: any) {
-      console.error('Failed to create payment intent:', error);
+      console.error('Failed to create payment:', error);
       alert(`Error: ${error.message}`);
+      onClose();
     } finally {
       setIsLoading(false);
     }
@@ -284,51 +276,8 @@ export default function PaymentModal({
 
         {/* Content */}
         <div className="p-6">
-          {!showPaymentForm ? (
-            // Email and Name Collection
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Nombre completo *
-                </label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Tu nombre"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  required
-                />
-              </div>
-
-              <button
-                onClick={handleStartPayment}
-                disabled={isLoading || !customerEmail || !customerName}
-                className="w-full mt-6 px-6 py-4 bg-green-600 text-white rounded-lg font-bold text-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-              >
-                {isLoading ? 'Cargando...' : 'Continuar al pago'}
-              </button>
-
-              <p className="text-xs text-gray-500 text-center mt-4">
-                🔒 Pago seguro con Stripe • Soporte 24/7
-              </p>
-            </div>
-          ) : clientSecret && options ? (
-            // Payment Form
+          {clientSecret && options ? (
+            // Payment Form - DIRECTO
             <Elements stripe={stripePromise} options={options}>
               <CheckoutForm
                 amount={detectedAmount}
@@ -338,9 +287,10 @@ export default function PaymentModal({
               />
             </Elements>
           ) : (
-            <div className="text-center py-8">
-              <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="mt-4 text-gray-600">Preparando pago...</p>
+            // Loading
+            <div className="text-center py-12">
+              <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="mt-4 text-gray-600 font-medium">Preparando pago...</p>
             </div>
           )}
         </div>
