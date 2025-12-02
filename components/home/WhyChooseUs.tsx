@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import StripeCheckout from '@/components/checkout/StripeCheckout';
 import { Heart, Trophy, Clock, Shield, Sparkles, TrendingDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -114,12 +114,14 @@ export default function WhyChooseUs() {
             <p className="text-xl text-emerald-100 mb-8">
               Únete a las miles de personas que ya han logrado sus objetivos con Planeta Keto
             </p>
-            <Link
-              href="/tienda"
+            <StripeCheckout
+              amount={10}
+              currency="eur"
+              productName="Método Keto 70 Días"
               className="inline-flex items-center px-10 py-5 text-xl font-bold text-emerald-600 bg-white rounded-full hover:bg-gray-50 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
             >
               ⚡ Comenzar Ahora - 50% OFF
-            </Link>
+            </StripeCheckout>
             <p className="text-emerald-100 text-sm mt-6">
               Oferta por tiempo limitado • Acceso inmediato
             </p>

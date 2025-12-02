@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import StripeCheckout from '@/components/checkout/StripeCheckout';
 import { ArrowRight } from 'lucide-react';
 
 interface HeroProps {
@@ -25,13 +26,15 @@ export default function Hero({ content }: HeroProps) {
             {subtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
-            <Link
-              href="/tienda"
+            <StripeCheckout
+              amount={10}
+              currency="eur"
+              productName="Método Keto 70 Días"
               className="group inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-primary-600 rounded-full hover:bg-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               Ver Productos
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </StripeCheckout>
             <Link
               href="/recetas"
               className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-primary-700 bg-white rounded-full hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg border-2 border-primary-200"
