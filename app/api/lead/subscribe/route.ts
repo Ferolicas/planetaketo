@@ -3,13 +3,7 @@ import { z } from 'zod';
 import { randomBytes } from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import { resend } from '@/lib/resend';
-import {
-  getEmail1Template,
-  getEmail2Template,
-  getEmail3Template,
-  getEmail4Template,
-  getEmail5Template,
-} from '@/lib/email/lead-templates';
+import { getEmail1Template } from '@/lib/email/lead-templates';
 
 // Validation schema
 const leadSchema = z.object({
@@ -18,7 +12,8 @@ const leadSchema = z.object({
 });
 
 // Email configuration
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+// IMPORTANTE: Para usar info@planetaketo.es, el dominio debe estar verificado en Resend
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Planeta Keto <info@planetaketo.es>';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://planetaketo.es';
 const YOUTUBE_URL = 'https://youtube.com/@planetaketo';
 
@@ -99,13 +94,6 @@ export async function POST(request: NextRequest) {
     const downloadUrl = `${SITE_URL}/download?token=${downloadToken}`;
     console.log(`Download token created for ${email}: ${downloadToken.substring(0, 8)}...`);
 
-    // Calculate scheduled dates for emails 2-5
-    const now = new Date();
-    const day2 = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-    const day4 = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000);
-    const day7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const day9 = new Date(now.getTime() + 9 * 24 * 60 * 60 * 1000);
-
     // Email template parameters
     const templateParams = {
       name,
@@ -116,6 +104,8 @@ export async function POST(request: NextRequest) {
 
     try {
       // Send Email 1 immediately (with PDF link)
+      // NOTA: Los emails programados requieren plan de pago en Resend
+      // Por ahora solo enviamos el email de entrega inmediata
       const email1Result = await resend.emails.send({
         from: FROM_EMAIL,
         to: email,
@@ -125,49 +115,8 @@ export async function POST(request: NextRequest) {
 
       console.log('Email 1 sent:', email1Result);
 
-      // Schedule Email 2 (Day 2)
-      const email2Result = await resend.emails.send({
-        from: FROM_EMAIL,
-        to: email,
-        subject: 'El error #1 que arruina la dieta keto',
-        html: getEmail2Template(templateParams),
-        scheduledAt: day2.toISOString(),
-      });
-
-      console.log('Email 2 scheduled for', day2.toISOString(), ':', email2Result);
-
-      // Schedule Email 3 (Day 4)
-      const email3Result = await resend.emails.send({
-        from: FROM_EMAIL,
-        to: email,
-        subject: '¿Cómo vas con el plan? (día 3-4)',
-        html: getEmail3Template(templateParams),
-        scheduledAt: day4.toISOString(),
-      });
-
-      console.log('Email 3 scheduled for', day4.toISOString(), ':', email3Result);
-
-      // Schedule Email 4 (Day 7)
-      const email4Result = await resend.emails.send({
-        from: FROM_EMAIL,
-        to: email,
-        subject: 'Ya terminaste los 7 días... ¿y ahora qué?',
-        html: getEmail4Template(templateParams),
-        scheduledAt: day7.toISOString(),
-      });
-
-      console.log('Email 4 scheduled for', day7.toISOString(), ':', email4Result);
-
-      // Schedule Email 5 (Day 9)
-      const email5Result = await resend.emails.send({
-        from: FROM_EMAIL,
-        to: email,
-        subject: '(última vez) Sobre el método de 70 días',
-        html: getEmail5Template(templateParams),
-        scheduledAt: day9.toISOString(),
-      });
-
-      console.log('Email 5 scheduled for', day9.toISOString(), ':', email5Result);
+      // TODO: Implementar emails de seguimiento con cron job o webhook
+      // Los emails programados de Resend requieren plan de pago
     } catch (emailError) {
       console.error('Error sending/scheduling emails:', emailError);
 
