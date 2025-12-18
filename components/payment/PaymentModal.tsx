@@ -21,9 +21,15 @@ interface PaymentModalProps {
   productName?: string;
 }
 
-function CheckoutForm({ amount, currency, onSuccess, onClose }: {
+interface CustomerData {
+  name: string;
+  email: string;
+}
+
+function CheckoutForm({ amount, currency, customerData, onSuccess, onClose }: {
   amount: number;
   currency: string;
+  customerData: CustomerData;
   onSuccess: () => void;
   onClose: () => void;
 }) {
@@ -48,6 +54,12 @@ function CheckoutForm({ amount, currency, onSuccess, onClose }: {
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/success`,
+          payment_method_data: {
+            billing_details: {
+              name: customerData.name,
+              email: customerData.email,
+            },
+          },
         },
         redirect: 'if_required',
       });
@@ -74,7 +86,6 @@ function CheckoutForm({ amount, currency, onSuccess, onClose }: {
       <div className="mb-6">
         <ExpressCheckoutElement
           onConfirm={async (event) => {
-            // Express checkout is handled by Stripe automatically
             console.log('Express checkout confirmed:', event);
           }}
           onReady={() => setExpressCheckoutReady(true)}
@@ -98,7 +109,7 @@ function CheckoutForm({ amount, currency, onSuccess, onClose }: {
           layout: 'tabs',
           fields: {
             billingDetails: {
-              email: 'auto',
+              email: 'never',
               name: 'never',
               address: 'never',
               phone: 'never',
@@ -155,19 +166,43 @@ export default function PaymentModal({
   currency = 'eur',
   productName = 'Método Keto 70 Días',
 }: PaymentModalProps) {
+  const [step, setStep] = useState<'form' | 'payment'>('form');
+  const [customerData, setCustomerData] = useState<CustomerData>({ name: '', email: '' });
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [detectedCurrency, setDetectedCurrency] = useState(currency);
   const [detectedAmount, setDetectedAmount] = useState(amount);
+  const [formErrors, setFormErrors] = useState<{ name?: string; email?: string }>({});
 
-  // Detect user's currency and create payment intent immediately
+  // Reset state when modal opens
   useEffect(() => {
-    if (isOpen && !clientSecret) {
-      detectUserCurrencyAndCreatePayment();
+    if (isOpen) {
+      setStep('form');
+      setCustomerData({ name: '', email: '' });
+      setClientSecret(null);
+      setFormErrors({});
     }
   }, [isOpen]);
 
-  const detectUserCurrencyAndCreatePayment = async () => {
+  const validateForm = () => {
+    const errors: { name?: string; email?: string } = {};
+
+    if (!customerData.name.trim() || customerData.name.trim().length < 2) {
+      errors.name = 'Por favor ingresa tu nombre';
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!customerData.email.trim() || !emailRegex.test(customerData.email)) {
+      errors.email = 'Por favor ingresa un email válido';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleContinueToPayment = async () => {
+    if (!validateForm()) return;
+
     setIsLoading(true);
 
     try {
@@ -203,13 +238,15 @@ export default function PaymentModal({
       setDetectedCurrency(finalCurrency);
       setDetectedAmount(finalAmount);
 
-      // Create Payment Intent immediately
+      // Create Payment Intent with customer data
       const response = await fetch('/api/stripe/payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: finalAmount,
           currency: finalCurrency,
+          customerName: customerData.name,
+          customerEmail: customerData.email,
         }),
       });
 
@@ -220,11 +257,11 @@ export default function PaymentModal({
       }
 
       setClientSecret(data.clientSecret);
+      setStep('payment');
       console.log('✓ Payment ready');
     } catch (error: any) {
       console.error('Failed to create payment:', error);
       alert(`Error: ${error.message}`);
-      onClose();
     } finally {
       setIsLoading(false);
     }
@@ -276,12 +313,97 @@ export default function PaymentModal({
 
         {/* Content */}
         <div className="p-6">
-          {clientSecret && options ? (
-            // Payment Form - DIRECTO
+          {step === 'form' ? (
+            // Step 1: Customer Data Form
+            <div className="space-y-6">
+              <p className="text-gray-600 text-sm">
+                Ingresa tus datos para recibir el producto por email
+              </p>
+
+              {/* Name Field */}
+              <div>
+                <label htmlFor="payment-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tu nombre
+                </label>
+                <input
+                  id="payment-name"
+                  type="text"
+                  value={customerData.name}
+                  onChange={(e) => setCustomerData({ ...customerData, name: e.target.value })}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 ${
+                    formErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Ej: María García"
+                />
+                {formErrors.name && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
+                )}
+              </div>
+
+              {/* Email Field */}
+              <div>
+                <label htmlFor="payment-email" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tu email
+                </label>
+                <input
+                  id="payment-email"
+                  type="email"
+                  value={customerData.email}
+                  onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 ${
+                    formErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="tu@email.com"
+                />
+                {formErrors.email && (
+                  <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                )}
+              </div>
+
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-sm text-green-800">
+                  <strong>📧 Importante:</strong> A este email recibirás el enlace de descarga del producto.
+                </p>
+              </div>
+
+              {/* Continue Button */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleContinueToPayment}
+                  disabled={isLoading}
+                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Cargando...
+                    </span>
+                  ) : (
+                    'Continuar al pago'
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : clientSecret && options ? (
+            // Step 2: Payment Form
             <Elements stripe={stripePromise} options={options}>
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  <strong>Enviando a:</strong> {customerData.email}
+                </p>
+              </div>
               <CheckoutForm
                 amount={detectedAmount}
                 currency={detectedCurrency}
+                customerData={customerData}
                 onSuccess={handleSuccess}
                 onClose={onClose}
               />

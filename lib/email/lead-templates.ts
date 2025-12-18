@@ -32,8 +32,8 @@ export function getEmail1Template({ name, pdfUrl }: EmailTemplateParams): string
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
+            <td style="padding: 24px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 120px; height: auto;" />
             </td>
           </tr>
 
@@ -81,10 +81,6 @@ export function getEmail1Template({ name, pdfUrl }: EmailTemplateParams): string
                 Durante los próximos días te enviaré algunos tips que te ayudarán a sacarle el máximo provecho al plan.
               </p>
 
-              <p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #374151;">
-                Si tienes dudas, responde a este email.
-              </p>
-
               <p style="margin: 0 0 8px; font-size: 16px; line-height: 24px; color: #374151;">
                 ¡A por ello!
               </p>
@@ -93,7 +89,17 @@ export function getEmail1Template({ name, pdfUrl }: EmailTemplateParams): string
                 Planeta Keto
               </p>
 
-              <div style="padding: 20px; background-color: #f3f4f6; border-radius: 6px; margin-top: 32px;">
+              <!-- WhatsApp Support -->
+              <div style="padding: 20px; background-color: #f3f4f6; border-radius: 6px; margin-top: 32px; text-align: center;">
+                <p style="margin: 0 0 12px; font-size: 14px; line-height: 20px; color: #6b7280;">
+                  ¿Tienes dudas? Escríbenos por WhatsApp
+                </p>
+                <a href="https://wa.me/19176726696" style="display: inline-block; padding: 12px 24px; background-color: #25D366; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px;">
+                  💬 Contactar por WhatsApp
+                </a>
+              </div>
+
+              <div style="padding: 20px; background-color: #f3f4f6; border-radius: 6px; margin-top: 16px;">
                 <p style="margin: 0 0 8px; font-size: 14px; line-height: 20px; color: #6b7280;">
                   <strong>P.D.</strong> Si quieres ver más recetas keto, te espero en mi canal:
                 </p>
@@ -143,8 +149,8 @@ export function getEmail2Template({ name, fourthwallUrl }: EmailTemplateParams):
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
+            <td style="padding: 24px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 120px; height: auto;" />
             </td>
           </tr>
 
@@ -252,8 +258,8 @@ export function getEmail3Template({ name }: EmailTemplateParams): string {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
+            <td style="padding: 24px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 120px; height: auto;" />
             </td>
           </tr>
 
@@ -351,8 +357,8 @@ export function getEmail4Template({ name, fourthwallUrl }: EmailTemplateParams):
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
+            <td style="padding: 24px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 120px; height: auto;" />
             </td>
           </tr>
 
@@ -486,8 +492,8 @@ export function getEmail5Template({ name, fourthwallUrl, youtubeUrl }: EmailTemp
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
+            <td style="padding: 24px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 120px; height: auto;" />
             </td>
           </tr>
 

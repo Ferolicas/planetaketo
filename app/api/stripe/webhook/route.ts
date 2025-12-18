@@ -246,22 +246,20 @@ async function processPaymentIntent(event: Stripe.Event): Promise<NextResponse> 
 
     console.log(`📨 Processing payment intent: ${paymentIntent.id}`);
 
-    // Get customer email from payment intent
-    let customerEmail = paymentIntent.receipt_email || paymentIntent.metadata.customerEmail;
-    let customerName = 'Cliente';
+    // Get customer data from metadata (set during payment intent creation)
+    let customerEmail = paymentIntent.metadata.customerEmail || paymentIntent.receipt_email;
+    let customerName = paymentIntent.metadata.customerName || 'Cliente';
 
-    // Get customer name from payment method (cardholder name)
-    if (paymentIntent.payment_method) {
+    // Fallback: try to get from payment method billing details
+    if (!customerEmail && paymentIntent.payment_method) {
       try {
         const paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method as string);
 
-        // Email from billing details if not in payment intent
         if (!customerEmail && paymentMethod.billing_details?.email) {
           customerEmail = paymentMethod.billing_details.email;
         }
 
-        // Name from billing details (cardholder name)
-        if (paymentMethod.billing_details?.name) {
+        if (customerName === 'Cliente' && paymentMethod.billing_details?.name) {
           customerName = paymentMethod.billing_details.name;
         }
       } catch (error) {
@@ -270,7 +268,7 @@ async function processPaymentIntent(event: Stripe.Event): Promise<NextResponse> 
     }
 
     if (!customerEmail) {
-      throw new Error('No customer email found in payment intent or payment method');
+      throw new Error('No customer email found in payment intent metadata or payment method');
     }
 
     console.log(`👤 Customer: ${customerEmail} | Name: ${customerName}`);
