@@ -37,8 +37,18 @@ export async function POST(request: NextRequest) {
     return await processCheckoutSession(event);
   }
 
-  // Handle payment_intent.succeeded event (new embedded flow)
+  // Handle payment_intent.succeeded event
+  // NOTA: El nuevo flujo embedded usa /api/stripe/complete-purchase para procesar
+  // Solo procesamos aquí si el pago tiene customerEmail en metadata (flujo antiguo)
   if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+
+    // Si no tiene customerEmail en metadata, el frontend lo procesará via complete-purchase
+    if (!paymentIntent.metadata.customerEmail) {
+      console.log(`⏭️  Payment ${paymentIntent.id} will be processed by frontend (no customerEmail in metadata)`);
+      return NextResponse.json({ received: true, status: 'deferred_to_frontend' });
+    }
+
     return await processPaymentIntent(event);
   }
 

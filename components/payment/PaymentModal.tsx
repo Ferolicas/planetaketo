@@ -9,7 +9,7 @@ import {
   useStripe,
   useElements
 } from '@stripe/react-stripe-js';
-import { X } from 'lucide-react';
+import { X, CheckCircle } from 'lucide-react';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -26,11 +26,10 @@ interface CustomerData {
   email: string;
 }
 
-function CheckoutForm({ amount, currency, customerData, onSuccess, onClose }: {
+function CheckoutForm({ amount, currency, onPaymentSuccess, onClose }: {
   amount: number;
   currency: string;
-  customerData: CustomerData;
-  onSuccess: () => void;
+  onPaymentSuccess: (paymentIntentId: string) => void;
   onClose: () => void;
 }) {
   const stripe = useStripe();
@@ -50,16 +49,10 @@ function CheckoutForm({ amount, currency, customerData, onSuccess, onClose }: {
     setErrorMessage(null);
 
     try {
-      const { error } = await stripe.confirmPayment({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/success`,
-          payment_method_data: {
-            billing_details: {
-              name: customerData.name,
-              email: customerData.email,
-            },
-          },
         },
         redirect: 'if_required',
       });
@@ -67,10 +60,9 @@ function CheckoutForm({ amount, currency, customerData, onSuccess, onClose }: {
       if (error) {
         setErrorMessage(error.message || 'Error al procesar el pago');
         console.error('Payment error:', error);
-      } else {
-        // Payment succeeded
-        console.log('✅ Payment successful');
-        onSuccess();
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        console.log('✅ Payment successful:', paymentIntent.id);
+        onPaymentSuccess(paymentIntent.id);
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Error inesperado');
@@ -109,7 +101,7 @@ function CheckoutForm({ amount, currency, customerData, onSuccess, onClose }: {
           layout: 'tabs',
           fields: {
             billingDetails: {
-              email: 'never',
+              email: 'auto',
               name: 'never',
               address: 'never',
               phone: 'never',
@@ -166,43 +158,35 @@ export default function PaymentModal({
   currency = 'eur',
   productName = 'Método Keto 70 Días',
 }: PaymentModalProps) {
-  const [step, setStep] = useState<'form' | 'payment'>('form');
+  const [step, setStep] = useState<'payment' | 'customer-form' | 'success'>('payment');
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [customerData, setCustomerData] = useState<CustomerData>({ name: '', email: '' });
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [detectedCurrency, setDetectedCurrency] = useState(currency);
   const [detectedAmount, setDetectedAmount] = useState(amount);
   const [formErrors, setFormErrors] = useState<{ name?: string; email?: string }>({});
 
-  // Reset state when modal opens
+  // Detect currency and create payment intent when modal opens
   useEffect(() => {
-    if (isOpen) {
-      setStep('form');
+    if (isOpen && !clientSecret) {
+      detectCurrencyAndCreatePayment();
+    }
+  }, [isOpen]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setStep('payment');
+      setPaymentIntentId(null);
       setCustomerData({ name: '', email: '' });
       setClientSecret(null);
       setFormErrors({});
     }
   }, [isOpen]);
 
-  const validateForm = () => {
-    const errors: { name?: string; email?: string } = {};
-
-    if (!customerData.name.trim() || customerData.name.trim().length < 2) {
-      errors.name = 'Por favor ingresa tu nombre';
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!customerData.email.trim() || !emailRegex.test(customerData.email)) {
-      errors.email = 'Por favor ingresa un email válido';
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleContinueToPayment = async () => {
-    if (!validateForm()) return;
-
+  const detectCurrencyAndCreatePayment = async () => {
     setIsLoading(true);
 
     try {
@@ -238,15 +222,13 @@ export default function PaymentModal({
       setDetectedCurrency(finalCurrency);
       setDetectedAmount(finalAmount);
 
-      // Create Payment Intent with customer data
+      // Create Payment Intent (sin datos de cliente aún)
       const response = await fetch('/api/stripe/payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: finalAmount,
           currency: finalCurrency,
-          customerName: customerData.name,
-          customerEmail: customerData.email,
         }),
       });
 
@@ -257,19 +239,69 @@ export default function PaymentModal({
       }
 
       setClientSecret(data.clientSecret);
-      setStep('payment');
       console.log('✓ Payment ready');
     } catch (error: any) {
       console.error('Failed to create payment:', error);
       alert(`Error: ${error.message}`);
+      onClose();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSuccess = () => {
-    alert('✅ ¡Pago exitoso! Revisa tu email para acceder al producto.');
-    onClose();
+  const handlePaymentSuccess = (intentId: string) => {
+    console.log('Payment successful, asking for customer data');
+    setPaymentIntentId(intentId);
+    setStep('customer-form');
+  };
+
+  const validateForm = () => {
+    const errors: { name?: string; email?: string } = {};
+
+    if (!customerData.name.trim() || customerData.name.trim().length < 2) {
+      errors.name = 'Por favor ingresa tu nombre';
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!customerData.email.trim() || !emailRegex.test(customerData.email)) {
+      errors.email = 'Por favor ingresa un email válido';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmitCustomerData = async () => {
+    if (!validateForm() || !paymentIntentId) return;
+
+    setIsSendingEmail(true);
+
+    try {
+      // Enviar datos del cliente al servidor para completar el proceso
+      const response = await fetch('/api/stripe/complete-purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentIntentId,
+          customerName: customerData.name,
+          customerEmail: customerData.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al completar la compra');
+      }
+
+      console.log('✅ Purchase completed, email sent');
+      setStep('success');
+    } catch (error: any) {
+      console.error('Error completing purchase:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -298,9 +330,17 @@ export default function PaymentModal({
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{productName}</h2>
-              <p className="text-3xl font-bold text-green-600 mt-2">
-                {detectedAmount.toFixed(2)} {detectedCurrency.toUpperCase()}
-              </p>
+              {step === 'payment' && (
+                <p className="text-3xl font-bold text-green-600 mt-2">
+                  {detectedAmount.toFixed(2)} {detectedCurrency.toUpperCase()}
+                </p>
+              )}
+              {step === 'customer-form' && (
+                <p className="text-green-600 mt-2 flex items-center gap-2">
+                  <CheckCircle size={20} />
+                  Pago completado
+                </p>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -313,12 +353,37 @@ export default function PaymentModal({
 
         {/* Content */}
         <div className="p-6">
-          {step === 'form' ? (
-            // Step 1: Customer Data Form
+          {/* Step 1: Payment Form */}
+          {step === 'payment' && (
+            <>
+              {clientSecret && options ? (
+                <Elements stripe={stripePromise} options={options}>
+                  <CheckoutForm
+                    amount={detectedAmount}
+                    currency={detectedCurrency}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onClose={onClose}
+                  />
+                </Elements>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="mt-4 text-gray-600 font-medium">Preparando pago...</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Step 2: Customer Data Form (after payment) */}
+          {step === 'customer-form' && (
             <div className="space-y-6">
-              <p className="text-gray-600 text-sm">
-                Ingresa tus datos para recibir el producto por email
-              </p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-2" />
+                <p className="text-green-800 font-semibold">¡Pago exitoso!</p>
+                <p className="text-green-700 text-sm mt-1">
+                  Ingresa tus datos para recibir el producto
+                </p>
+              </div>
 
               {/* Name Field */}
               <div>
@@ -334,6 +399,7 @@ export default function PaymentModal({
                     formErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Ej: María García"
+                  autoFocus
                 />
                 {formErrors.name && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
@@ -360,59 +426,51 @@ export default function PaymentModal({
                 )}
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-sm text-green-800">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
                   <strong>📧 Importante:</strong> A este email recibirás el enlace de descarga del producto.
                 </p>
               </div>
 
-              {/* Continue Button */}
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleContinueToPayment}
-                  disabled={isLoading}
-                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Cargando...
-                    </span>
-                  ) : (
-                    'Continuar al pago'
-                  )}
-                </button>
-              </div>
+              {/* Submit Button */}
+              <button
+                type="button"
+                onClick={handleSubmitCustomerData}
+                disabled={isSendingEmail}
+                className="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                {isSendingEmail ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Enviando...
+                  </span>
+                ) : (
+                  'Recibir mi producto'
+                )}
+              </button>
             </div>
-          ) : clientSecret && options ? (
-            // Step 2: Payment Form
-            <Elements stripe={stripePromise} options={options}>
-              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">
-                  <strong>Enviando a:</strong> {customerData.email}
-                </p>
+          )}
+
+          {/* Step 3: Success */}
+          {step === 'success' && (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
-              <CheckoutForm
-                amount={detectedAmount}
-                currency={detectedCurrency}
-                customerData={customerData}
-                onSuccess={handleSuccess}
-                onClose={onClose}
-              />
-            </Elements>
-          ) : (
-            // Loading
-            <div className="text-center py-12">
-              <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="mt-4 text-gray-600 font-medium">Preparando pago...</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">¡Listo!</h3>
+              <p className="text-gray-600 mb-6">
+                Hemos enviado el enlace de descarga a<br />
+                <strong className="text-gray-900">{customerData.email}</strong>
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Revisa tu bandeja de entrada (y spam) en los próximos minutos.
+              </p>
+              <button
+                onClick={onClose}
+                className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+              >
+                Cerrar
+              </button>
             </div>
           )}
         </div>
