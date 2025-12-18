@@ -9,7 +9,6 @@ type DownloadStatus = 'loading' | 'success' | 'used' | 'expired' | 'error';
 interface DownloadState {
   status: DownloadStatus;
   message: string;
-  downloadUrl?: string;
 }
 
 // Loading fallback component
@@ -64,33 +63,44 @@ function DownloadContent() {
 
   const verifyAndDownload = useCallback(async (downloadToken: string) => {
     try {
+      // El API ahora sirve el archivo directamente
       const response = await fetch(`/api/lead/download?token=${downloadToken}`);
-      const data = await response.json();
 
-      if (response.ok && data.success) {
+      if (response.ok) {
+        // Si es OK, el servidor está enviando el PDF
+        const blob = await response.blob();
+
+        // Crear URL temporal para descargar
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'PLANIFICADOR_KETO_7_DIAS_GRATIS.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
         setState({
           status: 'success',
-          message: 'Descarga lista',
-          downloadUrl: data.downloadUrl
+          message: 'Descarga completada'
         });
 
-        // Auto-start download after a brief delay
-        setTimeout(() => {
-          window.location.href = data.downloadUrl;
-        }, 1500);
-
-      } else if (response.status === 410) {
-        // Token used or expired
-        const isUsed = data.error?.includes('utilizado');
-        setState({
-          status: isUsed ? 'used' : 'expired',
-          message: data.message || data.error
-        });
       } else {
-        setState({
-          status: 'error',
-          message: data.error || 'Error al procesar la descarga'
-        });
+        // Si no es OK, es un error JSON
+        const data = await response.json();
+
+        if (response.status === 410) {
+          const isUsed = data.error?.includes('utilizado');
+          setState({
+            status: isUsed ? 'used' : 'expired',
+            message: data.message || data.error
+          });
+        } else {
+          setState({
+            status: 'error',
+            message: data.error || 'Error al procesar la descarga'
+          });
+        }
       }
     } catch (error) {
       console.error('Download error:', error);
@@ -172,39 +182,25 @@ function DownloadContent() {
                 </div>
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Descarga Iniciada
+                ¡Descarga Completada!
               </h2>
               <p className="text-gray-600 mb-6">
-                Tu descarga comenzara automaticamente...
+                Tu Plan Keto de 7 Días se ha descargado correctamente.
               </p>
 
-              {state.downloadUrl && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800">
+                  <strong>¡Listo!</strong> Revisa tu carpeta de descargas para encontrar el PDF.
+                </p>
+              </div>
+
+              <div className="mt-4">
                 <a
-                  href={state.downloadUrl}
+                  href="/"
                   className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
                 >
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
-                  Descargar Manualmente
+                  Ir a Planeta Keto
                 </a>
-              )}
-
-              <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Nota:</strong> Este enlace de descarga solo puede usarse una vez
-                  por seguridad.
-                </p>
               </div>
             </div>
           )}

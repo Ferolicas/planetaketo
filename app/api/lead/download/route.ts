@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
-// PDF URL in Supabase bucket "producto"
-// Construir URL dinámicamente usando la URL de Supabase del proyecto
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ibyeukzocqygimmwibxe.supabase.co';
+// Nombre del archivo en el bucket (privado)
 const PDF_FILE_NAME = 'PLANIFICADOR_KETO_7_DIAS_GRATIS.pdf';
-const PDF_PUBLIC_URL = `${SUPABASE_URL}/storage/v1/object/public/producto/${PDF_FILE_NAME}`;
+const BUCKET_NAME = 'producto';
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,7 +57,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Mark token as used
+    // Mark token as used BEFORE downloading (prevent race conditions)
     const { error: updateError } = await supabaseAdmin
       .from('download_tokens')
       .update({
@@ -70,16 +68,44 @@ export async function GET(request: NextRequest) {
 
     if (updateError) {
       console.error('Error marking token as used:', updateError);
-      // Continue anyway - better to allow download than fail
+      return NextResponse.json(
+        { error: 'Error al procesar la descarga' },
+        { status: 500 }
+      );
     }
 
     console.log(`Download token used: ${token} for email: ${downloadToken.email}`);
 
-    // Return the PDF URL for redirect
-    return NextResponse.json({
-      success: true,
-      downloadUrl: PDF_PUBLIC_URL,
-      message: 'Descarga autorizada'
+    // Download file from Supabase Storage (usando service role - acceso privado)
+    const { data: fileData, error: downloadError } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .download(PDF_FILE_NAME);
+
+    if (downloadError || !fileData) {
+      console.error('Error downloading file from Supabase:', downloadError);
+      // Revert the token usage if download fails
+      await supabaseAdmin
+        .from('download_tokens')
+        .update({ used: false, used_at: null })
+        .eq('id', downloadToken.id);
+
+      return NextResponse.json(
+        { error: 'Error al descargar el archivo' },
+        { status: 500 }
+      );
+    }
+
+    // Serve the file directly to the user
+    const arrayBuffer = await fileData.arrayBuffer();
+
+    return new NextResponse(arrayBuffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${PDF_FILE_NAME}"`,
+        'Content-Length': arrayBuffer.byteLength.toString(),
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
     });
 
   } catch (error) {
