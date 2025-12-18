@@ -195,12 +195,12 @@ function DownloadContent() {
               </div>
 
               <div className="mt-4">
-                <a
+                <Link
                   href="/"
                   className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
                 >
                   Ir a Planeta Keto
-                </a>
+                </Link>
               </div>
             </div>
           )}
