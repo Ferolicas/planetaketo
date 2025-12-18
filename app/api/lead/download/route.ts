@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
-// PDF URL in Supabase bucket
-const PDF_PUBLIC_URL = process.env.LEAD_MAGNET_PDF_URL ||
-  'https://xbmjnylhpcjbylqasbaz.supabase.co/storage/v1/object/public/producto/PLANIFICADOR_KETO_7_DIAS_GRATIS.pdf';
+// PDF URL in Supabase bucket "producto"
+// Construir URL dinámicamente usando la URL de Supabase del proyecto
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ibyeukzocqygimmwibxe.supabase.co';
+const PDF_FILE_NAME = 'PLANIFICADOR_KETO_7_DIAS_GRATIS.pdf';
+const PDF_PUBLIC_URL = `${SUPABASE_URL}/storage/v1/object/public/producto/${PDF_FILE_NAME}`;
 
 export async function GET(request: NextRequest) {
   try {

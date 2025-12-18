@@ -12,7 +12,6 @@ const leadSchema = z.object({
 });
 
 // Email configuration
-// IMPORTANTE: Para usar info@planetaketo.es, el dominio debe estar verificado en Resend
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Planeta Keto <info@planetaketo.es>';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://planetaketo.es';
 const YOUTUBE_URL = 'https://youtube.com/@planetaketo';
@@ -43,10 +42,9 @@ export async function POST(request: NextRequest) {
       throw new Error('Database error checking existing email');
     }
 
-    // If email already exists, return success without creating duplicate
-    // (Don't reveal to user that email is already in system)
+    // Si el email ya existe, retornar éxito sin enviar email (solo una copia por lead)
     if (existingLead) {
-      console.log(`Email ${email} already exists in leads table`);
+      console.log(`Email ${email} already exists - no resend allowed`);
       return NextResponse.json({
         success: true,
         message: 'Subscription successful',
@@ -104,8 +102,12 @@ export async function POST(request: NextRequest) {
 
     try {
       // Send Email 1 immediately (with PDF link)
-      // NOTA: Los emails programados requieren plan de pago en Resend
-      // Por ahora solo enviamos el email de entrega inmediata
+      console.log('Attempting to send email with config:', {
+        from: FROM_EMAIL,
+        to: email,
+        subject: 'Tu Plan Keto de 7 Días está aquí 🥑',
+      });
+
       const email1Result = await resend.emails.send({
         from: FROM_EMAIL,
         to: email,
@@ -113,12 +115,13 @@ export async function POST(request: NextRequest) {
         html: getEmail1Template(templateParams),
       });
 
-      console.log('Email 1 sent:', email1Result);
+      console.log('Email 1 sent successfully:', JSON.stringify(email1Result, null, 2));
 
       // TODO: Implementar emails de seguimiento con cron job o webhook
       // Los emails programados de Resend requieren plan de pago
-    } catch (emailError) {
-      console.error('Error sending/scheduling emails:', emailError);
+    } catch (emailError: unknown) {
+      console.error('Error sending email:', emailError);
+      console.error('Email error details:', JSON.stringify(emailError, Object.getOwnPropertyNames(emailError as object), 2));
 
       // Even if email sending fails, we've saved the lead
       // Log the error but don't fail the request

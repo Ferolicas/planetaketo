@@ -24,6 +24,15 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Forzar texto negro en todos los inputs para evitar problemas con dark mode del sistema */
+  input, textarea, select {
+    @apply text-gray-900 bg-white;
+  }
+
+  input::placeholder, textarea::placeholder {
+    @apply text-gray-400;
+  }
 }
 
 @layer utilities {

@@ -32,8 +32,8 @@ export function getEmail1Template({ name, pdfUrl }: EmailTemplateParams): string
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🥑 Planeta Keto</h1>
+            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
             </td>
           </tr>
 
@@ -143,8 +143,8 @@ export function getEmail2Template({ name, fourthwallUrl }: EmailTemplateParams):
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🥑 Planeta Keto</h1>
+            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
             </td>
           </tr>
 
@@ -252,8 +252,8 @@ export function getEmail3Template({ name }: EmailTemplateParams): string {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🥑 Planeta Keto</h1>
+            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
             </td>
           </tr>
 
@@ -351,8 +351,8 @@ export function getEmail4Template({ name, fourthwallUrl }: EmailTemplateParams):
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🥑 Planeta Keto</h1>
+            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
             </td>
           </tr>
 
@@ -486,8 +486,8 @@ export function getEmail5Template({ name, fourthwallUrl, youtubeUrl }: EmailTemp
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🥑 Planeta Keto</h1>
+            <td style="padding: 30px 40px; text-align: center; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 8px 8px 0 0;">
+              <img src="https://planetaketo.es/LOGO.png" alt="Planeta Keto" style="max-width: 180px; height: auto;" />
             </td>
           </tr>
 
