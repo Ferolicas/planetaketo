@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS payments (
   currency TEXT DEFAULT 'eur',
   status TEXT NOT NULL,
   product_name TEXT,
+  magic_link_created BOOLEAN DEFAULT FALSE,
+  email_sent BOOLEAN DEFAULT FALSE,
+  email_sent_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -72,6 +75,10 @@ CREATE POLICY "Enable read access for all users" ON payments
 DROP POLICY IF EXISTS "Enable insert for service role" ON payments;
 CREATE POLICY "Enable insert for service role" ON payments
   FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable update for service role" ON payments;
+CREATE POLICY "Enable update for service role" ON payments
+  FOR UPDATE USING (true);
 
 -- Create policies for download_links
 DROP POLICY IF EXISTS "Enable read access for all users" ON download_links;

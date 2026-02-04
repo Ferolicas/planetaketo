@@ -44,6 +44,9 @@ CREATE TABLE payments (
   currency TEXT DEFAULT 'eur',
   status TEXT NOT NULL,
   product_name TEXT,
+  magic_link_created BOOLEAN DEFAULT FALSE,
+  email_sent BOOLEAN DEFAULT FALSE,
+  email_sent_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -101,6 +104,9 @@ CREATE POLICY "Enable read access for all users" ON payments
 
 CREATE POLICY "Enable insert for service role" ON payments
   FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Enable update for service role" ON payments
+  FOR UPDATE USING (true);
 
 -- PASO 11: Crear políticas para download_links
 CREATE POLICY "Enable read access for all users" ON download_links

@@ -56,8 +56,14 @@ function CheckoutForm({ amount, currency, onPaymentSuccess, onClose }: {
           payment_method_data: {
             billing_details: {
               name: 'Cliente',
+              phone: '',
               address: {
                 country: 'ES',
+                postal_code: '',
+                city: '',
+                line1: '',
+                line2: '',
+                state: '',
               },
             },
           },
