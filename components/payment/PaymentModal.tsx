@@ -53,6 +53,14 @@ function CheckoutForm({ amount, currency, onPaymentSuccess, onClose }: {
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/success`,
+          payment_method_data: {
+            billing_details: {
+              name: 'Cliente',
+              address: {
+                country: 'ES',
+              },
+            },
+          },
         },
         redirect: 'if_required',
       });
