@@ -209,25 +209,31 @@ export default function PaymentModal({
       let finalAmount = amount;
 
       try {
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
-
-        const currencyMap: Record<string, { currency: string; rate: number }> = {
-          'US': { currency: 'usd', rate: 1.1 },
-          'GB': { currency: 'gbp', rate: 0.85 },
-          'MX': { currency: 'mxn', rate: 22 },
-          'CO': { currency: 'cop', rate: 4500 },
-          'AR': { currency: 'ars', rate: 350 },
-          'CL': { currency: 'clp', rate: 950 },
-          'PE': { currency: 'pen', rate: 4 },
+        const countryCurrencyMap: Record<string, string> = {
+          'US': 'USD',
+          'GB': 'GBP',
+          'MX': 'MXN',
+          'CO': 'COP',
+          'AR': 'ARS',
+          'CL': 'CLP',
+          'PE': 'PEN',
         };
 
-        const countryCode = data.country_code;
-        if (currencyMap[countryCode]) {
-          const { currency: newCurrency, rate } = currencyMap[countryCode];
-          finalCurrency = newCurrency;
-          finalAmount = amount * rate;
-          console.log(`✓ Detected: ${newCurrency} (${countryCode})`);
+        const geoResponse = await fetch('https://ipapi.co/json/');
+        const geoData = await geoResponse.json();
+        const countryCode = geoData.country_code;
+        const targetCurrency = countryCurrencyMap[countryCode];
+
+        if (targetCurrency) {
+          const rateResponse = await fetch('https://open.er-api.com/v6/latest/EUR');
+          const rateData = await rateResponse.json();
+
+          if (rateData.result === 'success' && rateData.rates[targetCurrency]) {
+            const rate = rateData.rates[targetCurrency];
+            finalCurrency = targetCurrency.toLowerCase();
+            finalAmount = amount * rate;
+            console.log(`✓ Detected: ${targetCurrency} (${countryCode}), rate: ${rate}`);
+          }
         }
       } catch (error) {
         console.log('Using default currency:', currency);
