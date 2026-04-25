@@ -53,20 +53,6 @@ function CheckoutForm({ amount, currency, onPaymentSuccess, onClose }: {
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/success`,
-          payment_method_data: {
-            billing_details: {
-              name: 'Cliente',
-              phone: '',
-              address: {
-                country: 'ES',
-                postal_code: '',
-                city: '',
-                line1: '',
-                line2: '',
-                state: '',
-              },
-            },
-          },
         },
         redirect: 'if_required',
       });
@@ -91,8 +77,28 @@ function CheckoutForm({ amount, currency, onPaymentSuccess, onClose }: {
       {/* Express Checkout (Apple Pay, Google Pay, etc) */}
       <div className="mb-6">
         <ExpressCheckoutElement
-          onConfirm={async (event) => {
-            console.log('Express checkout confirmed:', event);
+          onConfirm={async () => {
+            if (!stripe || !elements) return;
+
+            setIsProcessing(true);
+            setErrorMessage(null);
+
+            const { error, paymentIntent } = await stripe.confirmPayment({
+              elements,
+              confirmParams: {
+                return_url: `${window.location.origin}/success`,
+              },
+              redirect: 'if_required',
+            });
+
+            if (error) {
+              setErrorMessage(error.message || 'Error al procesar el pago');
+              console.error('Express checkout error:', error);
+              setIsProcessing(false);
+            } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+              console.log('✅ Express payment successful:', paymentIntent.id);
+              onPaymentSuccess(paymentIntent.id);
+            }
           }}
           onReady={() => setExpressCheckoutReady(true)}
           options={{
@@ -116,9 +122,11 @@ function CheckoutForm({ amount, currency, onPaymentSuccess, onClose }: {
           fields: {
             billingDetails: {
               email: 'auto',
-              name: 'never',
-              address: 'never',
-              phone: 'never',
+              name: 'auto',
+              address: {
+                country: 'auto',
+                postalCode: 'auto',
+              },
             },
           },
         }}
@@ -204,9 +212,9 @@ export default function PaymentModal({
     setIsLoading(true);
 
     try {
-      // Detect currency
-      let finalCurrency = currency;
-      let finalAmount = amount;
+      // Detect currency + exchange rate (display only — server validates price)
+      let targetCurrency = 'eur';
+      let exchangeRate = 1;
 
       try {
         const countryCurrencyMap: Record<string, string> = {
@@ -222,33 +230,29 @@ export default function PaymentModal({
         const geoResponse = await fetch('https://ipapi.co/json/');
         const geoData = await geoResponse.json();
         const countryCode = geoData.country_code;
-        const targetCurrency = countryCurrencyMap[countryCode];
+        const detected = countryCurrencyMap[countryCode];
 
-        if (targetCurrency) {
+        if (detected) {
           const rateResponse = await fetch('https://open.er-api.com/v6/latest/EUR');
           const rateData = await rateResponse.json();
 
-          if (rateData.result === 'success' && rateData.rates[targetCurrency]) {
-            const rate = rateData.rates[targetCurrency];
-            finalCurrency = targetCurrency.toLowerCase();
-            finalAmount = amount * rate;
-            console.log(`✓ Detected: ${targetCurrency} (${countryCode}), rate: ${rate}`);
+          if (rateData.result === 'success' && rateData.rates[detected]) {
+            targetCurrency = detected.toLowerCase();
+            exchangeRate = rateData.rates[detected];
+            console.log(`✓ Detected: ${detected} (${countryCode}), rate: ${exchangeRate}`);
           }
         }
       } catch (error) {
-        console.log('Using default currency:', currency);
+        console.log('Using default currency: eur');
       }
 
-      setDetectedCurrency(finalCurrency);
-      setDetectedAmount(finalAmount);
-
-      // Create Payment Intent (sin datos de cliente aún)
+      // Create Payment Intent — server reads price from Supabase
       const response = await fetch('/api/stripe/payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: finalAmount,
-          currency: finalCurrency,
+          currency: targetCurrency,
+          exchangeRate,
         }),
       });
 
@@ -258,8 +262,11 @@ export default function PaymentModal({
         throw new Error(data.error);
       }
 
+      // Trust the server's amount + currency
+      setDetectedCurrency(data.currency);
+      setDetectedAmount(data.amount);
       setClientSecret(data.clientSecret);
-      console.log('✓ Payment ready');
+      console.log('✓ Payment ready:', data.amount, data.currency);
     } catch (error: any) {
       console.error('Failed to create payment:', error);
       alert(`Error: ${error.message}`);
@@ -271,6 +278,14 @@ export default function PaymentModal({
 
   const handlePaymentSuccess = (intentId: string) => {
     console.log('Payment successful, asking for customer data');
+    // Persist so we can recover the data form even if the user refreshes,
+    // closes the tab, or navigates away before submitting.
+    try {
+      localStorage.setItem('pendingPayment', JSON.stringify({
+        paymentIntentId: intentId,
+        timestamp: Date.now(),
+      }));
+    } catch {}
     setPaymentIntentId(intentId);
     setStep('customer-form');
   };
@@ -315,6 +330,9 @@ export default function PaymentModal({
       }
 
       console.log('✅ Purchase completed, email sent');
+      try {
+        localStorage.removeItem('pendingPayment');
+      } catch {}
       setStep('success');
     } catch (error: any) {
       console.error('Error completing purchase:', error);
