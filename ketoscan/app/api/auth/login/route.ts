@@ -1,0 +1,56 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { queryOne } from "@/lib/db";
+import {
+  verifyPassword,
+  ensureProfile,
+  makeSessionValue,
+  SESSION_COOKIE,
+  sessionCookieOptions,
+} from "@/lib/auth";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1).max(200),
+});
+
+export async function POST(req: Request) {
+  const parsed = schema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Datos invalidos" }, { status: 400 });
+  }
+  const { email, password } = parsed.data;
+
+  try {
+    const acc = await queryOne<{
+      id: string;
+      email: string;
+      password_hash: string;
+      must_change_password: boolean;
+    }>(
+      `SELECT id, email, password_hash, must_change_password
+       FROM ketoscan_accounts WHERE email = $1`,
+      [email.toLowerCase()]
+    );
+
+    if (!acc || !(await verifyPassword(password, acc.password_hash))) {
+      return NextResponse.json({ error: "Credenciales invalidas" }, { status: 401 });
+    }
+
+    // Garantiza el perfil (fila en users) para esta cuenta
+    await ensureProfile(acc.id);
+
+    const res = NextResponse.json({
+      email: acc.email,
+      mustChangePassword: acc.must_change_password,
+    });
+    res.cookies.set(SESSION_COOKIE, makeSessionValue(acc.id), sessionCookieOptions);
+    return res;
+  } catch (err) {
+    console.error("[ketoscan login]", err);
+    return NextResponse.json({ error: "Error del servidor" }, { status: 500 });
+  }
+}

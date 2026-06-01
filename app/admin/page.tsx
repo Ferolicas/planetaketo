@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { DollarSign } from 'lucide-react';
+import AdminPanel from '@/components/admin/AdminPanel';
 import HomeManager from '@/components/admin/HomeManager';
 
 export default function AdminPage() {
@@ -41,11 +42,14 @@ export default function AdminPage() {
               Panel de Administración
             </h1>
             <p className="text-gray-600 text-lg">
-              Gestiona los precios del producto
+              Métricas, alta de usuarios y precios
             </p>
           </div>
 
-          {/* Content */}
+          {/* Métricas + alta manual de ketoscan (polling 10s) */}
+          <AdminPanel />
+
+          {/* Gestión de precios / home */}
           <HomeManager />
         </div>
       </div>

@@ -1,23 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { query, queryOne } from '@/lib/db';
 import { createMagicLink } from '@/lib/downloads/magic-link';
-import { Resend } from 'resend';
+import { resend } from '@/lib/resend';
 import { getPurchaseEmailTemplate } from '@/lib/email/templates';
 import { PRODUCT_CONFIG } from '@/lib/stripe/config';
+import { getSession } from '@/lib/auth/session';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const runtime = 'nodejs';
+
 const WHATSAPP_NUMBER = '+19176726696';
+const FROM_EMAIL = 'Planeta Keto <info@planetaketo.es>';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://planetaketo.es';
+
+interface WebhookLog {
+  id: string;
+  stripe_payment_intent: string | null;
+  stripe_session_id: string | null;
+  customer_email: string | null;
+  amount: number | null;
+  currency: string | null;
+  retry_count: number | null;
+}
+
+interface PaymentJoined {
+  id: string;
+  customer_id: string;
+  magic_link_created: boolean | null;
+  email_sent: boolean | null;
+  customer_email: string;
+  customer_name: string | null;
+}
 
 /**
- * Admin endpoint to retry failed webhook processing
- * POST /api/admin/retry-webhook
- * Body: { webhookLogId: string } OR { paymentId: string }
+ * Reintento de procesamiento de webhooks fallidos (admin).
+ * POST /api/admin/retry-webhook  Body: { webhookLogId } | { paymentId }
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { webhookLogId, paymentId } = body;
+    const session = await getSession();
+    if (!session || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
+    const { webhookLogId, paymentId } = await request.json();
     if (!webhookLogId && !paymentId) {
       return NextResponse.json(
         { error: 'Either webhookLogId or paymentId is required' },
@@ -25,159 +50,96 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get webhook log
-    let webhookLog;
-    if (webhookLogId) {
-      const { data } = await supabaseAdmin
-        .from('webhook_logs')
-        .select('*')
-        .eq('id', webhookLogId)
-        .single();
-      webhookLog = data;
-    } else {
-      const { data } = await supabaseAdmin
-        .from('webhook_logs')
-        .select('*')
-        .eq('stripe_payment_intent', paymentId)
-        .single();
-      webhookLog = data;
-    }
+    const webhookLog = webhookLogId
+      ? await queryOne<WebhookLog>(`SELECT * FROM webhook_logs WHERE id = $1`, [webhookLogId])
+      : await queryOne<WebhookLog>(
+          `SELECT * FROM webhook_logs WHERE stripe_payment_intent = $1`,
+          [paymentId]
+        );
 
     if (!webhookLog) {
-      return NextResponse.json(
-        { error: 'Webhook log not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Webhook log not found' }, { status: 404 });
     }
 
     console.log(`🔄 Retrying webhook: ${webhookLog.id}`);
 
-    // Get payment record
-    const { data: payment } = await supabaseAdmin
-      .from('payments')
-      .select('*, customers(*)')
-      .eq('stripe_payment_id', webhookLog.stripe_payment_intent)
-      .single();
+    const payment = await queryOne<PaymentJoined>(
+      `SELECT p.id, p.customer_id, p.magic_link_created, p.email_sent,
+              c.email AS customer_email, c.name AS customer_name
+       FROM payments p
+       JOIN customers c ON c.id = p.customer_id
+       WHERE p.stripe_payment_id = $1`,
+      [webhookLog.stripe_payment_intent]
+    );
 
     if (!payment) {
-      // Payment doesn't exist, need to recreate from webhook data
       return await recreatePaymentFromWebhook(webhookLog);
     }
 
-    // Payment exists, check what needs to be retried
     const needsMagicLink = !payment.magic_link_created;
     const needsEmail = !payment.email_sent;
 
-    console.log(`Status: Magic Link: ${payment.magic_link_created}, Email: ${payment.email_sent}`);
-
-    let downloadUrl;
-
-    // Create magic link if needed
+    let downloadUrl: string;
     if (needsMagicLink) {
-      console.log('Creating magic link...');
-      const result = await createMagicLink(
-        payment.customer_id,
-        payment.id,
-        PRODUCT_CONFIG.pdfFileName
-      );
+      const result = await createMagicLink(payment.customer_id, payment.id, PRODUCT_CONFIG.pdfFileName);
       downloadUrl = result.downloadUrl;
-
-      await supabaseAdmin
-        .from('payments')
-        .update({ magic_link_created: true })
-        .eq('id', payment.id);
-
-      console.log('✅ Magic link created');
+      await query(`UPDATE payments SET magic_link_created = true WHERE id = $1`, [payment.id]);
     } else {
-      // Get existing magic link
-      const { data: magicLink } = await supabaseAdmin
-        .from('download_links')
-        .select('magic_token')
-        .eq('payment_id', payment.id)
-        .single();
-
-      if (magicLink) {
-        downloadUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/download/${magicLink.magic_token}`;
-      } else {
-        // Magic link was marked as created but doesn't exist, recreate
-        const result = await createMagicLink(
-          payment.customer_id,
-          payment.id,
-          PRODUCT_CONFIG.pdfFileName
-        );
-        downloadUrl = result.downloadUrl;
-      }
+      const existingLink = await queryOne<{ token: string }>(
+        `SELECT token FROM download_links WHERE payment_id = $1 ORDER BY created_at DESC LIMIT 1`,
+        [payment.id]
+      );
+      downloadUrl = existingLink
+        ? `${SITE_URL}/download/${existingLink.token}`
+        : (await createMagicLink(payment.customer_id, payment.id, PRODUCT_CONFIG.pdfFileName)).downloadUrl;
     }
 
-    // Send email if needed
     if (needsEmail) {
-      console.log(`Sending email to ${payment.customers.email}...`);
-      const emailHtml = getPurchaseEmailTemplate({
-        customerName: payment.customers.name,
-        downloadUrl,
-        whatsappNumber: WHATSAPP_NUMBER,
-      });
-
       const emailResult = await resend.emails.send({
-        from: 'Planeta Keto <info@planetaketo.es>',
-        to: payment.customers.email,
+        from: FROM_EMAIL,
+        to: payment.customer_email,
         subject: '¡Gracias por tu compra! Tu Método Keto está listo 💚',
-        html: emailHtml,
+        html: getPurchaseEmailTemplate({
+          customerName: payment.customer_name ?? 'Cliente',
+          downloadUrl,
+          whatsappNumber: WHATSAPP_NUMBER,
+        }),
       });
-
-      await supabaseAdmin
-        .from('payments')
-        .update({
-          email_sent: true,
-          email_sent_at: new Date().toISOString()
-        })
-        .eq('id', payment.id);
-
-      console.log(`✅ Email sent: ${emailResult.data?.id}`);
+      await query(
+        `UPDATE payments SET email_sent = true, email_sent_at = now() WHERE id = $1`,
+        [payment.id]
+      );
+      console.log(`✅ Email reenviado: ${emailResult.data?.id}`);
     }
 
-    // Update webhook log
-    await supabaseAdmin
-      .from('webhook_logs')
-      .update({
-        status: 'completed',
-        processing_step: 'completed_via_retry',
-        completed_at: new Date().toISOString(),
-        retry_count: (webhookLog.retry_count || 0) + 1,
-        last_retry_at: new Date().toISOString(),
-      })
-      .eq('id', webhookLog.id);
-
-    console.log('✅ Webhook retry successful');
+    await query(
+      `UPDATE webhook_logs
+       SET status = 'completed', processing_step = 'completed_via_retry',
+           completed_at = now(),
+           retry_count = COALESCE(retry_count, 0) + 1, last_retry_at = now()
+       WHERE id = $1`,
+      [webhookLog.id]
+    );
 
     return NextResponse.json({
       success: true,
       webhookLogId: webhookLog.id,
       paymentId: payment.id,
-      actions: {
-        magicLinkCreated: needsMagicLink,
-        emailSent: needsEmail,
-      }
+      actions: { magicLinkCreated: needsMagicLink, emailSent: needsEmail },
     });
-
-  } catch (error: any) {
-    console.error('❌ Retry failed:', error);
-    return NextResponse.json(
-      { error: error.message, stack: error.stack },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error('❌ Retry failed:', (error as Error).message);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
 
-async function recreatePaymentFromWebhook(webhookLog: any) {
+async function recreatePaymentFromWebhook(webhookLog: WebhookLog): Promise<NextResponse> {
   console.log('⚠️  Payment record missing, recreating from webhook data...');
 
-  // Get or create customer
-  const { data: customer } = await supabaseAdmin
-    .from('customers')
-    .select('*')
-    .eq('email', webhookLog.customer_email)
-    .maybeSingle();
+  const customer = await queryOne<{ id: string; email: string; name: string | null }>(
+    `SELECT id, email, name FROM customers WHERE email = $1`,
+    [webhookLog.customer_email]
+  );
 
   if (!customer) {
     return NextResponse.json(
@@ -186,74 +148,49 @@ async function recreatePaymentFromWebhook(webhookLog: any) {
     );
   }
 
-  // Create payment record
-  const { data: payment, error: paymentError } = await supabaseAdmin
-    .from('payments')
-    .insert({
-      customer_id: customer.id,
-      stripe_payment_id: webhookLog.stripe_payment_intent,
-      stripe_session_id: webhookLog.stripe_session_id,
-      amount: webhookLog.amount,
-      currency: webhookLog.currency,
-      status: 'paid',
-      product_name: PRODUCT_CONFIG.name,
-      webhook_log_id: webhookLog.id,
-    })
-    .select()
-    .single();
-
-  if (paymentError) {
-    throw new Error(`Failed to recreate payment: ${paymentError.message}`);
-  }
-
-  console.log(`✅ Payment record recreated: ${payment.id}`);
-
-  // Create magic link
-  const { downloadUrl } = await createMagicLink(
-    customer.id,
-    payment.id,
-    PRODUCT_CONFIG.pdfFileName
+  const payment = await queryOne<{ id: string }>(
+    `INSERT INTO payments
+       (customer_id, stripe_payment_id, stripe_session_id, amount, currency, status, product_name, webhook_log_id)
+     VALUES ($1, $2, $3, $4, $5, 'paid', $6, $7) RETURNING id`,
+    [
+      customer.id,
+      webhookLog.stripe_payment_intent,
+      webhookLog.stripe_session_id,
+      webhookLog.amount,
+      webhookLog.currency,
+      PRODUCT_CONFIG.name,
+      webhookLog.id,
+    ]
   );
+  if (!payment) throw new Error('Failed to recreate payment');
 
-  await supabaseAdmin
-    .from('payments')
-    .update({ magic_link_created: true })
-    .eq('id', payment.id);
-
-  // Send email
-  const emailHtml = getPurchaseEmailTemplate({
-    customerName: customer.name,
-    downloadUrl,
-    whatsappNumber: WHATSAPP_NUMBER,
-  });
+  const { downloadUrl } = await createMagicLink(customer.id, payment.id, PRODUCT_CONFIG.pdfFileName);
+  await query(`UPDATE payments SET magic_link_created = true WHERE id = $1`, [payment.id]);
 
   const emailResult = await resend.emails.send({
-    from: 'Planeta Keto <info@planetaketo.es>',
+    from: FROM_EMAIL,
     to: customer.email,
     subject: '¡Gracias por tu compra! Tu Método Keto está listo 💚',
-    html: emailHtml,
+    html: getPurchaseEmailTemplate({
+      customerName: customer.name ?? 'Cliente',
+      downloadUrl,
+      whatsappNumber: WHATSAPP_NUMBER,
+    }),
   });
 
-  await supabaseAdmin
-    .from('payments')
-    .update({
-      email_sent: true,
-      email_sent_at: new Date().toISOString()
-    })
-    .eq('id', payment.id);
+  await query(
+    `UPDATE payments SET email_sent = true, email_sent_at = now() WHERE id = $1`,
+    [payment.id]
+  );
 
-  // Update webhook log
-  await supabaseAdmin
-    .from('webhook_logs')
-    .update({
-      status: 'completed',
-      processing_step: 'completed_via_full_recreation',
-      completed_at: new Date().toISOString(),
-    })
-    .eq('id', webhookLog.id);
+  await query(
+    `UPDATE webhook_logs
+     SET status = 'completed', processing_step = 'completed_via_full_recreation', completed_at = now()
+     WHERE id = $1`,
+    [webhookLog.id]
+  );
 
   console.log(`✅ Full recreation successful | Email: ${emailResult.data?.id}`);
-
   return NextResponse.json({
     success: true,
     recreated: true,
@@ -262,20 +199,20 @@ async function recreatePaymentFromWebhook(webhookLog: any) {
   });
 }
 
-/**
- * GET endpoint to list failed webhooks
- */
+// Lista de webhooks fallidos (admin).
 export async function GET() {
-  const { data, error } = await supabaseAdmin
-    .from('webhook_logs')
-    .select('*')
-    .in('status', ['failed', 'processing'])
-    .order('created_at', { ascending: false })
-    .limit(50);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const session = await getSession();
+    if (!session || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const res = await query(
+      `SELECT * FROM webhook_logs
+       WHERE status IN ('failed', 'processing')
+       ORDER BY created_at DESC LIMIT 50`
+    );
+    return NextResponse.json({ failedWebhooks: res.rows });
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
-
-  return NextResponse.json({ failedWebhooks: data });
 }

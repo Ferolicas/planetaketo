@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe/config';
-import { supabaseAdmin } from '@/lib/supabase';
+import { queryOne } from '@/lib/db';
 import { processSale, extractStripeEmail } from '@/lib/payments/process-sale';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
@@ -67,11 +68,10 @@ export async function GET(request: NextRequest) {
         if (pi.status !== 'succeeded') continue;
 
         // Already in DB?
-        const { data: existing } = await supabaseAdmin
-          .from('payments')
-          .select('id')
-          .eq('stripe_payment_id', pi.id)
-          .maybeSingle();
+        const existing = await queryOne<{ id: string }>(
+          `SELECT id FROM payments WHERE stripe_payment_id = $1`,
+          [pi.id]
+        );
 
         if (existing) {
           summary.alreadyProcessed++;

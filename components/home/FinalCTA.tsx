@@ -24,7 +24,7 @@ const features = [
 export default function FinalCTA() {
   const [prices, setPrices] = useState<PriceSettings>({
     regularPrice: 39.75,
-    discountPrice: 19.75,
+    discountPrice: 10,
     discountPercentage: 50,
   });
 

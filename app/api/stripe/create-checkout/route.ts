@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, PRODUCT_CONFIG } from '@/lib/stripe/config';
-import { supabaseAdmin } from '@/lib/supabase';
+import { queryOne } from '@/lib/db';
+
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current prices from database
-    const { data: homeContent } = await supabaseAdmin
-      .from('homeContent')
-      .select('discount_price')
-      .eq('id', 'default')
-      .single();
-
-    const price = homeContent?.discount_price || 19.75;
+    // Precio desde Postgres (única fuente de verdad). Fallback defensivo = 10.
+    const row = await queryOne<{ discount_price: string | number | null }>(
+      `SELECT discount_price FROM "homeContent" WHERE id = 'default'`
+    );
+    const price = Number(row?.discount_price ?? 10);
     const priceInCents = Math.round(price * 100);
 
     // Create or get Stripe product

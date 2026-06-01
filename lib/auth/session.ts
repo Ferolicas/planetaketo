@@ -1,6 +1,12 @@
 import { cookies } from 'next/headers';
-import { supabaseAdmin } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
+import { queryOne } from '@/lib/db';
+
+// ============================================================
+// Sesión de administrador — pg (tabla `admins`)
+// El frontend público NO tiene login; el único login web es este (panel admin).
+// La sesión es una cookie httpOnly cuyo valor es base64(admin.id).
+// ============================================================
 
 export interface Session {
   user: {
@@ -12,19 +18,26 @@ export interface Session {
   };
 }
 
-export async function createSession(userId: string): Promise<string> {
-  const token = generateSessionToken();
+interface AdminRow {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  image: string | null;
+}
+
+export async function createSession(adminId: string): Promise<string> {
+  const token = Buffer.from(adminId).toString('base64');
   const cookieStore = await cookies();
 
   cookieStore.set('session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    maxAge: 60 * 60 * 24 * 30, // 30 días
     path: '/',
   });
 
-  // Store session in memory or database if needed
   return token;
 }
 
@@ -36,21 +49,19 @@ export async function getSession(): Promise<Session | null> {
     return null;
   }
 
-  // For now, decode the token (in production, validate JWT)
   try {
-    const userId = Buffer.from(sessionToken, 'base64').toString('utf-8');
+    const adminId = Buffer.from(sessionToken, 'base64').toString('utf-8');
 
-    const { data: user, error } = await supabaseAdmin
-      .from('User')
-      .select('id, email, name, role, image')
-      .eq('id', userId)
-      .single();
+    const admin = await queryOne<AdminRow>(
+      `SELECT id, email, name, role, image FROM admins WHERE id = $1`,
+      [adminId]
+    );
 
-    if (error || !user) {
+    if (!admin) {
       return null;
     }
 
-    return { user };
+    return { user: admin };
   } catch {
     return null;
   }
@@ -65,10 +76,9 @@ export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }
 
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+export async function verifyPassword(
+  password: string,
+  hash: string
+): Promise<boolean> {
   return bcrypt.compare(password, hash);
-}
-
-function generateSessionToken(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }

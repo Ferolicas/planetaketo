@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, PRODUCT_CONFIG } from '@/lib/stripe/config';
-import { supabaseAdmin } from '@/lib/supabase';
+import { queryOne } from '@/lib/db';
+
+export const runtime = 'nodejs';
 
 const ALLOWED_CURRENCIES = new Set([
   'eur', 'usd', 'gbp', 'mxn', 'cop', 'ars', 'clp', 'pen',
@@ -32,14 +34,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Read price from server (single source of truth)
-    const { data: homeContent } = await supabaseAdmin
-      .from('homeContent')
-      .select('discount_price')
-      .eq('id', 'default')
-      .single();
-
-    const eurPrice = Number(homeContent?.discount_price ?? 19.75);
+    // Precio desde Postgres (única fuente de verdad). Fallback defensivo = 10.
+    const row = await queryOne<{ discount_price: string | number | null }>(
+      `SELECT discount_price FROM "homeContent" WHERE id = 'default'`
+    );
+    const eurPrice = Number(row?.discount_price ?? 10);
 
     if (!eurPrice || eurPrice <= 0) {
       return NextResponse.json(

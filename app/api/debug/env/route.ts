@@ -1,13 +1,7 @@
-import { NextResponse } from 'next/server';
+import { disabledRoute } from '@/lib/disabled-route';
 
-export async function GET() {
-  return NextResponse.json({
-    env: {
-      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING',
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING',
-      NODE_ENV: process.env.NODE_ENV,
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    },
-  });
-}
+export const GET = disabledRoute;
+export const POST = disabledRoute;
+export const PUT = disabledRoute;
+export const PATCH = disabledRoute;
+export const DELETE = disabledRoute;

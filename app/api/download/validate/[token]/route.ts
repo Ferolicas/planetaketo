@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getDownloadLink, isDownloadUsable } from '@/lib/downloads/magic-link';
 
+export const runtime = 'nodejs';
+
+// Validación de solo lectura del enlace del libro de pago (no incrementa).
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
@@ -8,25 +11,25 @@ export async function GET(
   try {
     const { token } = await params;
 
-    // Get download link
-    const { data: link, error } = await supabaseAdmin
-      .from('download_links')
-      .select('*, customers(name, email)')
-      .eq('token', token)
-      .single();
-
-    if (error || !link) {
+    const link = await getDownloadLink(token);
+    if (!link) {
       return NextResponse.json(
         { valid: false, error: 'Enlace de descarga no encontrado' },
         { status: 404 }
       );
     }
 
-    // Check if download limit reached
-    if (link.download_count >= link.max_downloads) {
+    const usable = isDownloadUsable(link);
+    if (!usable.ok) {
       return NextResponse.json(
-        { valid: false, error: 'Límite de descargas alcanzado' },
-        { status: 403 }
+        {
+          valid: false,
+          error:
+            usable.reason === 'expired'
+              ? 'El enlace de descarga ha expirado'
+              : 'Límite de descargas alcanzado',
+        },
+        { status: usable.reason === 'expired' ? 410 : 403 }
       );
     }
 

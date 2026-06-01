@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { queryOne } from '@/lib/db';
 import { verifyPassword } from '@/lib/auth/session';
 
+// Login del panel de administrador (pg, tabla `admins`).
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
@@ -13,40 +14,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user
-    const { data: user, error } = await supabaseAdmin
-      .from('User')
-      .select('*')
-      .eq('email', email.toLowerCase())
-      .single();
+    const admin = await queryOne<{
+      id: string;
+      email: string;
+      name: string | null;
+      role: string;
+      password_hash: string;
+    }>(
+      `SELECT id, email, name, role, password_hash FROM admins WHERE email = $1`,
+      [email.toLowerCase()]
+    );
 
-    if (error || !user) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+    if (!admin) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Verify password
-    const isValid = await verifyPassword(password, user.password);
-
+    const isValid = await verifyPassword(password, admin.password_hash);
     if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Create session token
-    const sessionToken = Buffer.from(user.id).toString('base64');
+    const sessionToken = Buffer.from(admin.id).toString('base64');
 
-    // Create response with session cookie
     const response = NextResponse.json({
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
       },
     });
 
@@ -54,16 +49,13 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: 60 * 60 * 24 * 30, // 30 días
       path: '/',
     });
 
     return response;
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'Failed to login' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to login' }, { status: 500 });
   }
 }

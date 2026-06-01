@@ -1,55 +1,7 @@
-import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import { verifyPassword } from '@/lib/auth/session';
+import { disabledRoute } from '@/lib/disabled-route';
 
-export async function GET() {
-  try {
-    // Check if admin user exists
-    const { data: user, error } = await supabaseAdmin
-      .from('User')
-      .select('*')
-      .eq('email', 'admin@planetaketo.es')
-      .single();
-
-    if (error) {
-      return NextResponse.json({
-        exists: false,
-        error: error.message,
-        code: error.code,
-      });
-    }
-
-    if (!user) {
-      return NextResponse.json({
-        exists: false,
-        message: 'User not found',
-      });
-    }
-
-    // Test password verification
-    const testPassword = 'admin123';
-    const isValid = await verifyPassword(testPassword, user.password);
-
-    return NextResponse.json({
-      exists: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        hasPassword: !!user.password,
-        passwordLength: user.password?.length,
-      },
-      passwordTest: {
-        testPassword,
-        isValid,
-        storedHash: user.password,
-      },
-    });
-  } catch (error: any) {
-    return NextResponse.json({
-      error: error.message,
-      stack: error.stack,
-    });
-  }
-}
+export const GET = disabledRoute;
+export const POST = disabledRoute;
+export const PUT = disabledRoute;
+export const PATCH = disabledRoute;
+export const DELETE = disabledRoute;
