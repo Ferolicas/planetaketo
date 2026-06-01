@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureDefaultUser, getDefaultUserId } from "@/lib/db";
+import { authGuard } from "@/lib/auth";
 import {
   deleteDailyMenuItem,
   updateDailyMenuItem,
@@ -16,8 +16,9 @@ interface Ctx {
 // PATCH /api/daily-menu/:id  -> actualiza gramos de un item
 export async function PATCH(req: Request, { params }: Ctx) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
 
     const body = await req.json().catch(() => null);
     const parsed = dailyMenuUpdateSchema.safeParse(body);
@@ -42,8 +43,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
 // DELETE /api/daily-menu/:id
 export async function DELETE(_req: Request, { params }: Ctx) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
     const ok = await deleteDailyMenuItem(userId, params.id);
     if (!ok) {
       return NextResponse.json({ error: "No encontrado" }, { status: 404 });

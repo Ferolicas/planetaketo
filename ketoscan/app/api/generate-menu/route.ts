@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type Anthropic from "@anthropic-ai/sdk";
 import { getAnthropic, getModel, extractJson } from "@/lib/anthropic";
-import { ensureDefaultUser, getDefaultUserId } from "@/lib/db";
+import { authGuard } from "@/lib/auth";
 import { getProfile } from "@/lib/queries/profile";
 import { listFoods } from "@/lib/queries/foods";
 import { replaceWeeklyMenu } from "@/lib/queries/weekly-menu";
@@ -49,8 +49,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
 
     const body = await req.json().catch(() => ({}));
     const parsed = generateMenuSchema.safeParse(body ?? {});

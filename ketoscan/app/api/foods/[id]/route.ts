@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureDefaultUser, getDefaultUserId } from "@/lib/db";
+import { authGuard } from "@/lib/auth";
 import { deleteFood, getFood, updateFood } from "@/lib/queries/foods";
 import { foodSchema, formatZodError } from "@/lib/validations";
 
@@ -12,8 +12,9 @@ interface Ctx {
 
 export async function GET(_req: Request, { params }: Ctx) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
     const food = await getFood(userId, params.id);
     if (!food) {
       return NextResponse.json({ error: "No encontrado" }, { status: 404 });
@@ -27,8 +28,9 @@ export async function GET(_req: Request, { params }: Ctx) {
 
 export async function PUT(req: Request, { params }: Ctx) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
 
     const body = await req.json().catch(() => null);
     const parsed = foodSchema.safeParse(body);
@@ -52,8 +54,9 @@ export async function PUT(req: Request, { params }: Ctx) {
 
 export async function DELETE(_req: Request, { params }: Ctx) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
     const ok = await deleteFood(userId, params.id);
     if (!ok) {
       return NextResponse.json({ error: "No encontrado" }, { status: 404 });

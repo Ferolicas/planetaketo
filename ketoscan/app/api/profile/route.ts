@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureDefaultUser, getDefaultUserId } from "@/lib/db";
+import { authGuard } from "@/lib/auth";
 import { getProfile, upsertProfile } from "@/lib/queries/profile";
 import { profileSchema, formatZodError } from "@/lib/validations";
 import { calcTdee } from "@/lib/calculations/tdee";
@@ -10,8 +10,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
     const profile = await getProfile(userId);
 
     const tdee = profile ? calcTdee(profile) : null;
@@ -29,8 +30,9 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
 
     const body = await req.json().catch(() => null);
     const parsed = profileSchema.safeParse(body);

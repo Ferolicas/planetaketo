@@ -3,6 +3,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { getAnthropic, getModel, extractJson } from "@/lib/anthropic";
 import { scanSchema, formatZodError } from "@/lib/validations";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { authGuard } from "@/lib/auth";
 import type { ScanResult } from "@/types";
 import { z } from "zod";
 
@@ -59,6 +60,9 @@ function stripDataUrl(image: string): string {
 }
 
 export async function POST(req: Request) {
+  const guard = await authGuard();
+  if (!guard.ok) return guard.res;
+
   // Rate limit: 8 escaneos por minuto por IP
   const ip = clientIp(req);
   const rl = rateLimit(`scan:${ip}`, 8, 60_000);

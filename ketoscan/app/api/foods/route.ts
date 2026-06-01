@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureDefaultUser, getDefaultUserId } from "@/lib/db";
+import { authGuard } from "@/lib/auth";
 import { createFood, listFoods } from "@/lib/queries/foods";
 import { foodSchema, formatZodError } from "@/lib/validations";
 
@@ -8,8 +8,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
     const foods = await listFoods(userId);
     return NextResponse.json({ foods });
   } catch (err) {
@@ -23,8 +24,9 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
 
     const body = await req.json().catch(() => null);
     const parsed = foodSchema.safeParse(body);

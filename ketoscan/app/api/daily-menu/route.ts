@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureDefaultUser, getDefaultUserId } from "@/lib/db";
+import { authGuard } from "@/lib/auth";
 import {
   addDailyMenuItem,
   bulkUpdateGrams,
@@ -20,8 +20,9 @@ export const dynamic = "force-dynamic";
 // GET /api/daily-menu?date=YYYY-MM-DD
 export async function GET(req: Request) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date") || todayISO();
 
@@ -46,8 +47,9 @@ export async function GET(req: Request) {
 // POST /api/daily-menu  -> agrega un alimento al menu del dia
 export async function POST(req: Request) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
 
     const body = await req.json().catch(() => null);
     const parsed = dailyMenuAddSchema.safeParse(body);
@@ -78,8 +80,9 @@ export async function POST(req: Request) {
 // PATCH /api/daily-menu  -> actualizacion en lote de gramos (reestructuracion)
 export async function PATCH(req: Request) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
 
     const body = await req.json().catch(() => null);
     const parsed = dailyMenuBulkSchema.safeParse(body);

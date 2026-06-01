@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureDefaultUser, getDefaultUserId } from "@/lib/db";
+import { authGuard } from "@/lib/auth";
 import { clearWeeklyMenu, listWeeklyMenu } from "@/lib/queries/weekly-menu";
 import { weekStartISO } from "@/lib/utils";
 
@@ -9,8 +9,9 @@ export const dynamic = "force-dynamic";
 // GET /api/weekly-menu?week_start=YYYY-MM-DD
 export async function GET(req: Request) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
     const { searchParams } = new URL(req.url);
     const weekStart = searchParams.get("week_start") || weekStartISO();
 
@@ -28,8 +29,9 @@ export async function GET(req: Request) {
 // DELETE /api/weekly-menu?week_start=YYYY-MM-DD
 export async function DELETE(req: Request) {
   try {
-    await ensureDefaultUser();
-    const userId = getDefaultUserId();
+    const guard = await authGuard();
+    if (!guard.ok) return guard.res;
+    const userId = guard.userId;
     const { searchParams } = new URL(req.url);
     const weekStart = searchParams.get("week_start") || weekStartISO();
 
