@@ -7,7 +7,7 @@ PWA móvil para escanear alimentos con IA, controlar macros keto y armar menús 
 - **Next.js 14** (App Router) + TypeScript estricto
 - **PostgreSQL** con `pg` puro (sin ORM)
 - **Tailwind CSS** + componentes estilo shadcn/ui
-- **Anthropic API** (`claude-sonnet-4-20250514`) — solo server-side
+- **OpenAI API** (visión; modelo configurable vía `OPENAI_MODEL`, p.ej. `gpt-4o`) — solo server-side
 - **PWA** completa: `manifest.json` + service worker
 - Despliegue con **PM2** + **Nginx** (reverse proxy, SSL ready)
 
@@ -34,7 +34,7 @@ ketoscan/
 
    ```bash
    cp .env.example .env.local
-   # Edita .env.local: DATABASE_URL y ANTHROPIC_API_KEY
+   # Edita .env.local: DATABASE_URL, OPENAI_API_KEY, OPENAI_MODEL, SESSION_SECRET
    ```
 
 2. **Base de datos** (crea tablas + usuario por defecto)
@@ -60,8 +60,9 @@ ketoscan/
 | Variable | Descripción |
 |---|---|
 | `DATABASE_URL` | Cadena de conexión PostgreSQL |
-| `ANTHROPIC_API_KEY` | Clave de Anthropic (**solo server-side**, sin `NEXT_PUBLIC_`) |
-| `ANTHROPIC_MODEL` | `claude-sonnet-4-20250514` |
+| `OPENAI_API_KEY` | Clave de OpenAI (**solo server-side**, sin `NEXT_PUBLIC_`) |
+| `OPENAI_MODEL` | Modelo de visión (por defecto `gpt-4o`) |
+| `SESSION_SECRET` | Secreto para firmar la cookie de sesión (login multiusuario) |
 | `DEFAULT_USER_ID` | UUID del usuario único (hasta implementar auth) |
 | `NEXT_PUBLIC_BASE_PATH` | `/ketoscan` |
 
@@ -101,7 +102,7 @@ La app queda disponible en `https://tu-dominio.com/ketoscan/alimentos`.
 
 ## Seguridad
 
-- La clave de Anthropic **nunca** llega al cliente: todo el uso de IA ocurre en API routes.
+- La clave de OpenAI **nunca** llega al cliente: todo el uso de IA ocurre en API routes.
 - Toda entrada de usuario se valida con **Zod** antes de tocar la BD.
 - Headers de seguridad (CSP, HSTS, X-Frame-Options…) en `next.config.js`.
 - Rate limiting en memoria para los endpoints de IA (`/api/scan`, `/api/generate-menu`).

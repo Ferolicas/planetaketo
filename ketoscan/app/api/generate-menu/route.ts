@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import type Anthropic from "@anthropic-ai/sdk";
-import { getAnthropic, getModel, extractJson } from "@/lib/anthropic";
+import { getOpenAI, getModel, extractJson } from "@/lib/openai";
 import { authGuard } from "@/lib/auth";
 import { getProfile } from "@/lib/queries/profile";
 import { listFoods } from "@/lib/queries/foods";
@@ -128,25 +127,26 @@ ${JSON.stringify(catalog, null, 2)}
 Genera un menu para ${parsed.data.days} dia(s), con ~${parsed.data.meals_per_day} comidas por dia.
 ${parsed.data.notes ? `Notas del usuario: ${parsed.data.notes}` : ""}`;
 
-    const anthropic = getAnthropic();
-    const message = await anthropic.messages.create({
+    const openai = getOpenAI();
+    const completion = await openai.chat.completions.create({
       model: getModel(),
       max_tokens: 4096,
-      system,
-      messages: [{ role: "user", content: userMsg }],
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: userMsg },
+      ],
     });
 
-    const textBlock = message.content.find(
-      (b): b is Anthropic.TextBlock => b.type === "text"
-    );
-    if (!textBlock) {
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
       return NextResponse.json(
         { error: "El modelo no devolvio texto" },
         { status: 502 }
       );
     }
 
-    const raw = extractJson(textBlock.text);
+    const raw = extractJson(content);
     const validated = modelMenuSchema.safeParse(raw);
     if (!validated.success) {
       console.error("[generate-menu] JSON invalido", validated.error);
@@ -185,7 +185,7 @@ ${parsed.data.notes ? `Notas del usuario: ${parsed.data.notes}` : ""}`;
   } catch (err) {
     console.error("[POST /api/generate-menu]", err);
     return NextResponse.json(
-      { error: "No se pudo generar el menu. Verifica la ANTHROPIC_API_KEY." },
+      { error: "No se pudo generar el menu. Verifica la OPENAI_API_KEY." },
       { status: 500 }
     );
   }

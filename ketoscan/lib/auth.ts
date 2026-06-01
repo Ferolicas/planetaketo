@@ -13,7 +13,7 @@ import { query, queryOne } from "@/lib/db";
 
 export const SESSION_COOKIE = "ks_session";
 const SECRET =
-  process.env.SESSION_SECRET || process.env.ANTHROPIC_API_KEY || "dev-insecure-secret";
+  process.env.SESSION_SECRET || process.env.OPENAI_API_KEY || "dev-insecure-secret";
 
 export const sessionCookieOptions = {
   httpOnly: true,

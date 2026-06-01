@@ -12,7 +12,6 @@
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
     "@radix-ui/react-dialog": "^1.1.4",
     "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-select": "^2.1.4",
@@ -22,6 +21,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "next": "^14.2.35",
+    "openai": "^4.104.0",
     "pg": "^8.13.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

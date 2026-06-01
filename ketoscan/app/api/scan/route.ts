@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import type Anthropic from "@anthropic-ai/sdk";
-import { getAnthropic, getModel, extractJson } from "@/lib/anthropic";
+import { getOpenAI, getModel, extractJson } from "@/lib/openai";
 import { scanSchema, formatZodError } from "@/lib/validations";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { authGuard } from "@/lib/auth";
@@ -88,46 +87,40 @@ export async function POST(req: Request) {
   }
 
   try {
-    const anthropic = getAnthropic();
+    const openai = getOpenAI();
     const base64 = stripDataUrl(parsed.data.image);
+    // OpenAI Vision recibe la imagen como data URL (base64 embebido)
+    const dataUrl = `data:${parsed.data.media_type};base64,${base64}`;
 
     const userText = parsed.data.hint
       ? `Analiza este alimento. Pista del usuario: ${parsed.data.hint}`
       : "Analiza este alimento y devuelve sus valores nutricionales por 100g.";
 
-    const message = await anthropic.messages.create({
+    const completion = await openai.chat.completions.create({
       model: getModel(),
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      response_format: { type: "json_object" },
       messages: [
+        { role: "system", content: SYSTEM_PROMPT },
         {
           role: "user",
           content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: parsed.data.media_type,
-                data: base64,
-              },
-            },
             { type: "text", text: userText },
+            { type: "image_url", image_url: { url: dataUrl } },
           ],
         },
       ],
     });
 
-    const textBlock = message.content.find(
-      (b): b is Anthropic.TextBlock => b.type === "text"
-    );
-    if (!textBlock) {
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
       return NextResponse.json(
         { error: "El modelo no devolvio texto" },
         { status: 502 }
       );
     }
 
-    const raw = extractJson(textBlock.text);
+    const raw = extractJson(content);
     const result = modelResultSchema.safeParse(raw);
     if (!result.success) {
       console.error("[scan] respuesta del modelo invalida", result.error);
@@ -142,7 +135,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[POST /api/scan]", err);
     return NextResponse.json(
-      { error: "No se pudo analizar la imagen. Verifica la ANTHROPIC_API_KEY." },
+      { error: "No se pudo analizar la imagen. Verifica la OPENAI_API_KEY." },
       { status: 500 }
     );
   }
