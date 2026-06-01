@@ -44,6 +44,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
         keto: {
           fat: "hsl(38 92% 50%)",
           protein: "hsl(0 72% 51%)",

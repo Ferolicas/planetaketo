@@ -45,6 +45,11 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('ks-theme')==='dark'){document.documentElement.classList.add('dark');}}catch(e){}`,
+          }}
+        />
         <AppShell>{children}</AppShell>
         <script
           dangerouslySetInnerHTML={{

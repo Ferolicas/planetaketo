@@ -1,4 +1,5 @@
 import { ProfileForm } from "@/components/yo/ProfileForm";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata = { title: "Mi perfil" };
 
@@ -11,7 +12,13 @@ export default function YoPage() {
           Tus datos calculan tus calorías y macros objetivo.
         </p>
       </div>
+
       <ProfileForm />
+
+      <div className="rounded-lg border bg-card p-4">
+        <p className="mb-2 text-sm font-semibold">Apariencia</p>
+        <ThemeToggle />
+      </div>
     </div>
   );
 }
