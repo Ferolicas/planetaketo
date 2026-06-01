@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiUrl } from "@/lib/api-client";
 
-// Alterna modo claro/oscuro (clase .dark en <html>) y lo persiste en localStorage.
-// El layout aplica el tema guardado antes de pintar para evitar parpadeo.
+// Alterna modo claro/oscuro (clase .dark en <html>). Persiste en la BD
+// (multidispositivo) y cachea en localStorage para evitar parpadeo.
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);
 
@@ -15,13 +16,20 @@ export function ThemeToggle() {
 
   function toggle() {
     const next = !document.documentElement.classList.contains("dark");
+    const value = next ? "dark" : "light";
     document.documentElement.classList.toggle("dark", next);
     try {
-      localStorage.setItem("ks-theme", next ? "dark" : "light");
+      localStorage.setItem("ks-theme", value);
     } catch {
       /* almacenamiento no disponible */
     }
     setDark(next);
+    // Persistir en la cuenta (BD) — multidispositivo
+    fetch(apiUrl("/api/auth/theme"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ theme: value }),
+    }).catch(() => {});
   }
 
   return (

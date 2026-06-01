@@ -12,5 +12,6 @@ export async function GET() {
   return NextResponse.json({
     email: user.email,
     mustChangePassword: user.must_change_password,
+    theme: user.theme === "dark" ? "dark" : "light",
   });
 }

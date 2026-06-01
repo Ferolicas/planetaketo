@@ -29,6 +29,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       })
       .then((data) => {
         if (!active || !data) return;
+        // Tema desde la BD (multidispositivo): aplica y cachea
+        if (data.theme) {
+          document.documentElement.classList.toggle("dark", data.theme === "dark");
+          try {
+            localStorage.setItem("ks-theme", data.theme);
+          } catch {
+            /* sin almacenamiento */
+          }
+        }
         if (data.mustChangePassword) {
           router.replace("/cambiar-clave");
           return;

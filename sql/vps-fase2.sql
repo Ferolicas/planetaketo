@@ -28,9 +28,13 @@ CREATE TABLE IF NOT EXISTS ketoscan_accounts (
   email                text UNIQUE NOT NULL,
   password_hash        text NOT NULL,
   must_change_password boolean DEFAULT true,
+  theme                text DEFAULT 'light',  -- preferencia claro/oscuro (multidispositivo)
   created_at           timestamptz DEFAULT now(),
   updated_at           timestamptz DEFAULT now()
 );
+
+-- Para bases ya creadas: añade la columna theme si falta
+ALTER TABLE ketoscan_accounts ADD COLUMN IF NOT EXISTS theme text DEFAULT 'light';
 
 -- ------------------------------------------------------------
 -- Expiración para los enlaces del libro de PAGO (download_links).

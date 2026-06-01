@@ -58,13 +58,14 @@ export interface SessionUser {
   id: string;
   email: string;
   must_change_password: boolean;
+  theme: string;
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
   const id = getAccountId();
   if (!id) return null;
   return queryOne<SessionUser>(
-    `SELECT id, email, must_change_password FROM ketoscan_accounts WHERE id = $1`,
+    `SELECT id, email, must_change_password, theme FROM ketoscan_accounts WHERE id = $1`,
     [id]
   );
 }
