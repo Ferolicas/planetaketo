@@ -1,9 +1,9 @@
 // ============================================================
 // Cliente fetch para el navegador
 // ============================================================
-// Next.js NO prefija basePath en fetch(), asi que lo hacemos aqui.
+// La app vive en la raíz del subdominio: sin prefijo (basePath vacío).
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/ketoscan";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 export function apiUrl(path: string): string {
   const clean = path.startsWith("/") ? path : `/${path}`;

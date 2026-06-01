@@ -12,7 +12,6 @@ import { query, queryOne } from "@/lib/db";
 // ============================================================
 
 export const SESSION_COOKIE = "ks_session";
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/ketoscan";
 const SECRET =
   process.env.SESSION_SECRET || process.env.ANTHROPIC_API_KEY || "dev-insecure-secret";
 
@@ -21,7 +20,7 @@ export const sessionCookieOptions = {
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
   maxAge: 60 * 60 * 24 * 30, // 30 días
-  path: BASE_PATH,
+  path: "/",
 };
 
 function sign(id: string): string {

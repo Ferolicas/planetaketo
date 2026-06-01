@@ -23,8 +23,7 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // La app se sirve bajo el path /ketoscan detras de Nginx
-  basePath: "/ketoscan",
+  // Se sirve en la raíz del subdominio scan.planetaketo.es (sin basePath)
   async headers() {
     return [
       {

@@ -5,7 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/ketoscan";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 export const metadata: Metadata = {
   applicationName: "Planeta Keto Scan",

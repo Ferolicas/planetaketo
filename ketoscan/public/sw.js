@@ -7,7 +7,7 @@
 
 const VERSION = "keto-scan-v1";
 const STATIC_CACHE = `${VERSION}-static`;
-const BASE = "/ketoscan";
+const BASE = "";
 
 const PRECACHE = [
   `${BASE}/alimentos`,
