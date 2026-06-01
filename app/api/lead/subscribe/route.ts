@@ -1,131 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { randomBytes } from 'crypto';
-import { supabaseAdmin } from '@/lib/supabase';
+import { query, queryOne } from '@/lib/db';
 import { resend } from '@/lib/resend';
 import { getEmail1Template } from '@/lib/email/lead-templates';
 
-// Validation schema
+export const runtime = 'nodejs';
+
 const leadSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
 });
 
-// Email configuration
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Planeta Keto <info@planetaketo.es>';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://planetaketo.es';
 const YOUTUBE_URL = 'https://youtube.com/@planetaketo';
 
-// Generate a unique download token
 function generateDownloadToken(): string {
   return randomBytes(32).toString('hex');
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Parse and validate request body
     const body = await request.json();
-    const validatedData = leadSchema.parse(body);
+    const { name, email } = leadSchema.parse(body);
 
-    const { name, email } = validatedData;
+    // ¿Ya existe el lead? (una sola copia por email)
+    const existingLead = await queryOne<{ id: string }>(
+      `SELECT id FROM leads WHERE email = $1`,
+      [email]
+    );
 
-    // Check if email already exists
-    const { data: existingLead, error: checkError } = await supabaseAdmin
-      .from('leads')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (checkError && checkError.code !== 'PGRST116') {
-      // PGRST116 = no rows returned (which is good, means email doesn't exist)
-      console.error('Error checking existing lead:', checkError);
-      throw new Error('Database error checking existing email');
-    }
-
-    // Si el email ya existe, retornar éxito sin enviar email (solo una copia por lead)
     if (existingLead) {
       console.log(`Email ${email} already exists - no resend allowed`);
-      return NextResponse.json({
-        success: true,
-        message: 'Subscription successful',
-      });
+      return NextResponse.json({ success: true, message: 'Subscription successful' });
     }
 
-    // Insert new lead into database
-    const { data: newLead, error: insertError } = await supabaseAdmin
-      .from('leads')
-      .insert({
-        email,
-        name,
-      })
-      .select()
-      .single();
+    const newLead = await queryOne<{ id: string }>(
+      `INSERT INTO leads (email, name) VALUES ($1, $2) RETURNING id`,
+      [email, name]
+    );
 
-    if (insertError) {
-      console.error('Error inserting lead:', insertError);
+    if (!newLead) {
       throw new Error('Failed to save lead information');
     }
 
     console.log(`New lead created: ${email}`);
 
-    // Generate unique download token
+    // Token de descarga (un solo uso, expira en 7 días)
     const downloadToken = generateDownloadToken();
-    const tokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const tokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    // Save download token to database
-    const { error: tokenError } = await supabaseAdmin
-      .from('download_tokens')
-      .insert({
-        token: downloadToken,
-        lead_id: newLead.id,
-        email: email,
-        file_key: 'PLANIFICADOR_KETO_7_DIAS_GRATIS.pdf',
-        expires_at: tokenExpiresAt.toISOString(),
-      });
-
-    if (tokenError) {
+    try {
+      await query(
+        `INSERT INTO download_tokens (token, lead_id, email, file_key, expires_at)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          downloadToken,
+          newLead.id,
+          email,
+          'PLANIFICADOR_KETO_7_DIAS_GRATIS.pdf',
+          tokenExpiresAt.toISOString(),
+        ]
+      );
+    } catch (tokenError) {
       console.error('Error creating download token:', tokenError);
-      // Continue anyway - we can still send the lead magnet via direct link as fallback
+      // Continuamos: el lead ya quedó guardado.
     }
 
-    // Generate magic download link
     const downloadUrl = `${SITE_URL}/download?token=${downloadToken}`;
     console.log(`Download token created for ${email}: ${downloadToken.substring(0, 8)}...`);
 
-    // Email template parameters
     const templateParams = {
       name,
-      pdfUrl: downloadUrl, // Magic link instead of direct PDF URL
+      pdfUrl: downloadUrl,
       fourthwallUrl: SITE_URL,
       youtubeUrl: YOUTUBE_URL,
     };
 
     try {
-      // Send Email 1 immediately (with PDF link)
-      console.log('Attempting to send email with config:', {
-        from: FROM_EMAIL,
-        to: email,
-        subject: 'Tu Plan Keto de 7 Días está aquí 🥑',
-      });
-
       const email1Result = await resend.emails.send({
         from: FROM_EMAIL,
         to: email,
         subject: 'Tu Plan Keto de 7 Días está aquí 🥑',
         html: getEmail1Template(templateParams),
       });
-
-      console.log('Email 1 sent successfully:', JSON.stringify(email1Result, null, 2));
-
-      // TODO: Implementar emails de seguimiento con cron job o webhook
-      // Los emails programados de Resend requieren plan de pago
+      console.log('Email 1 sent successfully:', email1Result?.data?.id ?? email1Result);
     } catch (emailError: unknown) {
       console.error('Error sending email:', emailError);
-      console.error('Email error details:', JSON.stringify(emailError, Object.getOwnPropertyNames(emailError as object), 2));
-
-      // Even if email sending fails, we've saved the lead
-      // Log the error but don't fail the request
-      // You can manually follow up with this lead
       return NextResponse.json({
         success: true,
         warning: 'Lead saved but there was an issue sending emails',
@@ -140,20 +102,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in lead subscription:', error);
-
-    // Handle validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid input data',
-          details: error.errors,
-        },
+        { success: false, error: 'Invalid input data', details: error.errors },
         { status: 400 }
       );
     }
-
-    // Handle other errors
     return NextResponse.json(
       {
         success: false,

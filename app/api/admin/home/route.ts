@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { queryOne } from '@/lib/db';
 import { getSession } from '@/lib/auth/session';
+
+export const runtime = 'nodejs';
+
+interface HomeRow {
+  logo: string | null;
+  hero_title: string | null;
+  hero_subtitle: string | null;
+  hero_image: string | null;
+  product_id: string | null;
+  regular_price: string | number | null;
+  discount_price: string | number | null;
+  discount_percentage: string | number | null;
+}
+
+function toClient(row: HomeRow) {
+  return {
+    logo: row.logo,
+    heroTitle: row.hero_title,
+    heroSubtitle: row.hero_subtitle,
+    heroImage: row.hero_image,
+    productId: row.product_id,
+    regularPrice: row.regular_price,
+    discountPrice: row.discount_price,
+    discountPercentage: row.discount_percentage,
+  };
+}
 
 export async function PUT(request: NextRequest) {
   try {
@@ -9,87 +35,80 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { logo, heroTitle, heroSubtitle, heroImage, productId, regularPrice, discountPrice, discountPercentage } = await request.json();
-
-    // Map camelCase to snake_case for database
-    const dbData = {
+    const {
       logo,
-      hero_title: heroTitle,
-      hero_subtitle: heroSubtitle,
-      hero_image: heroImage,
-      product_id: productId,
-      regular_price: regularPrice,
-      discount_price: discountPrice,
-      discount_percentage: discountPercentage,
-    };
+      heroTitle,
+      heroSubtitle,
+      heroImage,
+      productId,
+      regularPrice,
+      discountPrice,
+      discountPercentage,
+    } = await request.json();
 
-    // Check if record exists
-    const { data: existing } = await supabaseAdmin
-      .from('homeContent')
-      .select('*')
-      .eq('id', 'default')
-      .single();
+    const params = [
+      logo ?? null,
+      heroTitle ?? null,
+      heroSubtitle ?? null,
+      heroImage ?? null,
+      productId ?? null,
+      regularPrice ?? null,
+      discountPrice ?? null,
+      discountPercentage ?? null,
+    ];
 
-    let homeContent;
+    const existing = await queryOne<{ id: string }>(
+      `SELECT id FROM "homeContent" WHERE id = 'default'`
+    );
+
+    let row: HomeRow | null;
     if (existing) {
-      // Update existing record
-      const { data, error } = await supabaseAdmin
-        .from('homeContent')
-        .update(dbData)
-        .eq('id', 'default')
-        .select()
-        .single();
-
-      if (error) throw error;
-      homeContent = data;
+      row = await queryOne<HomeRow>(
+        `UPDATE "homeContent" SET
+            logo = $1,
+            hero_title = $2,
+            hero_subtitle = $3,
+            hero_image = $4,
+            product_id = $5,
+            regular_price = $6,
+            discount_price = $7,
+            discount_percentage = $8
+         WHERE id = 'default'
+         RETURNING *`,
+        params
+      );
     } else {
-      // Create new record
-      const { data, error } = await supabaseAdmin
-        .from('homeContent')
-        .insert({
-          id: 'default',
-          ...dbData,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      homeContent = data;
+      row = await queryOne<HomeRow>(
+        `INSERT INTO "homeContent"
+           (id, logo, hero_title, hero_subtitle, hero_image, product_id,
+            regular_price, discount_price, discount_percentage)
+         VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        params
+      );
     }
 
-    return NextResponse.json(homeContent);
+    return NextResponse.json(row ? toClient(row) : null);
   } catch (error) {
     console.error('Update home content error:', error);
-    return NextResponse.json({ error: 'Failed to update home content' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to update home content' },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET() {
   try {
-    const { data: homeContent, error } = await supabaseAdmin
-      .from('homeContent')
-      .select('*')
-      .limit(1)
-      .single();
-
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows found"
-
-    // Map snake_case to camelCase for frontend
-    if (homeContent) {
-      return NextResponse.json({
-        logo: homeContent.logo,
-        heroTitle: homeContent.hero_title,
-        heroSubtitle: homeContent.hero_subtitle,
-        heroImage: homeContent.hero_image,
-        productId: homeContent.product_id,
-        regularPrice: homeContent.regular_price,
-        discountPrice: homeContent.discount_price,
-        discountPercentage: homeContent.discount_percentage,
-      });
-    }
-
-    return NextResponse.json(null);
+    const row = await queryOne<HomeRow>(
+      `SELECT * FROM "homeContent" ORDER BY (id = 'default') DESC LIMIT 1`
+    );
+    return NextResponse.json(row ? toClient(row) : null);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch home content' }, { status: 500 });
+    console.error('Fetch home content error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch home content' },
+      { status: 500 }
+    );
   }
 }

@@ -22,7 +22,7 @@ export default function HomeManager() {
     heroImage: null,
     productId: null,
     regularPrice: 39.75,
-    discountPrice: 19.75,
+    discountPrice: 10,
     discountPercentage: 50,
   });
 
@@ -43,7 +43,7 @@ export default function HomeManager() {
         heroImage: data.heroImage,
         productId: data.productId,
         regularPrice: data.regularPrice || 39.75,
-        discountPrice: data.discountPrice || 19.75,
+        discountPrice: data.discountPrice || 10,
         discountPercentage: data.discountPercentage || 50,
       });
     }
@@ -105,7 +105,7 @@ export default function HomeManager() {
                 value={formData.discountPrice || ''}
                 onChange={(e) => setFormData({ ...formData, discountPrice: parseFloat(e.target.value) })}
                 className="w-full pl-10 pr-4 py-4 text-lg text-gray-900 font-semibold border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all placeholder:text-gray-900"
-                placeholder="19.75"
+                placeholder="10"
               />
             </div>
             <p className="text-xs text-gray-500 mt-2">Precio que cobrarás en Stripe</p>
