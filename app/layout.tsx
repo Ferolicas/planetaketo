@@ -4,7 +4,6 @@ import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import PendingPaymentRecovery from '@/components/payment/PendingPaymentRecovery';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-geist-sans' });
@@ -50,7 +49,6 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
-          <PendingPaymentRecovery />
         </AuthProvider>
         <Toaster
           position="top-right"

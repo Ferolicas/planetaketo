@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import StripeCheckout from '@/components/checkout/StripeCheckout';
+import CheckoutButton from '@/components/checkout/CheckoutButton';
 
 interface PriceSettings {
   regularPrice: number;
@@ -113,10 +113,10 @@ export default function FinalCTA() {
                 Pago único • Acceso de por vida • Sin costos adicionales
               </p>
 
-              <StripeCheckout className="group inline-flex items-center justify-center px-12 py-6 text-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-full hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 hover:scale-105 mb-6 w-full sm:w-auto">
+              <CheckoutButton className="group inline-flex items-center justify-center px-12 py-6 text-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-full hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 hover:scale-105 mb-6 w-full sm:w-auto">
                 ⚡ Sí, Quiero Transformarme Ahora
                 <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform" />
-              </StripeCheckout>
+              </CheckoutButton>
 
               <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
                 <div className="flex items-center gap-2">
