@@ -108,7 +108,7 @@ export default function HomeManager() {
                 placeholder="10"
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">Precio que cobrarás en Stripe</p>
+            <p className="text-xs text-gray-500 mt-2">Precio mostrado en la web (debe coincidir con el del producto en Hotmart)</p>
           </div>
 
           <div>
@@ -141,10 +141,11 @@ export default function HomeManager() {
             </div>
             <div>
               <h4 className="text-sm font-semibold text-emerald-800 mb-1">
-                Sincronización automática con Stripe
+                El cobro se realiza en Hotmart
               </h4>
               <p className="text-sm text-emerald-700">
-                Los precios se actualizan automáticamente en Stripe cuando guardes los cambios. Los clientes pagarán el precio con descuento.
+                Este precio es solo informativo para la web. El importe que se cobra
+                de verdad se configura en el producto de Hotmart: manténlos sincronizados.
               </p>
             </div>
           </div>

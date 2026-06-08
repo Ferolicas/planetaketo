@@ -5,9 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { ShoppingCart, Check } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface Product {
   id: string;
@@ -180,7 +177,7 @@ export default function ProductDetailPage() {
                   </button>
 
                   <p className="text-center text-sm text-gray-500 mt-4">
-                    Pago seguro procesado por Stripe
+                    Pago 100% seguro y encriptado
                   </p>
                 </div>
               </div>
