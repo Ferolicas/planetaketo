@@ -21,7 +21,7 @@ export default function HeroSales() {
   });
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch('/api/settings', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setPrices(data))
       .catch(err => console.error('Error fetching prices:', err));

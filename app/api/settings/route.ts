@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // nunca cachear: refleja al instante lo que cambie el admin
+export const revalidate = 0;
 
 // Precios públicos para la home (tabla "homeContent", fila id='default').
 export async function GET() {
@@ -18,11 +20,14 @@ export async function GET() {
     const num = (v: unknown, d: number) =>
       v === null || v === undefined ? d : Number(v);
 
-    return NextResponse.json({
-      regularPrice: num(row?.regular_price, 39.75),
-      discountPrice: num(row?.discount_price, 10),
-      discountPercentage: num(row?.discount_percentage, 50),
-    });
+    return NextResponse.json(
+      {
+        regularPrice: num(row?.regular_price, 39.75),
+        discountPrice: num(row?.discount_price, 10),
+        discountPercentage: num(row?.discount_percentage, 50),
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
   } catch (error) {
     console.error('Fetch settings error:', error);
     return NextResponse.json(

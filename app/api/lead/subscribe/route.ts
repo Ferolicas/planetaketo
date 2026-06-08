@@ -20,6 +20,33 @@ function generateDownloadToken(): string {
   return randomBytes(32).toString('hex');
 }
 
+// País del visitante a partir de su IP (best-effort). Para mostrar la bandera
+// en la lista de descargas gratis del panel. Nunca rompe el alta del lead.
+async function countryFromRequest(request: NextRequest): Promise<string | null> {
+  try {
+    const xff = request.headers.get('x-forwarded-for') || '';
+    const ip = xff.split(',')[0].trim();
+    if (
+      !ip ||
+      ip === '::1' ||
+      ip.startsWith('127.') ||
+      ip.startsWith('10.') ||
+      ip.startsWith('192.168.') ||
+      ip.startsWith('172.16.')
+    ) {
+      return null;
+    }
+    const res = await fetch(`https://ipapi.co/${ip}/country/`, {
+      signal: AbortSignal.timeout(2500),
+    });
+    if (!res.ok) return null;
+    const cc = (await res.text()).trim().toUpperCase();
+    return /^[A-Z]{2}$/.test(cc) ? cc : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -46,6 +73,16 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`New lead created: ${email}`);
+
+    // País del lead (best-effort): si la columna no existe o la geo falla, no rompe el alta.
+    try {
+      const country = await countryFromRequest(request);
+      if (country) {
+        await query(`UPDATE leads SET country = $1 WHERE id = $2`, [country, newLead.id]);
+      }
+    } catch (geoError) {
+      console.warn('No se pudo guardar el país del lead:', (geoError as Error).message);
+    }
 
     // Token de descarga (un solo uso, expira en 7 días)
     const downloadToken = generateDownloadToken();
