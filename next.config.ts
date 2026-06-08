@@ -21,7 +21,10 @@ const nextConfig: NextConfig = {
     },
   },
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // Mantener console.error/warn en producción para poder depurar (webhooks, etc.).
+    // Antes era `true`, que eliminaba TODOS los console.* del build y ocultaba los errores.
+    removeConsole:
+      process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   typescript: {
     ignoreBuildErrors: false,
