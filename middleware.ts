@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   // CRITICAL: Never redirect API routes, especially webhooks
-  // Stripe webhooks MUST receive direct responses, not redirects
+  // The Hotmart webhook MUST receive direct responses, not redirects
   if (request.nextUrl.pathname.startsWith('/api/')) {
     return NextResponse.next();
   }

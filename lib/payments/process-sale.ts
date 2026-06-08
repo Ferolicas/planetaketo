@@ -1,10 +1,9 @@
-import type Stripe from 'stripe';
 import bcrypt from 'bcryptjs';
-import { stripe, PRODUCT_CONFIG } from '@/lib/stripe/config';
 import { query, queryOne } from '@/lib/db';
 import { createMagicLink } from '@/lib/downloads/magic-link';
 import { resend } from '@/lib/resend';
 import { getPurchaseEmailTemplate } from '@/lib/email/templates';
+import { PRODUCT_CONFIG } from '@/lib/product';
 
 const WHATSAPP_NUMBER = '+19176726696';
 const FROM_EMAIL = 'Planeta Keto <info@planetaketo.es>';
@@ -47,15 +46,21 @@ export async function ensureKetoscanAccount(email: string): Promise<void> {
 }
 
 // ============================================================
-// Núcleo idempotente de la venta (pg). Lo usan TODOS los caminos:
-//   - webhook (checkout.session.completed / payment_intent.succeeded)
-//   - complete-purchase (frontend)
-//   - cron rescue-payments
+// Núcleo idempotente de la venta (pg), agnóstico de pasarela.
+// Hoy lo usa el webhook de Hotmart; antes lo usaban los caminos de Stripe.
+//
+// Nota de columnas: por compatibilidad con la tabla `payments` viva se reutilizan
+// las columnas `stripe_payment_id` (id externo, clave de idempotencia) y
+// `stripe_session_id` (referencia externa). La columna `provider` distingue el
+// origen ('hotmart' | 'stripe').
 // ============================================================
 
 export interface FinalizeSaleOpts {
-  stripePaymentId: string;
-  stripeSessionId: string | null;
+  provider: 'hotmart' | 'stripe';
+  /** Id único del pago en la pasarela (Hotmart: transaction). Clave de idempotencia. */
+  externalId: string;
+  /** Referencia secundaria opcional (Hotmart: id del evento; Stripe: session id). */
+  externalRef?: string | null;
   email: string;
   name: string;
   country?: string | null;
@@ -63,7 +68,8 @@ export interface FinalizeSaleOpts {
   currency: string;
   status: string;
   productName: string;
-  stripeCustomerId?: string | null;
+  /** Id de cliente en la pasarela, si existe (Hotmart no lo usa). */
+  externalCustomerId?: string | null;
 }
 
 export async function finalizeSale(
@@ -72,10 +78,10 @@ export async function finalizeSale(
   const email = opts.email?.trim();
   if (!email) return { status: 'skipped', reason: 'no_email' };
 
-  // Idempotencia por stripe_payment_id
+  // Idempotencia por id externo del pago
   const existing = await queryOne<{ id: string }>(
     `SELECT id FROM payments WHERE stripe_payment_id = $1`,
-    [opts.stripePaymentId]
+    [opts.externalId]
   );
   if (existing) return { status: 'already_processed', paymentId: existing.id };
 
@@ -93,14 +99,14 @@ export async function finalizeSale(
          country = COALESCE($4, country),
          updated_at = now()
        WHERE id = $1`,
-      [existingCustomer.id, opts.name, opts.stripeCustomerId ?? null, opts.country ?? null]
+      [existingCustomer.id, opts.name, opts.externalCustomerId ?? null, opts.country ?? null]
     );
     customerId = existingCustomer.id;
   } else {
     const created = await queryOne<{ id: string }>(
       `INSERT INTO customers (email, name, stripe_customer_id, country)
        VALUES ($1, $2, $3, $4) RETURNING id`,
-      [email, opts.name, opts.stripeCustomerId ?? null, opts.country ?? 'Unknown']
+      [email, opts.name, opts.externalCustomerId ?? null, opts.country ?? 'Unknown']
     );
     if (!created) throw new Error('No se pudo crear el cliente');
     customerId = created.id;
@@ -111,16 +117,17 @@ export async function finalizeSale(
   try {
     const payment = await queryOne<{ id: string }>(
       `INSERT INTO payments
-         (customer_id, stripe_payment_id, stripe_session_id, amount, currency, status, product_name)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+         (customer_id, stripe_payment_id, stripe_session_id, amount, currency, status, product_name, provider)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
       [
         customerId,
-        opts.stripePaymentId,
-        opts.stripeSessionId ?? null,
+        opts.externalId,
+        opts.externalRef ?? null,
         opts.amount,
         opts.currency,
         opts.status,
         opts.productName,
+        opts.provider,
       ]
     );
     if (!payment) throw new Error('No se pudo registrar el pago');
@@ -128,7 +135,7 @@ export async function finalizeSale(
   } catch (err) {
     const raceWinner = await queryOne<{ id: string }>(
       `SELECT id FROM payments WHERE stripe_payment_id = $1`,
-      [opts.stripePaymentId]
+      [opts.externalId]
     );
     if (raceWinner) return { status: 'already_processed', paymentId: raceWinner.id };
     throw err;
@@ -153,7 +160,7 @@ export async function finalizeSale(
   );
   await query(`UPDATE payments SET magic_link_created = true WHERE id = $1`, [paymentId]);
 
-  // Email de compra
+  // Email de compra (lo enviamos NOSOTROS, no la pasarela)
   let emailSent = false;
   try {
     const emailResult = await resend.emails.send({
@@ -177,72 +184,8 @@ export async function finalizeSale(
     // No tumbamos la venta: magic_link_created=true permite recuperación.
   }
 
-  console.log(`🎉 VENTA PROCESADA | ${email} | ${opts.amount} ${opts.currency} | ${paymentId}`);
+  console.log(
+    `🎉 VENTA PROCESADA | ${opts.provider} | ${email} | ${opts.amount} ${opts.currency} | ${paymentId}`
+  );
   return { status: 'created', paymentId, emailSent };
-}
-
-/**
- * Procesa una venta a partir de un PaymentIntent (flujo embebido / cron / frontend).
- * Idempotente. Mantiene la firma usada por complete-purchase y rescue-payments.
- */
-export async function processSale(opts: {
-  paymentIntent: Stripe.PaymentIntent;
-  customerName: string;
-  customerEmail: string;
-  stripeCustomerId?: string | null;
-  country?: string;
-}): Promise<ProcessSaleResult> {
-  const { paymentIntent, customerName, customerEmail, stripeCustomerId, country } = opts;
-
-  if (paymentIntent.status !== 'succeeded') {
-    return { status: 'skipped', reason: `payment_intent.status=${paymentIntent.status}` };
-  }
-
-  return finalizeSale({
-    stripePaymentId: paymentIntent.id,
-    stripeSessionId: null,
-    email: customerEmail,
-    name: customerName,
-    country: country ?? null,
-    amount: paymentIntent.amount / 100,
-    currency: paymentIntent.currency,
-    status: 'paid',
-    productName: paymentIntent.metadata.productName || PRODUCT_CONFIG.name,
-    stripeCustomerId: stripeCustomerId ?? null,
-  });
-}
-
-/**
- * Extracción best-effort del email que Stripe recolectó (PaymentElement).
- * receipt_email → charge billing_details → payment_method.
- */
-export async function extractStripeEmail(
-  paymentIntent: Stripe.PaymentIntent
-): Promise<{ email: string | null; name: string | null; country: string | null }> {
-  let email: string | null = paymentIntent.receipt_email || null;
-  let name: string | null = null;
-  let country: string | null = null;
-
-  const latestChargeId = (paymentIntent.latest_charge as string) || null;
-  if (latestChargeId) {
-    try {
-      const charge = await stripe.charges.retrieve(latestChargeId);
-      email = email || charge.billing_details?.email || null;
-      name = charge.billing_details?.name || null;
-      country = charge.billing_details?.address?.country || null;
-    } catch {}
-  }
-
-  if ((!email || !name) && paymentIntent.payment_method) {
-    try {
-      const pm = await stripe.paymentMethods.retrieve(
-        paymentIntent.payment_method as string
-      );
-      email = email || pm.billing_details?.email || null;
-      name = name || pm.billing_details?.name || null;
-      country = country || pm.billing_details?.address?.country || null;
-    } catch {}
-  }
-
-  return { email, name, country };
 }

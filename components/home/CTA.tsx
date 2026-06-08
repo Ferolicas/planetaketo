@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import StripeCheckout from '@/components/checkout/StripeCheckout';
+import CheckoutButton from '@/components/checkout/CheckoutButton';
 import { ArrowRight } from 'lucide-react';
 
 export default function CTA() {
@@ -14,7 +14,7 @@ export default function CTA() {
             Únete a miles de personas que ya están viviendo una vida más saludable con la dieta cetogénica.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <StripeCheckout
+            <CheckoutButton
               amount={10}
               currency="eur"
               productName="Método Keto 70 Días"
@@ -22,7 +22,7 @@ export default function CTA() {
             >
               Comenzar Ahora
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </StripeCheckout>
+            </CheckoutButton>
             <Link
               href="/blog"
               className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-primary-800 rounded-full hover:bg-primary-900 transition-all duration-200"

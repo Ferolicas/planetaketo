@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ArrowRight, Star, TrendingDown, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import StripeCheckout from '@/components/checkout/StripeCheckout';
+import CheckoutButton from '@/components/checkout/CheckoutButton';
 
 interface PriceSettings {
   regularPrice: number;
@@ -103,10 +103,10 @@ export default function HeroSales() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <StripeCheckout className="group inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-full hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105">
+              <CheckoutButton className="group inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-full hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105">
                 ⚡ Comprar Ahora - {prices.discountPercentage}% OFF
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </StripeCheckout>
+              </CheckoutButton>
             </div>
 
             {/* Price */}
@@ -284,9 +284,9 @@ export default function HeroSales() {
                   </p>
                 </div>
 
-                <StripeCheckout className="block w-full text-center px-8 py-5 text-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-full hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
+                <CheckoutButton className="block w-full text-center px-8 py-5 text-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-full hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
                   ⚡ Comprar Ahora
-                </StripeCheckout>
+                </CheckoutButton>
 
                 <p className="text-center text-sm text-gray-500 mt-4">
                   🔒 Pago seguro • Acceso inmediato • Garantía de satisfacción
