@@ -262,7 +262,7 @@ export default function RecursosPage() {
               </Link>
 
               <p className="text-center text-xs text-green-100 mt-4">
-                Pago seguro con Stripe
+                Pago 100% seguro y encriptado
               </p>
             </div>
           </div>
