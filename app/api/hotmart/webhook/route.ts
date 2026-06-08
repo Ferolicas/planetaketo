@@ -77,7 +77,19 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     // 500 => Hotmart reintenta el envío.
-    console.error('[hotmart] error procesando la venta:', (err as Error).message);
+    // Log enriquecido: incluye los campos de error de node-postgres (code/detail/
+    // table/column/constraint) para identificar la query exacta que falló.
+    const e = err as Record<string, unknown>;
+    console.error('[hotmart] error procesando la venta:', {
+      message: e?.message,
+      code: e?.code,
+      detail: e?.detail,
+      hint: e?.hint,
+      table: e?.table,
+      column: e?.column,
+      constraint: e?.constraint,
+      stack: e?.stack,
+    });
     return NextResponse.json({ error: 'processing_error' }, { status: 500 });
   }
 }
