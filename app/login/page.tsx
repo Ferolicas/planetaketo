@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import Link from 'next/link';
 import { Mail, Lock, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
@@ -95,15 +94,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              ¿No tienes cuenta?{' '}
-              <Link href="/register" className="font-medium text-primary-600 hover:text-primary-700">
-                Regístrate aquí
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>

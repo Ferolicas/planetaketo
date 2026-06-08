@@ -16,7 +16,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -61,32 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       setUser(data.user);
       toast.success('¡Bienvenido!');
-      router.push('/perfil');
+      router.push('/admin');
     } catch (error: any) {
       toast.error(error.message || 'Error al iniciar sesión');
-      throw error;
-    }
-  };
-
-  const register = async (email: string, password: string, name?: string) => {
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Registration failed');
-      }
-
-      const data = await response.json();
-      setUser(data.user);
-      toast.success('¡Cuenta creada exitosamente!');
-      router.push('/perfil');
-    } catch (error: any) {
-      toast.error(error.message || 'Error al registrarse');
       throw error;
     }
   };
@@ -103,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
