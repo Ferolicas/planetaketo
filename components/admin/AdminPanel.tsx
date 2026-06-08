@@ -1,11 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Users, Download, UserPlus, Loader2 } from 'lucide-react';
+import { Users, Download, UserPlus, Loader2, Eye, MousePointerClick } from 'lucide-react';
 
 interface Stats {
   customers: number;
   freeDownloads: number;
+  visitsToday: number;
+  pageviewsToday: number;
+  checkoutClicksToday: number;
 }
 
 export default function AdminPanel() {
@@ -54,6 +57,11 @@ export default function AdminPanel() {
     }
   }
 
+  const conversion =
+    stats && stats.visitsToday > 0
+      ? `${((stats.checkoutClicksToday / stats.visitsToday) * 100).toFixed(1)}%`
+      : '—';
+
   return (
     <div className="mb-10 space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -68,6 +76,31 @@ export default function AdminPanel() {
           value={stats?.freeDownloads}
         />
       </div>
+
+      {/* Tráfico de HOY — embudo real */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">Hoy</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <StatCard
+            icon={<Eye className="h-5 w-5" />}
+            label="Visitas hoy (únicas)"
+            value={stats?.visitsToday}
+          />
+          <StatCard
+            icon={<MousePointerClick className="h-5 w-5" />}
+            label="Clics a 'Comprar' hoy"
+            value={stats?.checkoutClicksToday}
+          />
+        </div>
+        <p className="mt-3 text-center text-sm text-gray-500">
+          Conversión visita → clic:{' '}
+          <span className="font-semibold text-gray-700">{conversion}</span>
+          {typeof stats?.pageviewsToday === 'number' && (
+            <> · {stats.pageviewsToday} vistas de página</>
+          )}
+        </p>
+      </div>
+
       <p className="text-center text-xs text-gray-400">Se actualiza solo cada 10 segundos</p>
 
       <form onSubmit={createUser} className="rounded-xl border bg-white p-6 shadow-sm">

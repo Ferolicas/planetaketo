@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Analytics from '@/components/Analytics';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-geist-sans' });
@@ -50,6 +51,7 @@ export default function RootLayout({
             <Footer />
           </div>
         </AuthProvider>
+        <Analytics />
         <Toaster
           position="top-right"
           toastOptions={{
