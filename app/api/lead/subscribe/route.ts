@@ -122,7 +122,11 @@ export async function POST(request: NextRequest) {
         subject: 'Tu Plan Keto de 7 Días está aquí 🥑',
         html: getEmail1Template(templateParams),
       });
-      console.log('Email 1 sent successfully:', email1Result?.data?.id ?? email1Result);
+      // El SDK de Resend no lanza en fallos de API: devuelve { error }
+      if (email1Result.error) {
+        throw new Error(`Resend: ${email1Result.error.name} - ${email1Result.error.message}`);
+      }
+      console.log('Email 1 sent successfully:', email1Result.data?.id);
     } catch (emailError: unknown) {
       console.error('Error sending email:', emailError);
       return NextResponse.json({
