@@ -173,6 +173,11 @@ export async function finalizeSale(
         whatsappNumber: WHATSAPP_NUMBER,
       }),
     });
+    // El SDK de Resend NO lanza en fallos de API: devuelve { error }. Sin este
+    // check marcaríamos email_sent=true con el envío fallido (pasó el 2026-06-11).
+    if (emailResult.error) {
+      throw new Error(`Resend: ${emailResult.error.name} - ${emailResult.error.message}`);
+    }
     await query(
       `UPDATE payments SET email_sent = true, email_sent_at = now() WHERE id = $1`,
       [paymentId]
