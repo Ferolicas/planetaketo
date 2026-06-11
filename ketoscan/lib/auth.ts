@@ -12,8 +12,19 @@ import { query, queryOne } from "@/lib/db";
 // ============================================================
 
 export const SESSION_COOKIE = "ks_session";
-const SECRET =
-  process.env.SESSION_SECRET || process.env.OPENAI_API_KEY || "dev-insecure-secret";
+
+function resolveSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "SESSION_SECRET no esta definida: es obligatoria en produccion para firmar las cookies de sesion"
+    );
+  }
+  return "dev-insecure-secret";
+}
+
+const SECRET = resolveSecret();
 
 export const sessionCookieOptions = {
   httpOnly: true,

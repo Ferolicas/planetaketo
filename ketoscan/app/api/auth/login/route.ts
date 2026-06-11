@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { queryOne } from "@/lib/db";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 import {
   verifyPassword,
   ensureProfile,
@@ -23,6 +24,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Datos invalidos" }, { status: 400 });
   }
   const { email, password } = parsed.data;
+
+  // Rate limit: las cuentas nuevas nacen con clave generica, asi que el
+  // login es el endpoint mas sensible a fuerza bruta / robo de cuenta.
+  const ip = clientIp(req);
+  const rlIp = rateLimit(`login:ip:${ip}`, 10, 60_000);
+  const rlEmail = rateLimit(`login:email:${email.toLowerCase()}`, 5, 60_000);
+  if (!rlIp.success || !rlEmail.success) {
+    const resetMs = Math.max(rlIp.resetMs, rlEmail.resetMs);
+    return NextResponse.json(
+      { error: "Demasiados intentos. Espera un momento e intenta de nuevo." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(resetMs / 1000)) } }
+    );
+  }
 
   try {
     const acc = await queryOne<{
