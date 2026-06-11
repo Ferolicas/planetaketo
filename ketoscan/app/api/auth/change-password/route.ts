@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { query, queryOne } from "@/lib/db";
+import { rateLimit } from "@/lib/rate-limit";
 import { getAccountId, verifyPassword, hashPassword } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -15,6 +16,15 @@ export async function POST(req: Request) {
   const accountId = getAccountId();
   if (!accountId) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  // Rate limit: evita fuerza bruta sobre la contraseña actual
+  const rl = rateLimit(`chpass:${accountId}`, 5, 60_000);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "Demasiados intentos. Espera un momento e intenta de nuevo." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(rl.resetMs / 1000)) } }
+    );
   }
 
   const parsed = schema.safeParse(await req.json().catch(() => null));

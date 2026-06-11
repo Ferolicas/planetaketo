@@ -9,7 +9,10 @@ const SESSION_COOKIE = "ks_session";
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl; // sin basePath
-  const isPublic = pathname === "/login" || pathname.startsWith("/api/auth");
+  const isPublic =
+    pathname === "/login" ||
+    pathname.startsWith("/api/auth") ||
+    pathname === "/api/health";
   const hasSession = req.cookies.has(SESSION_COOKIE);
 
   if (!hasSession && !isPublic) {
