@@ -10,6 +10,7 @@ import {
 } from '@/lib/payments/mercadopago';
 import { convertEurToCop } from '@/lib/payments/fx';
 import { PRODUCT_CONFIG } from '@/lib/product';
+import { getClientIp } from '@/lib/geo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -67,6 +68,10 @@ export async function POST(req: NextRequest) {
   const origin = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin;
   const orderId = crypto.randomUUID();
 
+  // MP exige la IP del comprador en additional_info (la pasa Caddy en x-forwarded-for).
+  const ip = getClientIp(req.headers);
+  const existingAddInfo = (form.additional_info ?? {}) as Record<string, unknown>;
+
   try {
     const payment = (await createMpPayment(
       {
@@ -76,6 +81,10 @@ export async function POST(req: NextRequest) {
         external_reference: orderId,
         notification_url: `${origin}/api/mercadopago/webhook`,
         metadata: { product_name: PRODUCT_CONFIG.name },
+        additional_info: {
+          ...existingAddInfo,
+          ...(ip ? { ip_address: ip } : {}),
+        },
       },
       orderId
     )) as MpPayment;
