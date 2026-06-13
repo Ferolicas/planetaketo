@@ -52,14 +52,14 @@ export async function ensureKetoscanAccount(email: string): Promise<void> {
 // Nota de columnas: por compatibilidad con la tabla `payments` viva se reutilizan
 // las columnas `stripe_payment_id` (id externo, clave de idempotencia) y
 // `stripe_session_id` (referencia externa). La columna `provider` distingue el
-// origen ('pasarela-antigua' | 'stripe').
+// origen ('pasarela-antigua' | 'stripe' | 'mercadopago'); es `text` libre, sin CHECK.
 // ============================================================
 
 export interface FinalizeSaleOpts {
-  provider: 'pasarela-antigua' | 'stripe';
-  /** Id único del pago en la pasarela (pasarela-antigua: transaction). Clave de idempotencia. */
+  provider: 'pasarela-antigua' | 'stripe' | 'mercadopago';
+  /** Id único del pago en la pasarela (pasarela-antigua: transaction; Stripe: payment_intent; MP: payment id). Clave de idempotencia. */
   externalId: string;
-  /** Referencia secundaria opcional (pasarela-antigua: id del evento; Stripe: session id). */
+  /** Referencia secundaria opcional (pasarela-antigua: id del evento; Stripe: session id; MP: external_reference). */
   externalRef?: string | null;
   email: string;
   name: string;

@@ -115,9 +115,6 @@ export default function WhyChooseUs() {
               Únete a las miles de personas que ya han logrado sus objetivos con Planeta Keto
             </p>
             <CheckoutButton
-              amount={10}
-              currency="eur"
-              productName="Método Keto 70 Días"
               className="inline-flex items-center px-10 py-5 text-xl font-bold text-emerald-600 bg-white rounded-full hover:bg-gray-50 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
             >
               ⚡ Comenzar Ahora - 50% OFF
