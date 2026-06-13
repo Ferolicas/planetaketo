@@ -27,3 +27,41 @@ export function getStripe(): Stripe {
   }
   return _stripe;
 }
+
+// ── Monedas ─────────────────────────────────────────────────────────────────
+// Monedas SIN decimales en Stripe: el `amount` NO se multiplica por 100.
+const ZERO_DECIMAL = new Set([
+  'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA',
+  'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF',
+]);
+
+export function isZeroDecimal(currency: string): boolean {
+  return ZERO_DECIMAL.has(currency.toUpperCase());
+}
+
+/** Importe (en unidades mayores) → entero que espera Stripe según la moneda. */
+export function toStripeAmount(amount: number, currency: string): number {
+  return isZeroDecimal(currency)
+    ? Math.max(0, Math.round(amount))
+    : Math.max(0, Math.round(amount * 100));
+}
+
+// Monedas que la cuenta puede cobrar (presentment). Cacheado 24 h.
+const ACCOUNT_COUNTRY = process.env.STRIPE_ACCOUNT_COUNTRY || 'ES';
+let supportedCache: { set: Set<string>; at: number } | null = null;
+
+export async function stripeSupportedCurrencies(): Promise<Set<string>> {
+  const now = Date.now();
+  if (supportedCache && now - supportedCache.at < 24 * 60 * 60 * 1000) return supportedCache.set;
+  try {
+    const spec = await getStripe().countrySpecs.retrieve(ACCOUNT_COUNTRY);
+    const set = new Set((spec.supported_payment_currencies || []).map((c) => c.toUpperCase()));
+    if (set.size > 0) {
+      supportedCache = { set, at: now };
+      return set;
+    }
+  } catch (e) {
+    console.warn('[stripe] no se pudieron leer monedas soportadas:', (e as Error).message);
+  }
+  return supportedCache?.set ?? new Set(['EUR', 'USD']);
+}

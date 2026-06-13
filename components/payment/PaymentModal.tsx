@@ -46,7 +46,8 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
 
   const display = regionDisplay(region);
   const provider = region?.provider ?? 'stripe';
-  const cop = region?.prices.cop;
+  // Colombia → Mercado Pago: el importe en COP es el precio local.
+  const copAmount = provider === 'mercadopago' ? region?.prices.local.discount : undefined;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-0 sm:p-4">
@@ -106,9 +107,9 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
             </div>
           ) : loading || !region ? (
             <Spinner label="Preparando pago seguro..." />
-          ) : provider === 'mercadopago' && cop ? (
+          ) : provider === 'mercadopago' && copAmount ? (
             <MercadoPagoBrick
-              amountCop={cop.discount}
+              amountCop={copAmount}
               onSuccess={() => setStatus('success')}
               onPending={(m) => {
                 setMessage(m);
