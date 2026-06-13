@@ -4,28 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Star, TrendingDown, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
 import CheckoutButton from '@/components/checkout/CheckoutButton';
-
-interface PriceSettings {
-  regularPrice: number;
-  discountPrice: number;
-  discountPercentage: number;
-}
+import { useCheckoutRegion, regionDisplay } from '@/lib/hooks/useCheckoutRegion';
 
 export default function HeroSales() {
-  const [prices, setPrices] = useState<PriceSettings>({
-    regularPrice: 39.75,
-    discountPrice: 10,
-    discountPercentage: 50,
-  });
-
-  useEffect(() => {
-    fetch('/api/settings', { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setPrices(data))
-      .catch(err => console.error('Error fetching prices:', err));
-  }, []);
+  const { region } = useCheckoutRegion();
+  const prices = regionDisplay(region);
   return (
     <section className="relative bg-gradient-to-br from-emerald-50 via-white to-green-50 overflow-hidden">
       {/* Background pattern */}
@@ -104,17 +88,17 @@ export default function HeroSales() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <CheckoutButton className="group inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-full hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105">
-                ⚡ Comprar Ahora - {prices.discountPercentage}% OFF
+                ⚡ Comprar Ahora - {prices.percentage}% OFF
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </CheckoutButton>
             </div>
 
             {/* Price */}
             <div className="mt-6 flex items-center justify-center lg:justify-start gap-4">
-              <span className="text-3xl font-bold text-gray-900">€{prices.discountPrice.toFixed(2)}</span>
-              <span className="text-2xl text-gray-400 line-through">€{prices.regularPrice.toFixed(2)}</span>
+              <span className="text-3xl font-bold text-gray-900">{prices.fmt(prices.discount)}</span>
+              <span className="text-2xl text-gray-400 line-through">{prices.fmt(prices.regular)}</span>
               <span className="px-3 py-1 bg-red-500 text-white font-bold rounded-full text-sm">
-                -{prices.discountPercentage}%
+                -{prices.percentage}%
               </span>
             </div>
           </motion.div>
@@ -276,8 +260,8 @@ export default function HeroSales() {
 
                 <div className="bg-emerald-50 rounded-2xl p-6 mb-6">
                   <div className="flex items-baseline gap-3 mb-2">
-                    <span className="text-4xl font-bold text-emerald-600">€{prices.discountPrice.toFixed(2)}</span>
-                    <span className="text-2xl text-gray-400 line-through">€{prices.regularPrice.toFixed(2)}</span>
+                    <span className="text-4xl font-bold text-emerald-600">{prices.fmt(prices.discount)}</span>
+                    <span className="text-2xl text-gray-400 line-through">{prices.fmt(prices.regular)}</span>
                   </div>
                   <p className="text-sm text-gray-600 font-medium">
                     Oferta especial - ¡Solo por tiempo limitado!

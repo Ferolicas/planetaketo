@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import LeadModal from '@/components/lead/LeadModal';
+import { useCheckoutRegion, regionDisplay } from '@/lib/hooks/useCheckoutRegion';
 
 export default function RecursosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { region } = useCheckoutRegion();
+  const prices = regionDisplay(region);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white py-12 px-4 sm:px-6 lg:px-8">
@@ -249,7 +252,7 @@ export default function RecursosPage() {
 
               {/* Price */}
               <div className="text-center mb-6">
-                <div className="text-4xl font-bold mb-1">10€</div>
+                <div className="text-4xl font-bold mb-1">{prices.fmt(prices.discount)}</div>
                 <p className="text-green-100 text-sm">Pago único, sin suscripciones</p>
               </div>
 
@@ -258,7 +261,7 @@ export default function RecursosPage() {
                 href="/"
                 className="block w-full py-4 bg-white text-green-700 font-bold rounded-xl hover:bg-green-50 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 text-center"
               >
-                COMPRAR - 10€
+                COMPRAR - {prices.fmt(prices.discount)}
               </Link>
 
               <p className="text-center text-xs text-green-100 mt-4">

@@ -6,22 +6,14 @@ import PaymentModal from '@/components/payment/PaymentModal';
 interface CheckoutButtonProps {
   children: React.ReactNode;
   className?: string;
-  amount?: number;
-  currency?: string;
-  productName?: string;
 }
 
 /**
- * Botón de compra. Abre el modal de pago de Planeta Keto, que embebe el
- * checkout de Hotmart (sin redirección, sin salir del sitio).
+ * Botón de compra. Abre el modal de pago de Planeta Keto, que detecta la región
+ * y embebe el checkout adecuado (Stripe para el mundo, Mercado Pago para
+ * Colombia) sin salir del sitio.
  */
-export default function CheckoutButton({
-  children,
-  className,
-  amount = 10,
-  currency = 'eur',
-  productName = 'Método Keto 70 Días - Planeta Keto',
-}: CheckoutButtonProps) {
+export default function CheckoutButton({ children, className }: CheckoutButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleClick = () => {
@@ -44,13 +36,7 @@ export default function CheckoutButton({
         {children}
       </button>
 
-      <PaymentModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        amount={amount}
-        currency={currency}
-        productName={productName}
-      />
+      <PaymentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }

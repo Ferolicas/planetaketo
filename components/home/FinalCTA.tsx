@@ -3,14 +3,8 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
 import CheckoutButton from '@/components/checkout/CheckoutButton';
-
-interface PriceSettings {
-  regularPrice: number;
-  discountPrice: number;
-  discountPercentage: number;
-}
+import { useCheckoutRegion, regionDisplay } from '@/lib/hooks/useCheckoutRegion';
 
 const features = [
   'Recetas keto deliciosas y fáciles de seguir',
@@ -22,18 +16,8 @@ const features = [
 ];
 
 export default function FinalCTA() {
-  const [prices, setPrices] = useState<PriceSettings>({
-    regularPrice: 39.75,
-    discountPrice: 10,
-    discountPercentage: 50,
-  });
-
-  useEffect(() => {
-    fetch('/api/settings', { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setPrices(data))
-      .catch(err => console.error('Error fetching prices:', err));
-  }, []);
+  const { region } = useCheckoutRegion();
+  const prices = regionDisplay(region);
 
   return (
     <section className="relative py-20 lg:py-28 overflow-hidden">
@@ -101,11 +85,11 @@ export default function FinalCTA() {
             <div className="text-center">
               <div className="mb-6">
                 <div className="inline-flex items-center gap-4 mb-4">
-                  <span className="text-5xl lg:text-6xl font-bold text-emerald-600">€{prices.discountPrice.toFixed(2)}</span>
-                  <span className="text-3xl lg:text-4xl text-gray-400 line-through">€{prices.regularPrice.toFixed(2)}</span>
+                  <span className="text-5xl lg:text-6xl font-bold text-emerald-600">{prices.fmt(prices.discount)}</span>
+                  <span className="text-3xl lg:text-4xl text-gray-400 line-through">{prices.fmt(prices.regular)}</span>
                 </div>
                 <div className="inline-flex items-center px-6 py-2 bg-red-500 text-white rounded-full font-bold text-lg shadow-lg">
-                  ¡Ahorra {prices.discountPercentage}% HOY!
+                  ¡Ahorra {prices.percentage}% HOY!
                 </div>
               </div>
 

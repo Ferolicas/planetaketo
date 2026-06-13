@@ -1,0 +1,8 @@
+# Configuración de pnpm (pnpm 11 movió aquí los ajustes desde package.json).
+# Aprobamos los scripts de build de dependencias con binarios nativos para que
+# `pnpm install` salga con código 0 (Next 15 hace un chequeo de deps antes del
+# build y aborta si el install falla).
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
