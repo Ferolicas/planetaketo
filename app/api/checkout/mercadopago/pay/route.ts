@@ -80,6 +80,8 @@ export async function POST(req: NextRequest) {
         description: PRODUCT_CONFIG.name,
         external_reference: orderId,
         notification_url: `${origin}/api/mercadopago/webhook`,
+        // PSE/Efecty redirigen al comprador al banco; al volver, MP lo manda aquí.
+        callback_url: `${origin}/gracias`,
         metadata: { product_name: PRODUCT_CONFIG.name },
         additional_info: {
           ...existingAddInfo,
