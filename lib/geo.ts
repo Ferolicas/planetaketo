@@ -10,6 +10,8 @@
 // Cache por IP. No es frontera de seguridad: el webhook es la fuente de verdad.
 // ============================================================
 
+import { currencyForCountry } from './payments/country-currency';
+
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora
 const FETCH_TIMEOUT_MS = 2500;
 
@@ -50,12 +52,6 @@ function cc(v: unknown): string | null {
   return /^[A-Z]{2}$/.test(c) ? c : null;
 }
 
-function cur(v: unknown): string | null {
-  if (typeof v !== 'string') return null;
-  const c = v.trim().toUpperCase();
-  return /^[A-Z]{3}$/.test(c) ? c : null;
-}
-
 async function fetchJson(url: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -69,29 +65,30 @@ async function fetchJson(url: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<unk
 }
 
 async function fetchGeo(ip: string): Promise<Geo> {
-  // ipapi.co → { country_code, currency }
-  try {
-    const data = (await fetchJson(`https://ipapi.co/${ip}/json/`)) as {
-      country_code?: string;
-      currency?: string;
-      error?: boolean;
-    };
-    if (!data?.error) {
-      const country = cc(data.country_code);
-      if (country) return { country, currency: cur(data.currency) };
-    }
-  } catch {
-    /* fallback */
-  }
-  // Fallback: country.is → { country } (sin moneda → el llamador usará EUR)
+  let country: string | null = null;
+
+  // País por IP: country.is (rápido y sin el rate limit de ipapi.co).
   try {
     const data = (await fetchJson(`https://api.country.is/${ip}`)) as { country?: string };
-    const country = cc(data?.country);
-    if (country) return { country, currency: null };
+    country = cc(data?.country);
   } catch {
-    /* sin geo */
+    /* probamos el fallback */
   }
-  return { country: null, currency: null };
+  // Fallback de país: ipwho.is.
+  if (!country) {
+    try {
+      const data = (await fetchJson(`https://ipwho.is/${ip}?fields=country_code,success`)) as {
+        country_code?: string;
+        success?: boolean;
+      };
+      if (data?.success !== false) country = cc(data?.country_code);
+    } catch {
+      /* sin país */
+    }
+  }
+
+  // La moneda se deriva del país con la tabla ISO (sin APIs frágiles).
+  return { country, currency: currencyForCountry(country) };
 }
 
 /** País + moneda local del visitante (cacheado por IP). En local/dev → nulls. */
