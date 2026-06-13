@@ -24,6 +24,22 @@ export function mpPayment(): Payment {
   return new Payment(mpClient());
 }
 
+// Tipo del body de Payment.create derivado del SDK (sin imports de subpaths).
+type MpPaymentBody = Parameters<Payment['create']>[0]['body'];
+
+/**
+ * Crea un pago en MP a partir del formData del Payment Brick. Se pasa el formData
+ * casi tal cual (cada método —tarjeta, PSE, Nequi, Efecty— trae su propia forma),
+ * y el llamador sobreescribe lo que controla el servidor (importe, refs, webhook).
+ * El cast cruza la frontera JSON→SDK en un único sitio controlado.
+ */
+export async function createMpPayment(body: Record<string, unknown>, idempotencyKey: string) {
+  return mpPayment().create({
+    body: body as unknown as MpPaymentBody,
+    requestOptions: { idempotencyKey },
+  });
+}
+
 /** Subconjunto estructural del PaymentResponse de MP que consumimos. */
 export interface MpPayment {
   id?: string | number;

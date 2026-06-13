@@ -78,6 +78,7 @@ export function regionDisplay(region: CheckoutRegion | null): PriceDisplay {
     discount: eur.discount,
     regular: eur.regular,
     percentage: eur.percentage,
-    fmt: (n) => '€' + n.toFixed(2),
+    fmt: (n) =>
+      n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €',
   };
 }
