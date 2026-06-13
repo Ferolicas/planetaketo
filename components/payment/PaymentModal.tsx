@@ -9,8 +9,6 @@ import { useCheckoutRegion, regionDisplay } from '@/lib/hooks/useCheckoutRegion'
 const StripeEmbedded = dynamic(() => import('./StripeEmbedded'), { ssr: false });
 const MercadoPagoBrick = dynamic(() => import('./MercadoPagoBrick'), { ssr: false });
 
-const PRODUCT_TITLE = 'Método Keto 70 Días - Planeta Keto';
-
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,8 +17,9 @@ interface PaymentModalProps {
 type Status = 'paying' | 'success' | 'pending' | 'error';
 
 export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
-  const [force, setForce] = useState<'co' | 'world' | undefined>(undefined);
-  const { region, loading } = useCheckoutRegion(force);
+  // Detección de región 100% automática (sin switch manual): Colombia → Mercado
+  // Pago; resto → Stripe.
+  const { region, loading } = useCheckoutRegion();
   const [status, setStatus] = useState<Status>('paying');
   const [message, setMessage] = useState('');
 
@@ -29,7 +28,6 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
     if (!isOpen) {
       setStatus('paying');
       setMessage('');
-      setForce(undefined);
     }
   }, [isOpen]);
 
@@ -52,17 +50,13 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-0 sm:p-4">
-      <div className="bg-white w-full h-full sm:h-[92vh] sm:max-w-xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        {/* Header — marca Planeta Keto */}
-        <div className="px-5 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">{PRODUCT_TITLE}</h2>
-            {status === 'paying' && (
-              <p className="text-2xl font-bold text-green-600 mt-0.5">
-                {loading ? '…' : `${display.fmt(display.discount)} ${display.currency}`}
-              </p>
-            )}
-          </div>
+      <div className="bg-white w-full h-full sm:h-[92vh] sm:max-w-md sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        {/* Barra superior mínima: candado + cerrar (sin producto/precio) */}
+        <div className="px-5 py-3 border-b border-gray-200 flex justify-between items-center shrink-0">
+          <p className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
+            <ShieldCheck size={16} className="text-green-600" />
+            Pago seguro y encriptado
+          </p>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition shrink-0"
@@ -126,34 +120,16 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
               }}
             />
           ) : (
-            <StripeEmbedded onComplete={() => setStatus('success')} />
+            <StripeEmbedded
+              amountLabel={display.fmt(display.discount)}
+              onSuccess={() => setStatus('success')}
+              onFailure={(m) => {
+                setMessage(m);
+                setStatus('error');
+              }}
+            />
           )}
         </div>
-
-        {/* Toggle de región + pie de seguridad */}
-        {status === 'paying' && (
-          <div className="px-5 py-3 border-t border-gray-100 shrink-0 space-y-2">
-            {provider === 'stripe' ? (
-              <button
-                onClick={() => setForce('co')}
-                className="w-full text-center text-sm text-emerald-700 font-medium hover:underline"
-              >
-                ¿Estás en Colombia? Paga con PSE, Nequi o tarjeta en pesos →
-              </button>
-            ) : (
-              <button
-                onClick={() => setForce('world')}
-                className="w-full text-center text-sm text-emerald-700 font-medium hover:underline"
-              >
-                ¿Pagas desde fuera de Colombia? Paga con tarjeta (€) →
-              </button>
-            )}
-            <p className="text-xs text-gray-500 text-center flex items-center justify-center gap-1.5">
-              <ShieldCheck size={14} className="text-green-600" />
-              Pago 100% seguro y encriptado · Acceso inmediato por correo
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
