@@ -23,7 +23,7 @@ export interface RegionPrices {
 
 export interface CheckoutRegion {
   country: string | null;
-  provider: 'stripe' | 'mercadopago';
+  provider: 'stripe' | 'mercadopago' | 'pasarela-antigua';
   currency: string;
   prices: RegionPrices;
 }
