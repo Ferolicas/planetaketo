@@ -8,6 +8,7 @@ import { useCheckoutRegion, regionDisplay } from '@/lib/hooks/useCheckoutRegion'
 // Los SDKs de pago son de navegador: cargarlos solo en cliente (sin SSR).
 const StripeEmbedded = dynamic(() => import('./StripeEmbedded'), { ssr: false });
 const MercadoPagoBrick = dynamic(() => import('./MercadoPagoBrick'), { ssr: false });
+const HotmartEmbed = dynamic(() => import('./HotmartEmbed'), { ssr: false });
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -45,7 +46,11 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
   if (!isOpen) return null;
 
   const display = regionDisplay(region);
-  const provider = region?.provider ?? 'stripe';
+  const rawProvider = region?.provider ?? 'stripe';
+  // Red de seguridad: si Hotmart aún no tiene URL de checkout configurada, el
+  // resto de LATAM cae a Stripe (tarjeta en moneda local) para no bloquear ventas.
+  const hotmartReady = Boolean(process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL);
+  const provider = rawProvider === 'hotmart' && !hotmartReady ? 'stripe' : rawProvider;
   // Colombia → Mercado Pago: el importe en COP es el precio local.
   const copAmount = provider === 'mercadopago' ? region?.prices.local.discount : undefined;
 
@@ -120,6 +125,8 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
                 setStatus('error');
               }}
             />
+          ) : provider === 'hotmart' ? (
+            <HotmartEmbed onSuccess={() => setStatus('success')} />
           ) : (
             <StripeEmbedded
               amountLabel={display.fmt(display.discount)}

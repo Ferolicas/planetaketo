@@ -23,7 +23,7 @@ export interface RegionPrices {
 
 export interface CheckoutRegion {
   country: string | null;
-  provider: 'stripe' | 'mercadopago';
+  provider: 'stripe' | 'mercadopago' | 'hotmart';
   currency: string;
   prices: RegionPrices;
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur, convertEurToCop } from '@/lib/payments/fx';
+import { isLatamCountry } from '@/lib/payments/country-currency';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,10 @@ export async function GET(req: NextRequest) {
   } else if (force === 'world') {
     country = 'XX';
     currency = (req.nextUrl.searchParams.get('cur') || 'EUR').toUpperCase();
+  } else if (force === 'latam') {
+    // Depuración: simula un país LATAM (≠ Colombia) → Hotmart.
+    country = (req.nextUrl.searchParams.get('cc') || 'PE').toUpperCase();
+    currency = (req.nextUrl.searchParams.get('cur') || 'PEN').toUpperCase();
   } else {
     const geo = await getGeoFromRequest(req);
     country = geo.country;
@@ -45,7 +50,11 @@ export async function GET(req: NextRequest) {
   }
 
   const isColombia = country === 'CO';
-  const provider: 'mercadopago' | 'stripe' = isColombia ? 'mercadopago' : 'stripe';
+  const provider: 'mercadopago' | 'hotmart' | 'stripe' = isColombia
+    ? 'mercadopago'
+    : isLatamCountry(country)
+      ? 'hotmart'
+      : 'stripe';
 
   // 2) Precios base en EUR (fuente de verdad)
   const num = (v: unknown, d: number) => (v === null || v === undefined ? d : Number(v));

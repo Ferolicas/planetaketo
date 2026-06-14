@@ -51,3 +51,18 @@ export function currencyForCountry(cc: string | null | undefined): string | null
   if (!cc) return null;
   return COUNTRY_TO_CURRENCY[cc.toUpperCase()] ?? null;
 }
+
+// ============================================================
+// Enrutado de cobro por país:
+//   Colombia (CO)        → Mercado Pago (PSE/Nequi nativos, ~3-4%)
+//   Resto de LATAM       → Hotmart (métodos locales: Yape, SPEI, OXXO, PIX…)
+//   Resto del mundo      → Stripe (tarjeta/wallets en moneda local)
+// ============================================================
+export const LATAM_COUNTRIES = new Set([
+  'AR', 'BO', 'BR', 'CL', 'CO', 'CR', 'CU', 'DO', 'EC', 'GT',
+  'HN', 'MX', 'NI', 'PA', 'PY', 'PE', 'PR', 'SV', 'UY', 'VE',
+]);
+
+export function isLatamCountry(cc: string | null | undefined): boolean {
+  return cc ? LATAM_COUNTRIES.has(cc.toUpperCase()) : false;
+}
