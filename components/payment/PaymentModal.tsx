@@ -60,7 +60,7 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
         {/* Barra superior mínima: candado + cerrar (sin producto/precio) */}
         <div className="px-5 py-3 border-b border-gray-200 flex justify-between items-center shrink-0">
           <p className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
-            <ShieldCheck size={16} className="text-green-600" />
+            <ShieldCheck size={16} className="text-forest" />
             Pago seguro y encriptado
           </p>
           <button
@@ -76,7 +76,7 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
         <div className="flex-1 relative bg-white overflow-hidden">
           {status === 'success' ? (
             <ResultState
-              icon={<CheckCircle className="w-12 h-12 text-green-600" />}
+              icon={<CheckCircle className="w-12 h-12 text-forest" />}
               title="¡Gracias por tu compra!"
               lines={[
                 'Te enviaremos el enlace de descarga a tu correo en unos minutos.',
@@ -105,7 +105,7 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
                   setMessage('');
                   setStatus('paying');
                 }}
-                className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+                className="px-8 py-3 bg-forest text-white rounded-lg font-semibold hover:bg-forest-dark transition"
               >
                 Reintentar
               </button>
@@ -146,7 +146,7 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
 function Spinner({ label }: { label: string }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
-      <div className="w-14 h-14 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+      <div className="w-14 h-14 border-4 border-forest border-t-transparent rounded-full animate-spin" />
       <p className="mt-4 text-gray-600 font-medium">{label}</p>
     </div>
   );
@@ -165,7 +165,7 @@ function ResultState({
 }) {
   return (
     <div className="h-full flex flex-col items-center justify-center text-center px-8 py-10">
-      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">{icon}</div>
+      <div className="w-20 h-20 bg-mint-pale rounded-full flex items-center justify-center mb-4">{icon}</div>
       <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
       {lines.map((l, i) => (
         <p key={i} className={i === 0 ? 'text-gray-600 mb-1' : 'text-sm text-gray-500 mb-1'}>
@@ -174,7 +174,7 @@ function ResultState({
       ))}
       <button
         onClick={onClose}
-        className="mt-6 px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+        className="mt-6 px-8 py-3 bg-forest text-white rounded-lg font-semibold hover:bg-forest-dark transition"
       >
         Cerrar
       </button>

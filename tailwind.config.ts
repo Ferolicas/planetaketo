@@ -1,5 +1,10 @@
 import type { Config } from 'tailwindcss';
 
+// ============================================================
+// Sistema visual "Fresh Wellness" — Planeta Keto
+// Verde bosque (marca) + menta (acento/firma) + ámbar (CTA) sobre crema.
+// Tipografía: Lora (títulos, serif) + Raleway (cuerpo, sans).
+// ============================================================
 const config: Config = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -11,6 +16,25 @@ const config: Config = {
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
+        cream: '#FAF7F0',
+        // Verde bosque de marca
+        forest: {
+          DEFAULT: '#166534',
+          dark: '#14532D',
+          deep: '#052e16',
+        },
+        // Menta fresca: acento y elemento firma
+        mint: {
+          DEFAULT: '#34D399',
+          soft: '#6EE7B7',
+          pale: '#D1FAE5',
+        },
+        // Ámbar cálido: color de acción (CTA)
+        cta: {
+          DEFAULT: '#F59E0B',
+          dark: '#D97706',
+          soft: '#FCD34D',
+        },
         primary: {
           50: '#f0fdf4',
           100: '#dcfce7',
@@ -26,44 +50,34 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)'],
-        mono: ['var(--font-geist-mono)'],
+        sans: ['var(--font-raleway)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-lora)', 'Georgia', 'serif'],
+      },
+      boxShadow: {
+        soft: '0 4px 24px -8px rgba(20, 83, 45, 0.12)',
+        card: '0 12px 40px -12px rgba(20, 83, 45, 0.18)',
+        cta: '0 10px 30px -8px rgba(245, 158, 11, 0.45)',
+      },
+      borderRadius: {
+        '4xl': '2rem',
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s ease-in-out',
-        'slide-up': 'slideUp 0.5s ease-out',
-        'blob': 'blob 7s infinite',
+        'fade-in': 'fadeIn 0.6s ease-out both',
+        'float-slow': 'floatSlow 9s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        slideUp: {
-          '0%': { transform: 'translateY(20px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        blob: {
-          '0%': {
-            transform: 'translate(0px, 0px) scale(1)',
-          },
-          '33%': {
-            transform: 'translate(30px, -50px) scale(1.1)',
-          },
-          '66%': {
-            transform: 'translate(-20px, 20px) scale(0.9)',
-          },
-          '100%': {
-            transform: 'translate(0px, 0px) scale(1)',
-          },
+        floatSlow: {
+          '0%,100%': { transform: 'translate(0,0) scale(1)' },
+          '50%': { transform: 'translate(16px,-24px) scale(1.06)' },
         },
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/forms'),
-  ],
+  plugins: [require('@tailwindcss/typography'), require('@tailwindcss/forms')],
 };
 
 export default config;

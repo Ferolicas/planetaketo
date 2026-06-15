@@ -70,7 +70,7 @@ export default function StripeEmbedded({ amountLabel, onSuccess, onFailure }: Pr
   if (!clientSecret) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-12 h-12 border-4 border-forest border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -134,7 +134,7 @@ function CheckoutForm({ amountLabel, onSuccess, onFailure }: Props) {
         <button
           type="submit"
           disabled={!stripe || submitting}
-          className="w-full py-3.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full py-3.5 bg-cta text-forest-dark rounded-full font-bold hover:bg-cta-dark hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
         >
           {submitting ? 'Procesando…' : `Pagar ${amountLabel}`}
         </button>

@@ -2,36 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Sistema "Fresh Wellness" — base
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #faf7f0; /* crema */
+  --foreground: #1f2937;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-raleway), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 @layer base {
-  body {
-    @apply bg-background text-foreground;
+  h1, h2, h3, h4 {
+    font-family: var(--font-lora), Georgia, serif;
   }
 
-  /* Forzar texto negro en todos los inputs para evitar problemas con dark mode del sistema */
+  /* Inputs legibles (evita el dark mode del sistema en formularios) */
   input, textarea, select {
     @apply text-gray-900 bg-white;
   }
-
   input::placeholder, textarea::placeholder {
     @apply text-gray-400;
+  }
+
+  /* Foco visible accesible en toda la web */
+  :focus-visible {
+    outline: 2px solid #f59e0b;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* Elemento FIRMA: trazo menta bajo la palabra clave de un título */
+  .trazo-menta {
+    position: relative;
+    white-space: nowrap;
+  }
+  .trazo-menta::after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    bottom: 0.06em;
+    height: 0.36em;
+    background: linear-gradient(180deg, transparent 0%, #6ee7b7 0%);
+    opacity: 0.55;
+    border-radius: 4px;
+    z-index: -1;
+    transform: rotate(-1.2deg);
   }
 }
 
@@ -41,31 +65,46 @@ body {
   }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+/* ============================================================
+   Reveal en scroll — SIN bloquear el render (arregla el blanco)
+   El contenido es VISIBLE por defecto (no-JS, pre-hidratación, SEO).
+   Solo si hay JS (html.js, añadido antes del primer pintado) ocultamos
+   y revelamos al entrar en viewport. Respeta prefers-reduced-motion.
+   El hero/above-the-fold NO usa .reveal: siempre visible.
+   ============================================================ */
+.reveal {
+  opacity: 1;
+}
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  will-change: opacity, transform;
+}
+html.js .reveal.is-visible {
+  opacity: 1;
+  transform: none;
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+@media (prefers-reduced-motion: reduce) {
+  html.js .reveal,
+  html.js .reveal.is-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .animate-fade-in,
+  .animate-float-slow {
+    animation: none !important;
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full hover:bg-gray-400;
-}
+/* Scrollbar discreta */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #f0ece2; }
+::-webkit-scrollbar-thumb { background: #c8d6c8; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #a7c3a7; }
 
-/* Smooth transitions */
-* {
-  @apply transition-colors duration-200;
-}
-
-/* Loading states */
-.loading {
-  @apply animate-pulse;
-}
-
-/* Container */
 .container {
   @apply mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
 }
