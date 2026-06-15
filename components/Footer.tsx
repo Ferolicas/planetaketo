@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { Instagram, Youtube, Mail, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
@@ -64,8 +65,13 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 mt-10 pt-6 text-center text-xs text-mint-pale/60">
-          © {year} Planeta Keto · Hecho con cariño para tu transformación
+        <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-mint-pale/60">
+          <p>© {year} Planeta Keto · Hecho con cariño para tu transformación</p>
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <Link href="/aviso-legal" className="hover:text-cta transition-colors">Aviso legal</Link>
+            <Link href="/privacidad" className="hover:text-cta transition-colors">Privacidad</Link>
+            <Link href="/cookies" className="hover:text-cta transition-colors">Cookies</Link>
+          </nav>
         </div>
       </div>
     </footer>

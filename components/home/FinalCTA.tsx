@@ -2,6 +2,7 @@
 
 import { ArrowRight, Check } from 'lucide-react';
 import CheckoutButton from '@/components/checkout/CheckoutButton';
+import Reveal from '@/components/Reveal';
 import { useCheckoutRegion, regionDisplay } from '@/lib/hooks/useCheckoutRegion';
 
 const features = [
@@ -34,17 +35,17 @@ export default function FinalCTA() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-4 mb-12 max-w-3xl mx-auto">
-          {features.map((f) => (
-            <div key={f} className="flex items-start gap-3 rounded-2xl bg-white/10 p-4">
+          {features.map((f, i) => (
+            <Reveal key={f} delay={i * 60} className="flex items-start gap-3 rounded-2xl bg-white/10 p-4">
               <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-mint text-forest-dark">
                 <Check className="h-3.5 w-3.5" />
               </span>
               <span className="text-white font-medium">{f}</span>
-            </div>
+            </Reveal>
           ))}
         </div>
 
-        <div className="rounded-4xl bg-cream p-8 lg:p-12 text-center shadow-card">
+        <Reveal className="rounded-4xl bg-cream p-8 lg:p-12 text-center shadow-card">
           <div className="flex items-baseline justify-center gap-3 mb-3">
             <span className="text-5xl lg:text-6xl font-bold text-forest-dark">{p.fmt(p.discount)}</span>
             <span className="text-3xl text-gray-400 line-through">{p.fmt(p.regular)}</span>
@@ -57,7 +58,7 @@ export default function FinalCTA() {
             <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1.5" />
           </CheckoutButton>
           <p className="mt-5 text-sm text-gray-500">Pago seguro · Acceso inmediato · Garantía de satisfacción</p>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

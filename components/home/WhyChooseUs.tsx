@@ -1,6 +1,7 @@
 'use client';
 
 import CheckoutButton from '@/components/checkout/CheckoutButton';
+import Reveal from '@/components/Reveal';
 import { Heart, Trophy, Clock, Leaf, Sparkles, TrendingDown } from 'lucide-react';
 
 const benefits = [
@@ -29,17 +30,18 @@ export default function WhyChooseUs() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {benefits.map(({ icon: Icon, title, description }) => (
-            <div
+          {benefits.map(({ icon: Icon, title, description }, i) => (
+            <Reveal
               key={title}
-              className="group rounded-3xl bg-white p-7 shadow-soft border border-forest/5 transition-shadow hover:shadow-card"
+              delay={i * 70}
+              className="group h-full rounded-3xl bg-white p-7 shadow-soft border border-forest/5 transition-shadow hover:shadow-card"
             >
               <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-forest text-white transition-colors group-hover:bg-cta group-hover:text-forest-dark">
                 <Icon className="h-6 w-6" />
               </div>
               <h3 className="font-serif text-xl font-semibold text-forest-dark mb-2">{title}</h3>
               <p className="text-gray-600 leading-relaxed">{description}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
 
