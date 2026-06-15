@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur, convertEurToCop } from '@/lib/payments/fx';
-import { isLatamCountry } from '@/lib/payments/country-currency';
+import { isLatamCountry, pasarela-antiguaSpread } from '@/lib/payments/country-currency';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
   // el mismo margen SOLO en países pasarela-antigua. En Stripe/MP cobramos el importe exacto
   // que mostramos, así que ahí NO se toca. Ajustable con pasarela-antigua_FX_SPREAD.
   if (provider === 'pasarela-antigua' && local.currency !== 'EUR') {
-    const spread = Number(process.env.pasarela-antigua_FX_SPREAD) || 0.08;
+    const spread = pasarela-antiguaSpread(country); // spread cambial de pasarela-antigua por país
     local = {
       ...local,
       regular: Math.round(local.regular * (1 + spread)),
