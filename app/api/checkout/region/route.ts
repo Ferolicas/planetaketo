@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur, convertEurToCop } from '@/lib/payments/fx';
-import { isLatamCountry } from '@/lib/payments/country-currency';
+import { isLatamCountry, hotmartSpread } from '@/lib/payments/country-currency';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
   // el mismo margen SOLO en países Hotmart. En Stripe/MP cobramos el importe exacto
   // que mostramos, así que ahí NO se toca. Ajustable con HOTMART_FX_SPREAD.
   if (provider === 'hotmart' && local.currency !== 'EUR') {
-    const spread = Number(process.env.HOTMART_FX_SPREAD) || 0.08;
+    const spread = hotmartSpread(country); // spread cambial de Hotmart por país
     local = {
       ...local,
       regular: Math.round(local.regular * (1 + spread)),

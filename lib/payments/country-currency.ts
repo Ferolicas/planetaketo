@@ -66,3 +66,28 @@ export const LATAM_COUNTRIES = new Set([
 export function isLatamCountry(cc: string | null | undefined): boolean {
   return cc ? LATAM_COUNTRIES.has(cc.toUpperCase()) : false;
 }
+
+// ============================================================
+// Spread cambial de Hotmart POR PAÍS (su tasa de cambio vs el mercado real).
+// Hotmart no lo publica; se MIDE comparando su checkout con nuestra conversión
+// mid-market. Las monedas volátiles/controladas (ARS) tienen un spread mucho
+// mayor que las estables. Lo usamos para que el precio mostrado en la web cuadre
+// con el del checkout de Hotmart. Calibrar con datos reales de cada país.
+//   AR: medido (web 17.280 vs checkout 18.200 → ~14%).
+//   Resto: estimado (pendiente de medir con VPN) — erramos ligeramente ALTO para
+//   que la web nunca muestre MENOS que el checkout (el cliente nunca paga "de más").
+// ============================================================
+const HOTMART_SPREAD: Record<string, number> = {
+  AR: 0.14,
+  CL: 0.11,
+  MX: 0.11,
+  UY: 0.11,
+  PE: 0.08,
+  BR: 0.08,
+};
+const HOTMART_SPREAD_DEFAULT = 0.1;
+
+export function hotmartSpread(cc: string | null | undefined): number {
+  if (!cc) return HOTMART_SPREAD_DEFAULT;
+  return HOTMART_SPREAD[cc.toUpperCase()] ?? HOTMART_SPREAD_DEFAULT;
+}
