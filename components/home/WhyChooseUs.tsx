@@ -1,129 +1,57 @@
 'use client';
 
 import CheckoutButton from '@/components/checkout/CheckoutButton';
-import { Heart, Trophy, Clock, Shield, Sparkles, TrendingDown } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Heart, Trophy, Clock, Leaf, Sparkles, TrendingDown } from 'lucide-react';
 
 const benefits = [
-  {
-    icon: Heart,
-    title: 'Sin Pasar Hambre',
-    description: 'Come delicioso mientras pierdes peso. Recetas diseñadas para que disfrutes cada comida sin privaciones.',
-    color: 'from-red-500 to-pink-500',
-  },
-  {
-    icon: Trophy,
-    title: 'Resultados Comprobados',
-    description: 'Más de 5 años de experiencia y resultados reales. Método probado que funciona de verdad.',
-    color: 'from-yellow-500 to-orange-500',
-  },
-  {
-    icon: Clock,
-    title: 'Acceso de Por Vida',
-    description: 'Paga una vez, accede para siempre. Todas las herramientas y actualizaciones sin costos adicionales.',
-    color: 'from-blue-500 to-cyan-500',
-  },
-  {
-    icon: Shield,
-    title: 'Sin Ejercicio Obligatorio',
-    description: 'Transforma tu cuerpo solo con alimentación inteligente. El ejercicio es opcional, no obligatorio.',
-    color: 'from-purple-500 to-indigo-500',
-  },
-  {
-    icon: Sparkles,
-    title: 'Más Energía',
-    description: 'Siéntete ligera y llena de vitalidad. Despierta cada día con más ganas y mejor humor.',
-    color: 'from-emerald-500 to-green-500',
-  },
-  {
-    icon: TrendingDown,
-    title: 'Método Sostenible',
-    description: 'No es una dieta temporal, es un estilo de vida. Mantén tus resultados para siempre.',
-    color: 'from-rose-500 to-red-500',
-  },
+  { icon: Heart, title: 'Sin pasar hambre', description: 'Come delicioso mientras pierdes peso. Recetas pensadas para disfrutar cada comida sin privaciones.' },
+  { icon: Trophy, title: 'Resultados comprobados', description: 'Más de 5 años de experiencia y resultados reales. Un método probado que funciona de verdad.' },
+  { icon: Clock, title: 'Acceso de por vida', description: 'Paga una vez, accede para siempre. Todas las herramientas y actualizaciones sin costes extra.' },
+  { icon: Leaf, title: 'Sin ejercicio obligatorio', description: 'Transforma tu cuerpo solo con alimentación inteligente. El ejercicio es opcional, no obligatorio.' },
+  { icon: Sparkles, title: 'Más energía', description: 'Siéntete ligera y llena de vitalidad. Despierta cada día con más ganas y mejor humor.' },
+  { icon: TrendingDown, title: 'Método sostenible', description: 'No es una dieta temporal, es un estilo de vida. Mantén tus resultados para siempre.' },
 ];
 
 export default function WhyChooseUs() {
   return (
-    <section className="py-20 lg:py-28 bg-gradient-to-b from-white to-emerald-50">
+    <section className="py-20 lg:py-28 bg-cream">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <div className="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full text-sm font-bold mb-4">
-            ✨ Por Qué Funciona
-          </div>
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Más que una Dieta,
-            <span className="text-emerald-600"> un Estilo de Vida</span>
+        <div className="text-center mb-14 max-w-3xl mx-auto">
+          <span className="inline-flex items-center rounded-full bg-mint-pale px-4 py-1.5 text-sm font-semibold text-forest-dark mb-4">
+            Por qué funciona
+          </span>
+          <h2 className="font-serif text-3xl lg:text-5xl font-bold text-forest-dark mb-4">
+            Más que una dieta, un <span className="trazo-menta">estilo de vida</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Descubre por qué miles de personas han transformado sus vidas con Planeta Keto
+          <p className="text-lg text-gray-600">
+            Miles de personas han transformado su vida con Planeta Keto. Esto es lo que lo hace distinto.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {benefits.map((benefit, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group"
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {benefits.map(({ icon: Icon, title, description }) => (
+            <div
+              key={title}
+              className="group rounded-3xl bg-white p-7 shadow-soft border border-forest/5 transition-shadow hover:shadow-card"
             >
-              <div className="relative h-full bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-gray-100 hover:border-emerald-200">
-                {/* Icon */}
-                <div className="mb-6">
-                  <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${benefit.color} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <benefit.icon className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-
-                {/* Content */}
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                  {benefit.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {benefit.description}
-                </p>
-
-                {/* Decorative element */}
-                <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${benefit.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-b-2xl`} />
+              <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-forest text-white transition-colors group-hover:bg-cta group-hover:text-forest-dark">
+                <Icon className="h-6 w-6" />
               </div>
-            </motion.div>
+              <h3 className="font-serif text-xl font-semibold text-forest-dark mb-2">{title}</h3>
+              <p className="text-gray-600 leading-relaxed">{description}</p>
+            </div>
           ))}
         </div>
 
-        {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-16 text-center"
-        >
-          <div className="bg-gradient-to-br from-emerald-600 to-green-600 rounded-3xl shadow-2xl p-12 max-w-4xl mx-auto">
-            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              ¿Lista para Transformar tu Vida?
-            </h3>
-            <p className="text-xl text-emerald-100 mb-8">
-              Únete a las miles de personas que ya han logrado sus objetivos con Planeta Keto
-            </p>
-            <CheckoutButton
-              className="inline-flex items-center px-10 py-5 text-xl font-bold text-emerald-600 bg-white rounded-full hover:bg-gray-50 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-            >
-              ⚡ Comenzar Ahora - 50% OFF
-            </CheckoutButton>
-            <p className="text-emerald-100 text-sm mt-6">
-              Oferta por tiempo limitado • Acceso inmediato
-            </p>
-          </div>
-        </motion.div>
+        <div className="mt-14 rounded-4xl bg-gradient-to-br from-forest to-forest-dark p-10 lg:p-14 text-center max-w-4xl mx-auto shadow-card">
+          <h3 className="font-serif text-2xl lg:text-3xl font-bold text-white mb-3">¿Lista para transformar tu vida?</h3>
+          <p className="text-mint-pale/90 mb-7 max-w-xl mx-auto">
+            Únete a las miles de personas que ya han logrado sus objetivos con Planeta Keto.
+          </p>
+          <CheckoutButton className="inline-flex items-center rounded-full bg-cta px-9 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-white cursor-pointer">
+            Empezar ahora
+          </CheckoutButton>
+        </div>
       </div>
     </section>
   );
