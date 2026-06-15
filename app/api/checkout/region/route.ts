@@ -101,6 +101,20 @@ export async function GET(req: NextRequest) {
     console.error('[region] fallo conversión de moneda, uso EUR:', error);
   }
 
+  // pasarela-antigua convierte a la moneda local a SU tasa (spread ~7-8% sobre el mercado),
+  // así que su checkout cobra un poco más que nuestra conversión mid-market. Para
+  // que el precio mostrado en la web COINCIDA con el checkout de pasarela-antigua, aplicamos
+  // el mismo margen SOLO en países pasarela-antigua. En Stripe/MP cobramos el importe exacto
+  // que mostramos, así que ahí NO se toca. Ajustable con pasarela-antigua_FX_SPREAD.
+  if (provider === 'pasarela-antigua' && local.currency !== 'EUR') {
+    const spread = Number(process.env.pasarela-antigua_FX_SPREAD) || 0.08;
+    local = {
+      ...local,
+      regular: Math.round(local.regular * (1 + spread)),
+      discount: Math.round(local.discount * (1 + spread)),
+    };
+  }
+
   return NextResponse.json(
     { country, provider, currency: local.currency, prices: { eur, local } },
     { headers: { 'Cache-Control': 'no-store' } }
