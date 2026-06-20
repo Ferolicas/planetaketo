@@ -28,7 +28,7 @@ import path from 'node:path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const TRANSCRIPT_MAX = 7000;
+const TRANSCRIPT_MAX = 40000; // contexto amplio: recetas largas y compilaciones completas
 const THROTTLE_MS = 6500; // free tier 2.5-flash ~10 req/min -> 1 cada ~6.5 s
 
 function req(name: string): string {
@@ -108,6 +108,7 @@ REGLAS:
 - La DESCRIPCIÓN trae la lista de ingredientes con cantidades: úsala como fuente AUTORITATIVA para "ingredients".
 - Usa la TRANSCRIPCIÓN para reconstruir "steps" en orden, claros y concisos.
 - Ignora las repeticiones de la transcripción (vienen de subtítulos solapados).
+- Si el vídeo incluye VARIAS recetas o variaciones, inclúyelas TODAS: enumera todos los ingredientes y todos los pasos en orden (agrupa los pasos por variación si aplica).
 - No marques como keto un ingrediente "opcional no keto" (p. ej. azúcar); si aparece, menciónalo solo en "tips".
 - Estima "nutrition" por ración y los tiempos de forma realista si no se indican.
 - Español neutro. No inventes ingredientes que no aparezcan en el material.`;
