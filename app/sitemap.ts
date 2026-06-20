@@ -1,19 +1,36 @@
 import type { MetadataRoute } from 'next';
 import { site } from '@/lib/site';
+import { getPublishedSlugs } from '@/lib/recipes';
+
+export const revalidate = 3600;
 
 /**
- * Sitemap LIMPIO — solo páginas reales e indexables.
- * Sustituye a los 3 sitemaps rotos de noviembre (www/sitemap-*.xml) que generaba
- * el sistema viejo de doorway pages.
- *
- * Las recetas (/recetas/[slug]) y los blogs (/blog/[slug]) se autoinyectarán aquí
- * en las Fases 2 y 3 a partir de la BD, para tener contenido fresco perpetuo.
+ * Sitemap dinámico — páginas reales + recetas publicadas (autoinyectadas desde
+ * la BD). Las recetas nuevas (cron de Fase 2) aparecen aquí solas.
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+async function recipeSlugs(): Promise<string[]> {
+  try {
+    return await getPublishedSlugs();
+  } catch {
+    return [];
+  }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const slugs = await recipeSlugs();
+
+  const recetas: MetadataRoute.Sitemap = slugs.map((slug) => ({
+    url: `${site.url}/recetas/${slug}`,
+    lastModified: now,
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  }));
 
   return [
     { url: `${site.url}`, lastModified: now, changeFrequency: 'weekly', priority: 1 },
+    { url: `${site.url}/recetas`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    ...recetas,
     { url: `${site.url}/aviso-legal`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${site.url}/privacidad`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${site.url}/cookies`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },

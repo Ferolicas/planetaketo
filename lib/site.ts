@@ -19,6 +19,18 @@ export const site = {
     youtube: 'https://youtube.com/@planetaketo',
     instagram: 'https://instagram.com/planetaketo',
   },
+  /** Datos del canal de YouTube para banners y galería de recetas. */
+  youtube: {
+    channelUrl: 'https://youtube.com/@planetaketo',
+    subscribeUrl: 'https://youtube.com/@planetaketo?sub_confirmation=1',
+    longVideoId: '82bY8byKzVI',
+    playlistId: 'PLZ8wIuDyp-hF9Jgyy0H9NfhkRvCvre5MG',
+    playlistUrl:
+      'https://www.youtube.com/watch?v=pnPt9DUhz2w&list=PLZ8wIuDyp-hF9Jgyy0H9NfhkRvCvre5MG',
+  },
 } as const;
 
 export type Site = typeof site;
+
+/** ca-pub-… de AdSense; vacío hasta activarlo. Solo en recetas/blogs, NUNCA en la landing. */
+export const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? '';
