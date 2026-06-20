@@ -29,7 +29,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const TRANSCRIPT_MAX = 40000; // contexto amplio: recetas largas y compilaciones completas
-const THROTTLE_MS = 6500; // free tier 2.5-flash ~10 req/min -> 1 cada ~6.5 s
+const THROTTLE_MS = 4000; // por debajo del límite de 20 req/min del free tier
 
 function req(name: string): string {
   const v = process.env[name];
@@ -122,14 +122,25 @@ async function callLLM(title: string, description: string, transcript: string): 
     generationConfig: { temperature: 0.2, responseMimeType: 'application/json' },
   };
 
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 12; attempt++) {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
     if (res.status === 429 || res.status === 503) {
-      await sleep(8000 * (attempt + 1)); // backoff ante rate limit
+      // Rate limit (20 req/min del free tier): esperar lo que indique Gemini
+      // (retryDelay) y REINTENTAR la misma receta. Paciente, no se rinde.
+      let waitMs = 20000;
+      const j = (await res.json().catch(() => null)) as
+        | { error?: { details?: { '@type'?: string; retryDelay?: string }[] } }
+        | null;
+      const delay = j?.error?.details?.find((d) => String(d['@type']).includes('RetryInfo'))?.retryDelay;
+      if (delay) {
+        const s = parseFloat(String(delay).replace(/[^0-9.]/g, ''));
+        if (s > 0) waitMs = Math.ceil(s * 1000) + 2000;
+      }
+      await sleep(Math.min(waitMs, 65000));
       continue;
     }
     if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
@@ -140,7 +151,7 @@ async function callLLM(title: string, description: string, transcript: string): 
     if (!text) throw new Error('Gemini: respuesta vacía');
     return RecipeSchema.parse(JSON.parse(text));
   }
-  throw new Error('Gemini: agotados los reintentos (rate limit)');
+  throw new Error('Gemini: rate limit persistente tras 12 intentos');
 }
 
 function slugify(s: string): string {
