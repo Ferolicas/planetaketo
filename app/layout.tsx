@@ -5,6 +5,8 @@ import { Toaster } from 'react-hot-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Analytics from '@/components/Analytics';
+import JsonLd from '@/components/seo/JsonLd';
+import { organizationSchema, websiteSchema } from '@/lib/seo';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 
 const lora = Lora({
@@ -58,6 +60,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
         />
+        {/* Datos estructurados de marca (en todas las páginas). */}
+        <JsonLd data={organizationSchema} />
+        <JsonLd data={websiteSchema} />
         <AuthProvider>
           <div className="flex min-h-screen flex-col">
             <Header />

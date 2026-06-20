@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Permite construir a un directorio temporal (atomic build-swap del deploy).
+  // Sin la variable, el directorio sigue siendo el estándar `.next`.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   images: {
     remotePatterns: [
       {
@@ -27,7 +30,10 @@ const nextConfig: NextConfig = {
       process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   typescript: {
-    ignoreBuildErrors: false,
+    // En el VPS (atomic build-swap con distDir alterno) se salta el type-check con
+    // SKIP_TYPECHECK=1: el código se valida en local antes del push, y el validador
+    // de Next choca con el `.next` symlinkeado. En local el type-check sigue activo.
+    ignoreBuildErrors: process.env.SKIP_TYPECHECK === '1',
   },
   eslint: {
     dirs: ['app', 'components', 'lib'],
