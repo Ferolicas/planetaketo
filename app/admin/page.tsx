@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { DollarSign } from 'lucide-react';
 import AdminPanel from '@/components/admin/AdminPanel';
 import HomeManager from '@/components/admin/HomeManager';
+import RecipesManager from '@/components/admin/RecipesManager';
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -51,6 +52,9 @@ export default function AdminPage() {
 
           {/* Gestión de precios / home */}
           <HomeManager />
+
+          {/* Gestión de recetas (editar / ocultar) */}
+          <RecipesManager />
         </div>
       </div>
     </div>
