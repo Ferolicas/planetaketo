@@ -2,10 +2,11 @@
  * Extracción de recetas (Fase 2).
  *
  * Lee los vídeos de receta de Planeta Keto desde la BD `youtube_analytics`
- * (descripción + transcripción) y los estructura con OpenAI en recetas listas
+ * (descripción + transcripción) y los estructura con un LLM en recetas listas
  * para publicar, escribiéndolas en `published_recipes` de la BD `planetaketo`.
  *
- * La IA solo ESTRUCTURA contenido real del autor; no inventa recetas.
+ * Modelo: Google Gemini (tier GRATIS, sin tarjeta). La IA solo ESTRUCTURA
+ * contenido real del autor; no inventa recetas.
  *
  * Uso (en el VPS, cwd /apps/planetaketo):
  *   pnpm exec tsx scripts/recipes/extract.ts            # todas las pendientes
@@ -16,7 +17,8 @@
  * Env (en .env.local de planetaketo):
  *   DATABASE_URL                     -> BD planetaketo (escritura)
  *   YOUTUBE_ANALYTICS_DATABASE_URL   -> BD youtube_analytics (lectura)
- *   OPENAI_API_KEY
+ *   GEMINI_API_KEY                   -> clave gratis de Google AI Studio
+ *   GEMINI_MODEL                     -> opcional (por defecto gemini-2.0-flash)
  */
 import { Pool } from 'pg';
 import { z } from 'zod';
@@ -25,9 +27,9 @@ import path from 'node:path';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-const RECIPES_PLAYLIST_ID = 'PLZ8wIuDyp-hEfGAvSCAwfJtzU9B7otp_F'; // "Recetas Keto Fáciles"
-const MODEL = 'gpt-4o-mini';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const TRANSCRIPT_MAX = 7000;
+const THROTTLE_MS = 6500; // free tier 2.5-flash ~10 req/min -> 1 cada ~6.5 s
 
 function req(name: string): string {
   const v = process.env[name];
@@ -35,9 +37,11 @@ function req(name: string): string {
   return v;
 }
 
-const OPENAI_API_KEY = req('OPENAI_API_KEY');
+const GEMINI_API_KEY = req('GEMINI_API_KEY');
 const ytPool = new Pool({ connectionString: req('YOUTUBE_ANALYTICS_DATABASE_URL'), max: 4 });
 const pkPool = new Pool({ connectionString: req('DATABASE_URL'), max: 4 });
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // ---- args ----
 const args = process.argv.slice(2);
@@ -108,24 +112,34 @@ REGLAS:
 - Estima "nutrition" por ración y los tiempos de forma realista si no se indican.
 - Español neutro. No inventes ingredientes que no aparezcan en el material.`;
 
-async function callOpenAI(title: string, description: string, transcript: string): Promise<Recipe> {
+async function callLLM(title: string, description: string, transcript: string): Promise<Recipe> {
   const user = `TÍTULO:\n${title}\n\nDESCRIPCIÓN:\n${description || '(sin descripción)'}\n\nTRANSCRIPCIÓN:\n${(transcript || '(sin transcripción)').slice(0, TRANSCRIPT_MAX)}`;
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.2,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: user },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const data = (await res.json()) as { choices: { message: { content: string } }[] };
-  return RecipeSchema.parse(JSON.parse(data.choices[0].message.content));
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const body = {
+    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: [{ role: 'user', parts: [{ text: user }] }],
+    generationConfig: { temperature: 0.2, responseMimeType: 'application/json' },
+  };
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 429 || res.status === 503) {
+      await sleep(8000 * (attempt + 1)); // backoff ante rate limit
+      continue;
+    }
+    if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const data = (await res.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('Gemini: respuesta vacía');
+    return RecipeSchema.parse(JSON.parse(text));
+  }
+  throw new Error('Gemini: agotados los reintentos (rate limit)');
 }
 
 function slugify(s: string): string {
@@ -208,7 +222,7 @@ async function main() {
   let fail = 0;
   for (const v of pending) {
     try {
-      const r = await callOpenAI(v.title, v.description ?? '', v.full_text ?? '');
+      const r = await callLLM(v.title, v.description ?? '', v.full_text ?? '');
       const slug = await uniqueSlug(slugify(r.title), v.video_id);
       const totalMin = r.totalMinutes ?? ((r.prepMinutes ?? 0) + (r.cookMinutes ?? 0) || null);
       await pkPool.query(
@@ -255,6 +269,7 @@ async function main() {
       fail++;
       console.error(`  ✗ ${v.video_id} "${v.title.slice(0, 50)}": ${(e as Error).message}`);
     }
+    await sleep(THROTTLE_MS);
   }
 
   console.log(`[extract] hecho: ${ok} ok, ${fail} fallos`);
