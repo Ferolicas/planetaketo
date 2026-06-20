@@ -53,8 +53,15 @@ export const CATEGORIES: { slug: string; label: string; emoji: string }[] = [
   { slug: 'guarnicion', label: 'Guarniciones', emoji: '🍳' },
 ];
 
+export function categoryMeta(slug: string | null): { label: string; emoji: string } {
+  const found = CATEGORIES.find((c) => c.slug === slug);
+  if (found) return { label: found.label, emoji: found.emoji };
+  const s = (slug ?? 'otros').trim();
+  return { label: s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Otros', emoji: '🍴' };
+}
+
 export function categoryLabel(slug: string | null): string {
-  return CATEGORIES.find((c) => c.slug === slug)?.label ?? 'Recetas';
+  return categoryMeta(slug).label;
 }
 
 interface Row {
