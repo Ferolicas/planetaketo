@@ -173,16 +173,17 @@ interface SourceRow {
 async function main() {
   console.log(`[extract] modelo=${MODEL} force=${FORCE} limit=${LIMIT ?? 'todas'} only=${ONLY ?? '-'}`);
 
+  // Set de recetas = vídeos NO-short con duración (excluye Shorts y directos),
+  // públicos. No se usa playlist_items porque en youtube_analytics está vacía.
   const where = ONLY
     ? 'v.video_id = $1'
-    : `pi.playlist_id = $1 AND COALESCE(v.is_short,false) = false AND COALESCE(v.duration_seconds,0) > 0`;
-  const params = ONLY ? [ONLY] : [RECIPES_PLAYLIST_ID];
+    : `COALESCE(v.is_short,false) = false AND COALESCE(v.duration_seconds,0) > 0 AND COALESCE(v.privacy_status,'public') = 'public'`;
+  const params: string[] = ONLY ? [ONLY] : [];
 
   const { rows } = await ytPool.query<SourceRow>(
     `SELECT v.video_id, v.title, v.description, v.duration_seconds, v.published_at,
             v.thumbnails, t.full_text
        FROM videos v
-       JOIN playlist_items pi ON pi.video_id = v.video_id
        LEFT JOIN transcripts t ON t.video_id = v.video_id
       WHERE ${where}
       ORDER BY v.published_at DESC NULLS LAST`,
