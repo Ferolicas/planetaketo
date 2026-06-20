@@ -7,6 +7,7 @@ import { DollarSign } from 'lucide-react';
 import AdminPanel from '@/components/admin/AdminPanel';
 import HomeManager from '@/components/admin/HomeManager';
 import RecipesManager from '@/components/admin/RecipesManager';
+import BlogManager from '@/components/admin/BlogManager';
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -55,6 +56,9 @@ export default function AdminPage() {
 
           {/* Gestión de recetas (editar / ocultar) */}
           <RecipesManager />
+
+          {/* Gestión de blogs (revisar borradores n8n / publicar) */}
+          <BlogManager />
         </div>
       </div>
     </div>
