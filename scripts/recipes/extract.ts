@@ -5,7 +5,7 @@
  * (descripción + transcripción) y los estructura con un LLM en recetas listas
  * para publicar, escribiéndolas en `published_recipes` de la BD `planetaketo`.
  *
- * Modelo: Google Gemini (tier GRATIS, sin tarjeta). La IA solo ESTRUCTURA
+ * Modelo: Groq (free tier generoso, OpenAI-compatible). La IA solo ESTRUCTURA
  * contenido real del autor; no inventa recetas.
  *
  * Uso (en el VPS, cwd /apps/planetaketo):
@@ -17,8 +17,8 @@
  * Env (en .env.local de planetaketo):
  *   DATABASE_URL                     -> BD planetaketo (escritura)
  *   YOUTUBE_ANALYTICS_DATABASE_URL   -> BD youtube_analytics (lectura)
- *   GEMINI_API_KEY                   -> clave gratis de Google AI Studio
- *   GEMINI_MODEL                     -> opcional (por defecto gemini-2.0-flash)
+ *   GROQ_API_KEY                     -> clave de Groq (console.groq.com)
+ *   GROQ_MODEL                       -> opcional (por defecto llama-3.3-70b-versatile)
  */
 import { Pool } from 'pg';
 import { z } from 'zod';
@@ -27,9 +27,9 @@ import path from 'node:path';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const TRANSCRIPT_MAX = 40000; // contexto amplio: recetas largas y compilaciones completas
-const THROTTLE_MS = 4000; // por debajo del límite de 20 req/min del free tier
+const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const TRANSCRIPT_MAX = 12000; // ~3k tokens; el límite real de Groq es TPM (12k/min)
+const THROTTLE_MS = 1500; // Groq permite 1000 req/min; el 429 (TPM) se gestiona aparte
 
 function req(name: string): string {
   const v = process.env[name];
@@ -37,7 +37,7 @@ function req(name: string): string {
   return v;
 }
 
-const GEMINI_API_KEY = req('GEMINI_API_KEY');
+const GROQ_API_KEY = req('GROQ_API_KEY');
 const ytPool = new Pool({ connectionString: req('YOUTUBE_ANALYTICS_DATABASE_URL'), max: 4 });
 const pkPool = new Pool({ connectionString: req('DATABASE_URL'), max: 4 });
 
@@ -115,43 +115,36 @@ REGLAS:
 
 async function callLLM(title: string, description: string, transcript: string): Promise<Recipe> {
   const user = `TÍTULO:\n${title}\n\nDESCRIPCIÓN:\n${description || '(sin descripción)'}\n\nTRANSCRIPCIÓN:\n${(transcript || '(sin transcripción)').slice(0, TRANSCRIPT_MAX)}`;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
   const body = {
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [{ role: 'user', parts: [{ text: user }] }],
-    generationConfig: { temperature: 0.2, responseMimeType: 'application/json' },
+    model: MODEL,
+    temperature: 0.2,
+    response_format: { type: 'json_object' as const },
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: user },
+    ],
   };
 
   for (let attempt = 0; attempt < 12; attempt++) {
-    const res = await fetch(url, {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
     if (res.status === 429 || res.status === 503) {
-      // Rate limit (20 req/min del free tier): esperar lo que indique Gemini
-      // (retryDelay) y REINTENTAR la misma receta. Paciente, no se rinde.
-      let waitMs = 20000;
-      const j = (await res.json().catch(() => null)) as
-        | { error?: { details?: { '@type'?: string; retryDelay?: string }[] } }
-        | null;
-      const delay = j?.error?.details?.find((d) => String(d['@type']).includes('RetryInfo'))?.retryDelay;
-      if (delay) {
-        const s = parseFloat(String(delay).replace(/[^0-9.]/g, ''));
-        if (s > 0) waitMs = Math.ceil(s * 1000) + 2000;
-      }
-      await sleep(Math.min(waitMs, 65000));
+      // Respeta el Retry-After de Groq (TPM/RPM) y reintenta la misma receta.
+      const ra = res.headers.get('retry-after');
+      const waitMs = ra ? Math.ceil(parseFloat(ra) * 1000) + 500 : 8000;
+      await sleep(Math.min(Math.max(waitMs, 2000), 65000));
       continue;
     }
-    if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
-    const data = (await res.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
-    };
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('Gemini: respuesta vacía');
+    if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) throw new Error('Groq: respuesta vacía');
     return RecipeSchema.parse(JSON.parse(text));
   }
-  throw new Error('Gemini: rate limit persistente tras 12 intentos');
+  throw new Error('Groq: rate limit persistente tras 12 intentos');
 }
 
 function slugify(s: string): string {
