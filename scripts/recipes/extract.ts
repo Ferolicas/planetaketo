@@ -29,7 +29,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const TRANSCRIPT_MAX = 12000; // ~3k tokens; el límite real de Groq es TPM (12k/min)
-const THROTTLE_MS = 1500; // Groq permite 1000 req/min; el 429 (TPM) se gestiona aparte
+const THROTTLE_MS = 22000; // ~3 req/min: no supera el límite de 12k tokens/min de Groq
 
 function req(name: string): string {
   const v = process.env[name];
