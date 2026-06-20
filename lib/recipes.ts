@@ -136,19 +136,34 @@ export async function getPublishedSlugs(): Promise<string[]> {
   return rows.map((r) => r.slug);
 }
 
-/** Recetas relacionadas de la misma categoría (excluyendo la actual). */
+/** Recetas relacionadas: misma categoría primero; si no llegan, rellena con recientes. */
 export async function getRelatedRecipes(
   category: string | null,
   excludeSlug: string,
   limit = 4
 ): Promise<Recipe[]> {
-  const { rows } = await query<Row>(
-    `${SELECT} WHERE is_published = true AND slug <> $1
-       AND ($2::text IS NULL OR category = $2)
-     ORDER BY video_published_at DESC NULLS LAST LIMIT $3`,
-    [excludeSlug, category, limit]
-  );
-  return rows.map(mapRow);
+  const sameCat = category
+    ? (
+        await query<Row>(
+          `${SELECT} WHERE is_published = true AND slug <> $1 AND category = $2
+           ORDER BY video_published_at DESC NULLS LAST LIMIT $3`,
+          [excludeSlug, category, limit]
+        )
+      ).rows.map(mapRow)
+    : [];
+  if (sameCat.length >= limit) return sameCat;
+
+  const have = new Set([excludeSlug, ...sameCat.map((r) => r.slug)]);
+  const recent = (
+    await query<Row>(
+      `${SELECT} WHERE is_published = true AND slug <> $1
+       ORDER BY video_published_at DESC NULLS LAST LIMIT $2`,
+      [excludeSlug, limit * 4]
+    )
+  ).rows
+    .map(mapRow)
+    .filter((r) => !have.has(r.slug));
+  return [...sameCat, ...recent].slice(0, limit);
 }
 
 /** Categorías que tienen al menos una receta publicada, con su conteo. */
