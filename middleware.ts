@@ -6,9 +6,8 @@ import type { NextRequest } from 'next/server';
 // para que Google las DESINDEXE rápido y entienda que se fueron a propósito.
 // NUNCA redirigir a la home: eso es soft-404 y Google lo penaliza.
 //
-// IMPORTANTE: cuando se publiquen las recetas y blogs reales (Fases 2 y 3),
-// quitar `/recetas` y `/blog` de esta lista — sus rutas servirán 200 (slug
-// válido) o 410 (slug desconocido) desde el propio segmento.
+// IMPORTANTE: `/recetas` ya está VIVO (Fase 2): se sirve desde la app (200 si el
+// slug existe, 404 si no). `/blog` sigue aquí hasta construir la Fase 3.
 // ════════════════════════════════════════════════════════════════════════════
 const GONE_PATTERNS: RegExp[] = [
   /^\/tienda(\/|$)/,
@@ -16,7 +15,6 @@ const GONE_PATTERNS: RegExp[] = [
   /^\/perfil(\/|$)/,
   /^\/register(\/|$)/,
   /^\/success(\/|$)/,
-  /^\/recetas(\/|$)/,
   /^\/blog(\/|$)/,
 ];
 
