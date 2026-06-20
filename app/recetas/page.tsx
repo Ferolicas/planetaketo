@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getAllRecipes, CATEGORIES, type Recipe } from '@/lib/recipes';
+import { getAllRecipes, CATEGORIES, categoryMeta, type Recipe } from '@/lib/recipes';
 import { site } from '@/lib/site';
 import RecipeCard from '@/components/recipes/RecipeCard';
 import BookBanner from '@/components/recipes/BookBanner';
@@ -32,7 +32,13 @@ export default async function RecetasHub() {
     if (!byCat.has(c)) byCat.set(c, []);
     byCat.get(c)!.push(r);
   }
-  const orderedCats = CATEGORIES.filter((c) => byCat.has(c.slug));
+  // Categorías conocidas primero (en orden), luego cualquier categoría extra
+  // que el modelo haya usado fuera de la lista (no se pierde ninguna receta).
+  const knownCats = CATEGORIES.filter((c) => byCat.has(c.slug));
+  const extraCats = [...byCat.keys()]
+    .filter((k) => !CATEGORIES.some((c) => c.slug === k))
+    .map((slug) => ({ slug, ...categoryMeta(slug) }));
+  const orderedCats = [...knownCats, ...extraCats];
 
   const itemList = {
     '@context': 'https://schema.org',
