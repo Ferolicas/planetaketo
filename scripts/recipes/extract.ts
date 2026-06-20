@@ -68,7 +68,18 @@ const RecipeSchema = z.object({
   summary: z.string().default(''),
   category: z.string().default('cena'),
   ingredients: z
-    .array(z.object({ quantity: z.string().default(''), item: z.string() }))
+    .array(
+      z.object({
+        quantity: z
+          .union([z.string(), z.number(), z.null()])
+          .optional()
+          .transform((v) => (v == null ? '' : String(v))),
+        item: z
+          .union([z.string(), z.null()])
+          .optional()
+          .transform((v) => v ?? ''),
+      })
+    )
     .default([]),
   steps: z.array(z.string()).default([]),
   tips: z
