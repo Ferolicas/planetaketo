@@ -6,6 +6,9 @@ import PaymentModal from '@/components/payment/PaymentModal';
 interface CheckoutButtonProps {
   children: React.ReactNode;
   className?: string;
+  /** Clave del botón para la analítica propia (data-cta). El clic lo registra el
+   *  tracker mediante un listener delegado, SOLO si hay consentimiento. */
+  cta?: string;
 }
 
 /**
@@ -13,26 +16,12 @@ interface CheckoutButtonProps {
  * y embebe el checkout adecuado (Stripe para el mundo, Mercado Pago para
  * Colombia) sin salir del sitio.
  */
-export default function CheckoutButton({ children, className }: CheckoutButtonProps) {
+export default function CheckoutButton({ children, className, cta }: CheckoutButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleClick = () => {
-    // Registra el clic a comprar (analítica del embudo). No bloquea la apertura.
-    fetch('/api/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'checkout_click',
-        path: typeof window !== 'undefined' ? window.location.pathname : null,
-      }),
-      keepalive: true,
-    }).catch(() => {});
-    setIsModalOpen(true);
-  };
 
   return (
     <>
-      <button onClick={handleClick} className={className}>
+      <button data-cta={cta} onClick={() => setIsModalOpen(true)} className={className}>
         {children}
       </button>
 

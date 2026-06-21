@@ -11,9 +11,12 @@ import {
 import { convertEurToCop } from '@/lib/payments/fx';
 import { PRODUCT_CONFIG } from '@/lib/product';
 import { getClientIp } from '@/lib/geo';
+import { markCheckoutStarted } from '@/lib/analytics/session-link';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ============================================================
 // Crea el pago de Mercado Pago (Colombia) a partir del formData del Payment Brick.
@@ -51,6 +54,13 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
   }
+
+  // Extrae el UUID de la visita (analítica) ANTES de construir el pago de MP.
+  const sessionId =
+    typeof form.session_uuid === 'string' && UUID_RE.test(form.session_uuid)
+      ? form.session_uuid
+      : null;
+  delete form.session_uuid;
 
   const formPayer = (form.payer ?? {}) as BrickPayer;
   const email = formPayer.email?.trim();
@@ -95,7 +105,10 @@ export async function POST(req: NextRequest) {
         external_reference: orderId,
         notification_url: `${origin}/api/mercadopago/webhook`,
         callback_url: `${origin}/gracias`, // PSE/Efecty redirigen al banco y vuelven aquí
-        metadata: { product_name: PRODUCT_CONFIG.name },
+        metadata: {
+          product_name: PRODUCT_CONFIG.name,
+          ...(sessionId ? { session_uuid: sessionId } : {}),
+        },
         additional_info: {
           ...existingAddInfo,
           ...(ip ? { ip_address: ip } : {}),
@@ -123,6 +136,9 @@ export async function POST(req: NextRequest) {
       },
       orderId
     )) as MpPayment;
+
+    // Analítica: la visita ha iniciado checkout (aún no completado).
+    await markCheckoutStarted(sessionId);
 
     // Entrega inmediata si ya está aprobado (el webhook re-confirma; es idempotente).
     if (payment.status === 'approved') {

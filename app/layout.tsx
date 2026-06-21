@@ -8,6 +8,8 @@ import Analytics from '@/components/Analytics';
 import JsonLd from '@/components/seo/JsonLd';
 import { organizationSchema, websiteSchema } from '@/lib/seo';
 import { AuthProvider } from '@/lib/auth/AuthContext';
+import { ConsentProvider } from '@/components/consent/ConsentProvider';
+import CookieConsent from '@/components/consent/CookieConsent';
 
 const lora = Lora({
   subsets: ['latin'],
@@ -63,14 +65,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Datos estructurados de marca (en todas las páginas). */}
         <JsonLd data={organizationSchema} />
         <JsonLd data={websiteSchema} />
-        <AuthProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </AuthProvider>
-        <Analytics />
+        <ConsentProvider>
+          <AuthProvider>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          </AuthProvider>
+          {/* Analítica propia: solo se activa tras consentimiento (lo controla el tracker). */}
+          <Analytics />
+          <CookieConsent />
+        </ConsentProvider>
         <Toaster
           position="top-center"
           toastOptions={{

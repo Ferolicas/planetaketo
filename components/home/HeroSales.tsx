@@ -23,7 +23,7 @@ export default function HeroSales() {
   const p = regionDisplay(region);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-mint-pale/40 via-cream to-cream">
+    <section data-section="hero" className="relative overflow-hidden bg-gradient-to-b from-mint-pale/40 via-cream to-cream">
       <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-mint/20 blur-3xl animate-float-slow" />
       <div aria-hidden className="pointer-events-none absolute top-32 -right-24 h-96 w-96 rounded-full bg-cta/10 blur-3xl animate-float-slow" />
 
@@ -56,7 +56,7 @@ export default function HeroSales() {
             </ul>
 
             <div className="flex flex-col sm:flex-row items-center gap-5 justify-center lg:justify-start">
-              <CheckoutButton className="group inline-flex items-center justify-center gap-2 rounded-full bg-cta px-8 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
+              <CheckoutButton cta="quiero_mi_metodo" className="group inline-flex items-center justify-center gap-2 rounded-full bg-cta px-8 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
                 Quiero mi método · -{p.percentage}%
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </CheckoutButton>
@@ -70,7 +70,7 @@ export default function HeroSales() {
           </div>
 
           {/* Transformación */}
-          <div className="relative animate-fade-in">
+          <div data-section="antes_despues" className="relative animate-fade-in">
             <div className="relative bg-white rounded-4xl shadow-card p-5 sm:p-7 border border-forest/5">
               <div className="text-center mb-5">
                 <h2 className="font-serif text-2xl font-bold text-forest-dark">Una transformación real</h2>
@@ -105,7 +105,7 @@ export default function HeroSales() {
         </div>
 
         {/* Producto: libro */}
-        <div className="mt-16 lg:mt-24 max-w-5xl mx-auto">
+        <div data-section="precio" className="mt-16 lg:mt-24 max-w-5xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center rounded-4xl bg-white border border-forest/5 shadow-card p-6 sm:p-10">
             <div className="relative">
               <div aria-hidden className="absolute -inset-3 rounded-4xl bg-mint/20 blur-2xl" />
@@ -133,7 +133,7 @@ export default function HeroSales() {
                 <span className="text-4xl font-bold text-forest-dark">{p.fmt(p.discount)}</span>
                 <span className="text-2xl text-gray-400 line-through">{p.fmt(p.regular)}</span>
               </div>
-              <CheckoutButton className="block w-full text-center rounded-full bg-cta px-8 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
+              <CheckoutButton cta="comprar_ahora" className="block w-full text-center rounded-full bg-cta px-8 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
                 Comprar ahora
               </CheckoutButton>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-gray-500">

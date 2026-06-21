@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
+import { getSid } from '@/lib/analytics/consent';
 
 // ============================================================
 // Payment Brick de Mercado Pago dentro del modal (cobro Colombia, COP).
@@ -71,7 +72,8 @@ export default function MercadoPagoBrick({ amountCop, onSuccess, onPending, onFa
           const res = await fetch('/api/checkout/mercadopago/pay', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
+            // session_uuid enlaza la venta con la visita (analítica).
+            body: JSON.stringify({ ...formData, session_uuid: getSid() ?? undefined }),
           });
           const data = await res.json();
 

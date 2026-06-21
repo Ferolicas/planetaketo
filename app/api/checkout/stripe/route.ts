@@ -9,9 +9,12 @@ import { PRODUCT_CONFIG } from '@/lib/product';
 import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur } from '@/lib/payments/fx';
+import { markCheckoutStarted } from '@/lib/analytics/session-link';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ============================================================
 // Stripe Payment Element — crea un PaymentIntent en la MONEDA LOCAL del visitante
@@ -26,6 +29,17 @@ export async function POST(req: NextRequest) {
   if (!isStripeConfigured()) {
     console.error('[stripe] STRIPE_SECRET_KEY no configurada');
     return NextResponse.json({ error: 'not_configured' }, { status: 500 });
+  }
+
+  // UUID de la visita (analítica) para enlazar la venta. Opcional.
+  let sessionId: string | null = null;
+  try {
+    const body = (await req.json()) as { sessionId?: unknown };
+    if (typeof body?.sessionId === 'string' && UUID_RE.test(body.sessionId)) {
+      sessionId = body.sessionId;
+    }
+  } catch {
+    /* sin body o JSON inválido: el checkout sigue sin enlace */
   }
 
   try {
@@ -60,8 +74,15 @@ export async function POST(req: NextRequest) {
       amount,
       currency: finalCurrency.toLowerCase(),
       automatic_payment_methods: { enabled: true },
-      metadata: { productName: PRODUCT_CONFIG.name, presentment_currency: finalCurrency },
+      metadata: {
+        productName: PRODUCT_CONFIG.name,
+        presentment_currency: finalCurrency,
+        ...(sessionId ? { session_uuid: sessionId } : {}),
+      },
     });
+
+    // Analítica: la visita ha iniciado checkout (aún no completado).
+    await markCheckoutStarted(sessionId);
 
     return NextResponse.json({ clientSecret: intent.client_secret });
   } catch (error) {
