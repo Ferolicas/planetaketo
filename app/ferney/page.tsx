@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import AdminConsole from '@/components/admin/AdminConsole';
 
-// Alias histórico del panel; el panel canónico es /ferney. Nunca indexar.
+// Panel privado del propietario. Nunca indexar.
 export const metadata: Metadata = {
   title: 'Panel | Planeta Keto',
   robots: { index: false, follow: false },
 };
 
-export default function AdminPage() {
+export default function FerneyPage() {
   return <AdminConsole />;
 }

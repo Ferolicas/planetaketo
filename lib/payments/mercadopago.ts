@@ -48,6 +48,7 @@ export interface MpPayment {
   transaction_amount?: number;
   currency_id?: string;
   external_reference?: string;
+  metadata?: Record<string, unknown>;
   payer?: { email?: string; first_name?: string; last_name?: string };
   point_of_interaction?: { transaction_data?: { ticket_url?: string } };
   transaction_details?: { external_resource_url?: string };
@@ -77,6 +78,9 @@ export async function finalizeMpPayment(payment: MpPayment): Promise<ProcessSale
     [payment.payer?.first_name, payment.payer?.last_name].filter(Boolean).join(' ').trim() ||
     'Cliente';
 
+  const sessionId =
+    typeof payment.metadata?.session_uuid === 'string' ? payment.metadata.session_uuid : null;
+
   return finalizeSale({
     provider: 'mercadopago',
     externalId: String(payment.id),
@@ -89,5 +93,6 @@ export async function finalizeMpPayment(payment: MpPayment): Promise<ProcessSale
     status: 'paid',
     productName: PRODUCT_CONFIG.name,
     externalCustomerId: null,
+    sessionId,
   });
 }

@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       status: 'paid',
       productName: sale.productName,
       externalCustomerId: null,
+      sessionId: sale.sessionId,
     });
 
     return NextResponse.json({

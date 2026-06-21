@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { query, queryOne } from '@/lib/db';
+import { markSaleCompleted } from '@/lib/analytics/session-link';
 import { createMagicLink } from '@/lib/downloads/magic-link';
 import { resend } from '@/lib/resend';
 import { getPurchaseEmailTemplate } from '@/lib/email/templates';
@@ -70,6 +71,8 @@ export interface FinalizeSaleOpts {
   productName: string;
   /** Id de cliente en la pasarela, si existe (Hotmart no lo usa). */
   externalCustomerId?: string | null;
+  /** UUID de la sesión de analítica (si llegó como metadata) para marcar la venta. */
+  sessionId?: string | null;
 }
 
 export async function finalizeSale(
@@ -83,7 +86,10 @@ export async function finalizeSale(
     `SELECT id FROM payments WHERE stripe_payment_id = $1`,
     [opts.externalId]
   );
-  if (existing) return { status: 'already_processed', paymentId: existing.id };
+  if (existing) {
+    await markSaleCompleted(opts.sessionId); // re-confirmación (webhook tras entrega inmediata)
+    return { status: 'already_processed', paymentId: existing.id };
+  }
 
   // Upsert de cliente por email
   let customerId: string;
@@ -188,6 +194,9 @@ export async function finalizeSale(
     console.error('❌ Envío de email falló:', emailError);
     // No tumbamos la venta: magic_link_created=true permite recuperación.
   }
+
+  // Marca la visita como venta_completada (analítica). Best-effort.
+  await markSaleCompleted(opts.sessionId);
 
   console.log(
     `🎉 VENTA PROCESADA | ${opts.provider} | ${email} | ${opts.amount} ${opts.currency} | ${paymentId}`

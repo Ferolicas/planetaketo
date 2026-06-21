@@ -26,7 +26,7 @@ const trust = [
 
 export default function SocialProof() {
   return (
-    <section className="py-20 lg:py-28 bg-white">
+    <section data-section="testimonios" className="py-20 lg:py-28 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-20 rounded-4xl bg-gradient-to-br from-forest to-forest-dark shadow-card overflow-hidden">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 p-8 lg:p-12">

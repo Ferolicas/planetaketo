@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { getSid } from '@/lib/analytics/consent';
 
 // ============================================================
 // Checkout de Hotmart embebido dentro del modal (resto de LATAM: Perú, México,
@@ -11,12 +12,36 @@ import { useEffect, useState } from 'react';
 // /gracias (nuestro dominio); al cargarse dentro del iframe tras la aprobación,
 // avisa al modal padre por postMessage. La entrega del libro la dispara el
 // webhook de Hotmart (Resend + magic link), igual que en las otras pasarelas.
+//
+// Analítica: el UUID de la visita viaja a Hotmart por el parámetro `sck` (que
+// Hotmart devuelve en el postback) para enlazar la venta con la visita.
 // ============================================================
 
 const CHECKOUT_URL = process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL || '';
 
 export default function HotmartEmbed({ onSuccess }: { onSuccess: () => void }) {
   const [loaded, setLoaded] = useState(false);
+
+  // Añade ?sck=<pk_sid> y avisa al backend de que se inició el checkout.
+  const checkoutUrl = useMemo(() => {
+    if (!CHECKOUT_URL) return '';
+    const sid = getSid();
+    if (!sid) return CHECKOUT_URL;
+    const sep = CHECKOUT_URL.includes('?') ? '&' : '?';
+    return `${CHECKOUT_URL}${sep}sck=${encodeURIComponent(sid)}`;
+  }, []);
+
+  useEffect(() => {
+    const sid = getSid();
+    if (sid) {
+      fetch('/api/checkout/hotmart/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sid }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -45,7 +70,7 @@ export default function HotmartEmbed({ onSuccess }: { onSuccess: () => void }) {
         </div>
       )}
       <iframe
-        src={CHECKOUT_URL}
+        src={checkoutUrl}
         title="Pago seguro"
         className="w-full h-full border-0"
         allow="payment *; clipboard-write"

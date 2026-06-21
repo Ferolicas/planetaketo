@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Instagram, Youtube, Mail, MessageCircle } from 'lucide-react';
+import CookiePreferencesLink from '@/components/consent/CookiePreferencesLink';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -71,6 +72,7 @@ export default function Footer() {
             <Link href="/aviso-legal" className="hover:text-cta transition-colors">Aviso legal</Link>
             <Link href="/privacidad" className="hover:text-cta transition-colors">Privacidad</Link>
             <Link href="/cookies" className="hover:text-cta transition-colors">Cookies</Link>
+            <CookiePreferencesLink className="hover:text-cta transition-colors" />
           </nav>
         </div>
       </div>

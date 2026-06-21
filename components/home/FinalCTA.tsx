@@ -19,7 +19,7 @@ export default function FinalCTA() {
   const p = regionDisplay(region);
 
   return (
-    <section className="relative py-20 lg:py-28 bg-gradient-to-br from-forest to-forest-dark overflow-hidden">
+    <section data-section="cta_final" className="relative py-20 lg:py-28 bg-gradient-to-br from-forest to-forest-dark overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute -top-20 right-0 h-80 w-80 rounded-full bg-mint/10 blur-3xl" />
       <div className="container relative mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
         <div className="text-center mb-12">
@@ -53,7 +53,7 @@ export default function FinalCTA() {
           <span className="inline-flex items-center rounded-full bg-cta px-5 py-1.5 text-sm font-bold text-forest-dark mb-7">
             Ahorra {p.percentage}% hoy
           </span>
-          <CheckoutButton className="group mx-auto flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-cta px-12 py-5 text-xl font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
+          <CheckoutButton cta="si_quiero_transformarme" className="group mx-auto flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-cta px-12 py-5 text-xl font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
             Sí, quiero transformarme
             <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1.5" />
           </CheckoutButton>

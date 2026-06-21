@@ -43,7 +43,11 @@ export interface HotmartSale {
   country: string | null;
   productName: string;
   eventId: string | null;
+  /** UUID de la visita propagado por el parámetro `sck` (si llegó válido). */
+  sessionId: string | null;
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type ParseResult =
   | { ok: true; sale: HotmartSale }
@@ -78,6 +82,13 @@ export function parseHotmartSale(
     data?.checkout_country ??
     null;
 
+  // El `sck` (tracking de Hotmart) lleva nuestro UUID de visita. Puede venir en
+  // varias formas según la versión del postback.
+  const tracking = purchase.tracking ?? {};
+  const sckRaw =
+    tracking.source_sck ?? tracking.sck ?? purchase.sck ?? data.sck ?? null;
+  const sessionId = typeof sckRaw === 'string' && UUID_RE.test(sckRaw) ? sckRaw : null;
+
   const extracted = {
     email: String(buyer.email ?? '').trim(),
     name: String(buyer.name ?? buyer.first_name ?? 'Cliente').trim() || 'Cliente',
@@ -100,6 +111,7 @@ export function parseHotmartSale(
       country: typeof countryRaw === 'string' ? countryRaw : null,
       productName: String(product.name ?? PRODUCT_CONFIG.name),
       eventId: payload?.id ? String(payload.id) : null,
+      sessionId,
     },
   };
 }

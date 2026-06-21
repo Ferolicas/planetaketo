@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import LegalShell from '@/components/legal/LegalShell';
+import CookiePreferencesLink from '@/components/consent/CookiePreferencesLink';
 
 export const metadata: Metadata = {
   title: 'Política de cookies',
@@ -8,42 +9,80 @@ export const metadata: Metadata = {
 
 export default function CookiesPage() {
   return (
-    <LegalShell title="Política de cookies" updated="15 de junio de 2026">
+    <LegalShell title="Política de cookies" updated="22 de junio de 2026">
       <p>
         Una cookie es un pequeño archivo que se almacena en tu dispositivo al visitar una web. En
-        Planeta Keto usamos las mínimas necesarias para que el sitio funcione y para entender de
-        forma agregada cómo se usa.
+        Planeta Keto usamos las <strong>mínimas necesarias</strong> para que el sitio funcione y, solo
+        con tu permiso, una <strong>analítica 100% propia</strong> para entender cómo se usa la web y
+        mejorarla. No usamos Google Analytics ni ninguna herramienta de terceros para medir tráfico, y{' '}
+        <strong>no almacenamos tu dirección IP</strong>.
       </p>
 
-      <h2>1. Cookies que utilizamos</h2>
+      <h2>1. Responsable</h2>
       <ul>
-        <li>
-          <strong>Técnicas y de sesión (necesarias):</strong> permiten el funcionamiento del sitio y
-          recordar tu sesión. No requieren consentimiento.
-        </li>
-        <li>
-          <strong>Analítica propia:</strong> medimos visitas y clics de forma agregada y anónima para
-          mejorar la web. No se usan para publicidad ni se ceden a terceros con fines comerciales.
-        </li>
-        <li>
-          <strong>Terceros durante el pago:</strong> al pagar, la pasarela correspondiente (Stripe,
-          Mercado Pago o Hotmart) puede instalar sus propias cookies para procesar la transacción y
-          prevenir el fraude, según sus respectivas políticas.
-        </li>
+        <li><strong>Responsable:</strong> Planeta Keto — [Completar: nombre o razón social y NIF/CIF]</li>
+        <li><strong>Contacto:</strong> <a href="mailto:info@planetaketo.es">info@planetaketo.es</a></li>
       </ul>
+
+      <h2>2. Cookies que utilizamos</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Finalidad</th>
+            <th>Duración</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>pk_consent</code></td>
+            <td>Recuerda tu decisión sobre las cookies.</td>
+            <td>12 meses</td>
+            <td>Propia · técnica (necesaria)</td>
+          </tr>
+          <tr>
+            <td><code>session</code></td>
+            <td>Mantiene la sesión del panel de administración (solo administradores).</td>
+            <td>30 días</td>
+            <td>Propia · técnica (necesaria)</td>
+          </tr>
+          <tr>
+            <td><code>pk_sid</code></td>
+            <td>
+              Identifica tu visita para medir audiencia de forma anónima y propia (sin IP y sin
+              terceros): número de visitas, tiempo activo y secciones vistas.
+            </td>
+            <td>30 min (se renueva con la actividad)</td>
+            <td>Propia · analítica</td>
+          </tr>
+        </tbody>
+      </table>
       <p>
-        Las tipografías se sirven desde nuestro propio servidor, por lo que no se realizan
-        peticiones a terceros para cargarlas.
+        Las cookies <strong>técnicas</strong> son necesarias y no requieren consentimiento. La cookie{' '}
+        <strong>analítica</strong> (<code>pk_sid</code>) solo se instala si la aceptas; su base jurídica
+        es tu <strong>consentimiento</strong> (art. 6.1.a RGPD y art. 22.2 LSSI-CE). Mientras no aceptes,
+        la analítica no se activa.
       </p>
 
-      <h2>2. Gestión de cookies</h2>
+      <h2>3. Cookies de las pasarelas de pago</h2>
       <p>
-        Puedes configurar o eliminar las cookies desde los ajustes de tu navegador. Ten en cuenta
-        que bloquear las cookies técnicas puede afectar al funcionamiento del sitio. Consulta la
-        ayuda de tu navegador (Chrome, Firefox, Safari o Edge) para más detalles.
+        Únicamente <strong>cuando inicias un pago</strong>, la pasarela correspondiente (Stripe, Mercado
+        Pago o Hotmart) puede instalar sus propias cookies para procesar la transacción y prevenir el
+        fraude, según sus respectivas políticas. Son necesarias para completar la compra.
       </p>
 
-      <h2>3. Más información</h2>
+      <h2>4. Cómo cambiar o retirar tu consentimiento</h2>
+      <p>
+        Puedes cambiar o retirar tu decisión en cualquier momento, con la misma facilidad con la que la
+        diste, desde aquí:{' '}
+        <CookiePreferencesLink className="font-medium text-forest underline hover:text-forest-dark" />.
+        También puedes eliminar las cookies desde los ajustes de tu navegador (Chrome, Firefox, Safari o
+        Edge). Si retiras la analítica, dejamos de medir tu visita y se elimina la cookie{' '}
+        <code>pk_sid</code>.
+      </p>
+
+      <h2>5. Más información</h2>
       <p>
         Para cualquier duda sobre esta política, escríbenos a{' '}
         <a href="mailto:info@planetaketo.es">info@planetaketo.es</a>. Consulta también nuestra{' '}

@@ -9,6 +9,7 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
+import { getSid } from '@/lib/analytics/consent';
 
 // ============================================================
 // Stripe Payment Element dentro del modal (cobro mundial, EUR).
@@ -45,7 +46,11 @@ export default function StripeEmbedded({ amountLabel, onSuccess, onFailure }: Pr
       return;
     }
     let alive = true;
-    fetch('/api/checkout/stripe', { method: 'POST' })
+    fetch('/api/checkout/stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: getSid() }), // enlaza la venta con la visita
+    })
       .then((r) => r.json())
       .then((d) => {
         if (!alive) return;

@@ -1,24 +1,38 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { useConsent } from '@/components/consent/ConsentProvider';
+import { startTracking, stopTracking, trackPageview } from '@/lib/analytics/tracker';
 
-// Registra una visita (pageview) en cada carga/navegación de página pública.
-// El panel y el login no se miden (no son tráfico real del sitio).
+// Analítica propia. NO arranca sin consentimiento (analyticsAllowed). El panel y
+// el login no son tráfico real del sitio, así que no se miden.
+const EXCLUDED = ['/admin', '/ferney', '/login'];
+const isExcluded = (p: string | null) => !!p && EXCLUDED.some((e) => p.startsWith(e));
+
 export default function Analytics() {
+  const { analyticsAllowed } = useConsent();
   const pathname = usePathname();
+  const shouldTrack = analyticsAllowed && !isExcluded(pathname);
+  const firstPath = useRef(true);
 
+  // Arranca/para el tracker según el consentimiento (y la zona pública).
   useEffect(() => {
-    if (!pathname) return;
-    if (pathname.startsWith('/admin') || pathname.startsWith('/login')) return;
+    if (!shouldTrack) return;
+    firstPath.current = true; // el session_start ya cuenta la página de entrada
+    startTracking();
+    return () => stopTracking();
+  }, [shouldTrack]);
 
-    fetch('/api/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'pageview', path: pathname }),
-      keepalive: true,
-    }).catch(() => {});
-  }, [pathname]);
+  // Pageview en cada cambio de ruta (App Router), excepto la página de entrada.
+  useEffect(() => {
+    if (!shouldTrack) return;
+    if (firstPath.current) {
+      firstPath.current = false;
+      return;
+    }
+    trackPageview(pathname);
+  }, [pathname, shouldTrack]);
 
   return null;
 }

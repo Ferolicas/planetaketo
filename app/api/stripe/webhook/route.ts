@@ -102,6 +102,7 @@ async function handleCheckoutSession(event: Stripe.Event): Promise<NextResponse>
     status: session.payment_status || 'paid',
     productName: PRODUCT_CONFIG.name,
     externalCustomerId: typeof session.customer === 'string' ? session.customer : null,
+    sessionId: (session.metadata?.session_uuid as string) || null,
   });
 
   return NextResponse.json(resultPayload(result));
@@ -129,6 +130,7 @@ async function handlePaymentIntent(event: Stripe.Event): Promise<NextResponse> {
     status: 'paid',
     productName: (pi.metadata?.productName as string) || PRODUCT_CONFIG.name,
     externalCustomerId: typeof pi.customer === 'string' ? pi.customer : null,
+    sessionId: (pi.metadata?.session_uuid as string) || null,
   });
 
   return NextResponse.json(resultPayload(result));

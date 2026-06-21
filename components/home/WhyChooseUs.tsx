@@ -15,7 +15,7 @@ const benefits = [
 
 export default function WhyChooseUs() {
   return (
-    <section className="py-20 lg:py-28 bg-cream">
+    <section data-section="por_que" className="py-20 lg:py-28 bg-cream">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14 max-w-3xl mx-auto">
           <span className="inline-flex items-center rounded-full bg-mint-pale px-4 py-1.5 text-sm font-semibold text-forest-dark mb-4">
@@ -50,7 +50,7 @@ export default function WhyChooseUs() {
           <p className="text-mint-pale/90 mb-7 max-w-xl mx-auto">
             Únete a las miles de personas que ya han logrado sus objetivos con Planeta Keto.
           </p>
-          <CheckoutButton className="inline-flex items-center rounded-full bg-cta px-9 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-white cursor-pointer">
+          <CheckoutButton cta="empezar_ahora" className="inline-flex items-center rounded-full bg-cta px-9 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-white cursor-pointer">
             Empezar ahora
           </CheckoutButton>
         </div>
