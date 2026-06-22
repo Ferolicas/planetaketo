@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { markCheckoutStarted } from '@/lib/analytics/session-link';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,9 @@ export const dynamic = 'force-dynamic';
 const Schema = z.object({ sessionId: z.string().uuid() });
 
 export async function POST(req: NextRequest) {
+  const limited = enforceRateLimit(req, 'checkout', 20, 5 * 60_000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = JSON.parse(await req.text());

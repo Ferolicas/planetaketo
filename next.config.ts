@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // No revelar el framework en la cabecera X-Powered-By.
+  poweredByHeader: false,
   // Permite construir a un directorio temporal (atomic build-swap del deploy).
   // Sin la variable, el directorio sigue siendo el estándar `.next`.
   distDir: process.env.NEXT_DIST_DIR || '.next',

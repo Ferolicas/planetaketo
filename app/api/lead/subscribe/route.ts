@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto';
 import { query, queryOne } from '@/lib/db';
 import { resend } from '@/lib/resend';
 import { getEmail1Template } from '@/lib/email/lead-templates';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -48,6 +49,10 @@ async function countryFromRequest(request: NextRequest): Promise<string | null> 
 }
 
 export async function POST(request: NextRequest) {
+  // Anti-spam: 5 altas por IP cada 10 minutos (cada alta envía un email).
+  const limited = enforceRateLimit(request, 'lead', 5, 10 * 60_000);
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     const { name, email } = leadSchema.parse(body);

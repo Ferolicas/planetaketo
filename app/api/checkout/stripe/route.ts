@@ -10,6 +10,7 @@ import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur } from '@/lib/payments/fx';
 import { markCheckoutStarted } from '@/lib/analytics/session-link';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,9 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // La entrega la dispara el webhook (payment_intent.succeeded) vía finalizeSale().
 // ============================================================
 export async function POST(req: NextRequest) {
+  const limited = enforceRateLimit(req, 'checkout', 20, 5 * 60_000);
+  if (limited) return limited;
+
   if (!isStripeConfigured()) {
     console.error('[stripe] STRIPE_SECRET_KEY no configurada');
     return NextResponse.json({ error: 'not_configured' }, { status: 500 });
