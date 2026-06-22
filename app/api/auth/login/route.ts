@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
-import { verifyPassword } from '@/lib/auth/session';
+import { verifyPassword, signSessionToken, SESSION_COOKIE_OPTS } from '@/lib/auth/session';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 // Login del panel de administrador (pg, tabla `admins`).
 export async function POST(request: NextRequest) {
+  // Anti fuerza bruta: 8 intentos por IP cada 10 minutos.
+  const limited = enforceRateLimit(request, 'login', 8, 10 * 60_000);
+  if (limited) return limited;
+
   try {
     const { email, password } = await request.json();
 
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const sessionToken = Buffer.from(admin.id).toString('base64');
+    const sessionToken = signSessionToken(admin.id);
 
     const response = NextResponse.json({
       user: {
@@ -45,13 +50,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    response.cookies.set('session', sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 días
-      path: '/',
-    });
+    response.cookies.set('session', sessionToken, SESSION_COOKIE_OPTS);
 
     return response;
   } catch (error) {

@@ -12,6 +12,7 @@ import { convertEurToCop } from '@/lib/payments/fx';
 import { PRODUCT_CONFIG } from '@/lib/product';
 import { getClientIp } from '@/lib/geo';
 import { markCheckoutStarted } from '@/lib/analytics/session-link';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,6 +44,9 @@ interface BrickPayer {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = enforceRateLimit(req, 'checkout', 20, 5 * 60_000);
+  if (limited) return limited;
+
   if (!isMpConfigured()) {
     console.error('[mercadopago] MP_ACCESS_TOKEN no configurado');
     return NextResponse.json({ error: 'not_configured' }, { status: 500 });
