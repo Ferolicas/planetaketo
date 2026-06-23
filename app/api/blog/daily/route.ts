@@ -89,6 +89,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'articulo incompleto' }, { status: 502 });
   }
 
+  // Guardarraíl duro: SOLO estilo de vida. Si el estudio derivó a enfermedad, no se
+  // inserta (aunque el prompt lo pida, Groq puede seguir la fuente). Cero temas YMYL.
+  const blob = `${art.title} ${art.content}`.toLowerCase();
+  if (/diabet|hipertensi|presi[oó]n arterial|h[ií]gado|hep[aá]tic|tiroid|colesterol|c[aá]ncer|enfermedad renal|ri[ñn][oó]n|epileps|alzh|card[ií]ac/.test(blob)) {
+    return NextResponse.json({ ok: false, skipped: 'tema de salud delicada (filtrado)', tema, pmid });
+  }
+
   // 5. Insertar como BORRADOR
   const slug = await uniqueSlug(blogSlugify(art.title));
   const { rows } = await query<{ id: number }>(
