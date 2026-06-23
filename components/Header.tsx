@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import CheckoutButton from '@/components/checkout/CheckoutButton';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -36,10 +35,6 @@ export default function Header() {
               Planeta Keto
             </span>
           </Link>
-
-          <CheckoutButton className="hidden sm:inline-flex items-center rounded-full bg-cta px-5 py-2.5 text-sm font-semibold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
-            Comprar ahora
-          </CheckoutButton>
         </div>
       </nav>
     </header>

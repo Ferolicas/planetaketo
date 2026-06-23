@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Lora, Raleway } from 'next/font/google';
+import { Fraunces, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/Header';
@@ -11,17 +11,21 @@ import { AuthProvider } from '@/lib/auth/AuthContext';
 import { ConsentProvider } from '@/components/consent/ConsentProvider';
 import CookieConsent from '@/components/consent/CookieConsent';
 
-const lora = Lora({
+// Fuentes premium y distintivas (NO las típicas de los sitios IA — nada de Inter/Poppins/
+// Playfair). Principal: Bricolage Grotesque (grotesca editorial con carácter, self-hosted
+// por Next) para titulares, precios, tarjetas y botones. Acento: Fraunces (la misma serif
+// de los libros) para los rótulos de sección. Se conservan los nombres de variable.
+const lora = Fraunces({
   subsets: ['latin'],
   variable: '--font-lora',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '900'],
 });
-const raleway = Raleway({
+const raleway = Bricolage_Grotesque({
   subsets: ['latin'],
   variable: '--font-raleway',
   display: 'swap',
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 export const metadata: Metadata = {

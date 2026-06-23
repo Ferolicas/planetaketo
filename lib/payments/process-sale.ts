@@ -5,6 +5,7 @@ import { createMagicLink } from '@/lib/downloads/magic-link';
 import { resend } from '@/lib/resend';
 import { getPurchaseEmailTemplate } from '@/lib/email/templates';
 import { PRODUCT_CONFIG } from '@/lib/product';
+import catalog from '@/data/catalog.json';
 
 const WHATSAPP_NUMBER = '+19176726696';
 const FROM_EMAIL = 'Planeta Keto <info@planetaketo.es>';
@@ -73,6 +74,8 @@ export interface FinalizeSaleOpts {
   externalCustomerId?: string | null;
   /** UUID de la sesión de analítica (si llegó como metadata) para marcar la venta. */
   sessionId?: string | null;
+  /** Slug del producto comprado (catálogo multi-producto). Si falta = keto por defecto. */
+  productSlug?: string | null;
 }
 
 export async function finalizeSale(
@@ -123,8 +126,8 @@ export async function finalizeSale(
   try {
     const payment = await queryOne<{ id: string }>(
       `INSERT INTO payments
-         (customer_id, stripe_payment_id, stripe_session_id, amount, currency, status, product_name, provider)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+         (customer_id, stripe_payment_id, stripe_session_id, amount, currency, status, product_name, provider, product_slug)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
       [
         customerId,
         opts.externalId,
@@ -134,6 +137,7 @@ export async function finalizeSale(
         opts.status,
         opts.productName,
         opts.provider,
+        opts.productSlug ?? null,
       ]
     );
     if (!payment) throw new Error('No se pudo registrar el pago');
@@ -158,11 +162,24 @@ export async function finalizeSale(
     }
   });
 
-  // Enlace mágico (libro servido por proxy desde Sanity en /api/download/[token])
+  // Enlace mágico (libro servido por proxy desde Sanity en /api/download/[token]).
+  // Con product_slug, la descarga sirve el PDF de ESE producto; sin él, el keto.
+  const pdfDisplayName = opts.productSlug
+    ? `${opts.productName}.pdf`
+    : PRODUCT_CONFIG.pdfFileName;
+  // Bundle = varios PDFs: sube el límite de descargas para que entren todos.
+  const bundle = opts.productSlug
+    ? (catalog.bundles as { slug: string; includes: string[] }[]).find((b) => b.slug === opts.productSlug)
+    : null;
+  const maxDl = bundle
+    ? (bundle.includes[0] === 'ALL' ? catalog.products.length : bundle.includes.length) * 2 + 4
+    : undefined;
   const { downloadUrl } = await createMagicLink(
     customerId,
     paymentId,
-    PRODUCT_CONFIG.pdfFileName
+    pdfDisplayName,
+    opts.productSlug ?? null,
+    maxDl
   );
   await query(`UPDATE payments SET magic_link_created = true WHERE id = $1`, [paymentId]);
 
@@ -172,7 +189,7 @@ export async function finalizeSale(
     const emailResult = await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
-      subject: '¡Gracias por tu compra! Tu Método Keto está listo 💚',
+      subject: '¡Gracias por tu compra! Tu libro está listo 💚',
       html: getPurchaseEmailTemplate({
         customerName: opts.name,
         downloadUrl,

@@ -108,3 +108,13 @@ html.js .reveal.is-visible {
 .container {
   @apply mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
 }
+
+/* CTA verde con efecto "push" suave: respira para llamar la atención. */
+@keyframes ctaPush {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+.cta-push { animation: ctaPush 2.6s ease-in-out infinite; will-change: transform; transition: background-color .15s ease; }
+.cta-push:hover { animation-play-state: paused; }
+.cta-push:active { transform: scale(0.96); }
+@media (prefers-reduced-motion: reduce) { .cta-push { animation: none; } }
