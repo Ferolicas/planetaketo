@@ -70,8 +70,10 @@ export default function Footer() {
           <p>© {year} Planeta Keto · Hecho con cariño para tu transformación</p>
           <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <Link href="/aviso-legal" className="hover:text-cta transition-colors">Aviso legal</Link>
+            <Link href="/terminos" className="hover:text-cta transition-colors">Términos</Link>
             <Link href="/privacidad" className="hover:text-cta transition-colors">Privacidad</Link>
             <Link href="/cookies" className="hover:text-cta transition-colors">Cookies</Link>
+            <Link href="/desistimiento" className="hover:text-cta transition-colors">Reembolsos</Link>
             <CookiePreferencesLink className="hover:text-cta transition-colors" />
           </nav>
         </div>
