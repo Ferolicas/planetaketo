@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { X, CheckCircle, ShieldCheck, Clock, AlertCircle } from 'lucide-react';
 import { useCheckoutRegion, regionDisplay } from '@/lib/hooks/useCheckoutRegion';
@@ -25,6 +26,10 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
   const { region, loading } = useCheckoutRegion(undefined, productSlug);
   const [status, setStatus] = useState<Status>('paying');
   const [message, setMessage] = useState('');
+  // El modal se renderiza por portal a <body>: así NO queda atrapado por ancestros
+  // con transform (botón con cta-push, tarjeta con hover:-translate-y). Solo cliente.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Reset al cerrar
   useEffect(() => {
@@ -45,7 +50,7 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const display = regionDisplay(region);
   const rawProvider = region?.provider ?? 'stripe';
@@ -56,9 +61,9 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
   // Colombia → Mercado Pago: el importe en COP es el precio local.
   const copAmount = provider === 'mercadopago' ? region?.prices.local.discount : undefined;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-0 sm:p-4">
-      <div className="bg-white w-full h-full sm:h-[92vh] sm:max-w-md sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+  return createPortal(
+    <div onClick={onClose} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-0 sm:p-4">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white w-full h-full sm:h-[92vh] sm:max-w-md sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         {/* Barra superior mínima: candado + cerrar (sin producto/precio) */}
         <div className="px-5 py-3 border-b border-gray-200 flex justify-between items-center shrink-0">
           <p className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
@@ -75,7 +80,7 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
         </div>
 
         {/* Cuerpo */}
-        <div className="flex-1 relative bg-white overflow-hidden">
+        <div className="flex-1 relative bg-white overflow-y-auto">
           {status === 'success' ? (
             <ResultState
               icon={<CheckCircle className="w-12 h-12 text-forest" />}
@@ -143,7 +148,8 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
