@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AvisoLegalPage() {
   return (
-    <LegalShell title="Aviso legal" updated="15 de junio de 2026">
+    <LegalShell title="Aviso legal" updated="23 de junio de 2026">
       <p>
         En cumplimiento de la Ley 34/2002, de Servicios de la Sociedad de la Información y de
         Comercio Electrónico (LSSI-CE), se facilita la siguiente información del titular de este
@@ -17,9 +17,9 @@ export default function AvisoLegalPage() {
 
       <h2>1. Titular del sitio web</h2>
       <ul>
-        <li><strong>Titular:</strong> [Completar: nombre o razón social]</li>
-        <li><strong>NIF/CIF:</strong> [Completar]</li>
-        <li><strong>Domicilio:</strong> [Completar]</li>
+        <li><strong>Titular:</strong> Ferney Elpidio Oliveros Casanova</li>
+        <li><strong>NIF:</strong> 60739837B</li>
+        <li><strong>Domicilio:</strong> Ciudad Real (España)</li>
         <li><strong>Correo:</strong> <a href="mailto:info@planetaketo.es">info@planetaketo.es</a></li>
         <li><strong>Sitio web:</strong> https://planetaketo.es</li>
       </ul>

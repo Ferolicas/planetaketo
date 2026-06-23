@@ -8,16 +8,19 @@ export const metadata: Metadata = {
 
 export default function PrivacidadPage() {
   return (
-    <LegalShell title="Política de privacidad" updated="22 de junio de 2026">
+    <LegalShell title="Política de privacidad" updated="23 de junio de 2026">
       <p>
         Esta política explica cómo se tratan tus datos personales conforme al Reglamento (UE)
-        2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD).
+        2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD). Si nos compras desde Latinoamérica, se
+        aplican además, según tu país, la Ley 1581 de 2012 (Colombia), la LFPDPPP (México) o la Ley
+        25.326 (Argentina), con derechos equivalentes.
       </p>
 
       <h2>1. Responsable del tratamiento</h2>
       <ul>
-        <li><strong>Responsable:</strong> [Completar: nombre o razón social]</li>
-        <li><strong>NIF/CIF:</strong> [Completar]</li>
+        <li><strong>Responsable:</strong> Ferney Elpidio Oliveros Casanova</li>
+        <li><strong>NIF:</strong> 60739837B</li>
+        <li><strong>Domicilio:</strong> Ciudad Real (España)</li>
         <li><strong>Contacto:</strong> <a href="mailto:info@planetaketo.es">info@planetaketo.es</a></li>
       </ul>
 
@@ -39,7 +42,6 @@ export default function PrivacidadPage() {
       <ul>
         <li><strong>Entregar el producto y dar soporte</strong> (ejecución del contrato).</li>
         <li><strong>Enviarte el enlace de descarga y comunicaciones del producto</strong> (ejecución del contrato).</li>
-        <li><strong>Newsletter y consejos</strong>, si te suscribes (consentimiento, revocable en cualquier momento).</li>
         <li><strong>Analítica propia de audiencia</strong> para mejorar la web (consentimiento, art. 6.1.a RGPD y art. 22.2 LSSI-CE; revocable en cualquier momento desde «Preferencias de cookies»).</li>
         <li><strong>Cumplir obligaciones legales</strong> (fiscales y contables).</li>
       </ul>
@@ -62,9 +64,9 @@ export default function PrivacidadPage() {
       <h2>5. Conservación</h2>
       <p>
         Conservamos tus datos mientras exista la relación y, después, durante los plazos legales
-        aplicables (por ejemplo, obligaciones fiscales). La suscripción a la newsletter se conserva
-        hasta que te des de baja. Los <strong>datos de analítica propia</strong> se conservan un máximo
-        de <strong>14 meses</strong> y se eliminan automáticamente después (minimización de datos).
+        aplicables (por ejemplo, obligaciones fiscales y contables). Los <strong>datos de analítica
+        propia</strong> se conservan un máximo de <strong>14 meses</strong> y se eliminan
+        automáticamente después (minimización de datos).
       </p>
 
       <h2>6. Tus derechos</h2>
@@ -73,6 +75,12 @@ export default function PrivacidadPage() {
         portabilidad escribiendo a <a href="mailto:info@planetaketo.es">info@planetaketo.es</a>.
         También puedes reclamar ante la Agencia Española de Protección de Datos (
         <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer">www.aepd.es</a>).
+      </p>
+      <p>
+        Si resides en Latinoamérica, puedes ejercer estos mismos derechos escribiendo al correo
+        anterior y, si lo necesitas, reclamar ante la autoridad de protección de datos de tu país
+        (por ejemplo, la Superintendencia de Industria y Comercio en Colombia, el INAI en México o la
+        Agencia de Acceso a la Información Pública en Argentina).
       </p>
     </LegalShell>
   );

@@ -147,6 +147,17 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
             />
           )}
         </div>
+
+        {/* Consentimiento de contenido digital: hace válida la excepción de desistimiento (UE). */}
+        {status === 'paying' && (
+          <div className="shrink-0 border-t border-gray-100 px-5 py-2.5 text-center text-[11px] leading-snug text-gray-400">
+            Al completar el pago aceptas los{' '}
+            <a href="/terminos" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">
+              términos
+            </a>{' '}
+            y consientes la descarga inmediata, perdiendo el derecho de desistimiento de contenido digital.
+          </div>
+        )}
       </div>
     </div>,
     document.body
