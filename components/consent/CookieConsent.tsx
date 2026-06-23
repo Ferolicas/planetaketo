@@ -27,7 +27,7 @@ export default function CookieConsent() {
           role="dialog"
           aria-modal="false"
           aria-label="Aviso de cookies"
-          className="fixed inset-x-0 bottom-0 z-[60] border-t border-forest/15 bg-white/98 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] backdrop-blur"
+          className="fixed inset-x-0 bottom-0 z-[60] border-t border-forest/15 bg-white shadow-[0_-10px_34px_rgba(0,0,0,0.2)]"
         >
           <div className="container mx-auto max-w-4xl px-4 py-5 sm:px-6">
             <div className="flex items-start gap-3">
