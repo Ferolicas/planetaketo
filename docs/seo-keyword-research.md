@@ -7,8 +7,9 @@
 El nicho keto en español mezcla 4 intenciones:
 - **Informacional / principiante:** "qué es la dieta keto", "keto para principiantes", "qué es la cetosis" → quieren entender y empezar.
 - **Cálculo / acción:** "calorías en keto", "cómo calcular macros", "cuántos carbohidratos al día" → quieren números y un método.
-- **Salud / ciencia:** "keto y colesterol", "keto y diabetes", "keto e hígado graso" → buscan evidencia y seguridad (YMYL: requiere E-E-A-T fuerte y citas reales).
 - **Receta / comida:** "pan keto sin harina", "postres keto sin azúcar", "snacks keto" → intención transaccional-blanda (quieren hacerlo).
+
+> **REGLA DURA DE CONTENIDO (orden de Ferney):** SOLO estilo de vida, comida y prevención. **NO se tocan temas de salud delicada / enfermedades** (diabetes, hipertensión, hígado graso, tiroides, colesterol y similares). Esos temas YMYL quedan FUERA del blog.
 
 ## 2. Competencia que rankea (y POR QUÉ)
 
@@ -81,14 +82,14 @@ El nicho keto en español mezcla 4 intenciones:
 | 18 | keto y rendimiento deportivo | `keto-rendimiento-deportivo` | Keto y rendimiento deportivo: qué dicen los estudios | Método Deportistas Keto |
 | 19 | recomposición corporal | `recomposicion-corporal` | Recomposición corporal: ganar músculo y perder grasa | Método Gym |
 
-### Cluster F — Salud / ciencia (YMYL, disclaimer fuerte) → **Método Keto + Guía**
+### Cluster F — Estilo de vida keto (SIN enfermedades) → **Método Keto / Recetarios**
 | # | Keyword | Slug | Title | Libro |
 |---|---|---|---|---|
-| 20 | keto y colesterol | `keto-y-colesterol` | Keto y colesterol: qué dice la evidencia | Método Keto |
-| 21 | keto y diabetes tipo 2 | `keto-diabetes-tipo-2` | Dieta keto y diabetes tipo 2: evidencia y precauciones | Método Keto |
-| 22 | keto e hígado graso | `keto-higado-graso` | Keto e hígado graso: qué dicen los estudios | Método Keto |
+| 20 | keto y alcohol | `keto-y-alcohol` | Alcohol en keto: qué puedes beber sin salir de cetosis | Bebidas y Postres Keto |
+| 21 | comer keto fuera de casa | `keto-fuera-de-casa` | Cómo comer keto fuera de casa y en restaurantes | Método Keto |
+| 22 | meal prep keto | `meal-prep-keto` | Meal prep keto: organiza tu semana de comidas | Comidas Rápidas Keto |
 | 23 | qué es la cetosis | `que-es-la-cetosis` | Qué es la cetosis y cómo saber si estás en ella | Método Keto |
-| 24 | keto y tiroides | `keto-y-tiroides` | Keto y tiroides: lo que conviene saber | Método Keto |
+| 24 | edulcorantes keto | `edulcorantes-keto` | Edulcorantes keto: cuáles usar sin salir de cetosis | Bebidas y Postres Keto |
 
 ### Cluster G — Recetas / comida → **Recetarios**
 | # | Keyword | Slug | Title | Libro |
