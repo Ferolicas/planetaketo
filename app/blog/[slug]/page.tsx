@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+import { Fragment } from 'react';
 import { ChevronRight, BookOpen } from 'lucide-react';
 import { getPostBySlug, getRelatedPosts, articleJsonLd, blogCategoryMeta } from '@/lib/blog';
 import JsonLd from '@/components/seo/JsonLd';
@@ -51,6 +52,14 @@ export default async function BlogArticle({ params }: Params) {
     ? new Date(p.publishedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
     : '';
 
+  // AdSense in-content: el artículo se parte por secciones (## ) y se intercala 1 anuncio
+  // tras la intro y cada ~2 secciones (máx 3 in-content + 1 final = ≤30% de la página).
+  const segments = p.content.split(/\n(?=## )/).map((s) => s.trim()).filter(Boolean);
+  const adAfter = new Set<number>();
+  for (let i = 0, n = 0; i < segments.length - 1 && n < 3; i++) {
+    if (i % 2 === 0) { adAfter.add(i); n++; }
+  }
+
   return (
     <div className="bg-cream">
       <JsonLd data={articleJsonLd(p)} />
@@ -77,10 +86,15 @@ export default async function BlogArticle({ params }: Params) {
           <img src={p.heroImage} alt={p.title} className="mt-6 w-full rounded-3xl shadow-card" />
         )}
 
-        <AdSlot />
-
-        <div className="prose prose-lg mt-6 max-w-none prose-headings:font-serif prose-headings:text-forest-dark prose-a:text-forest prose-strong:text-forest-dark">
-          <ReactMarkdown>{p.content}</ReactMarkdown>
+        <div className="mt-6">
+          {segments.map((seg, i) => (
+            <Fragment key={i}>
+              <div className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-forest-dark prose-a:text-forest prose-strong:text-forest-dark">
+                <ReactMarkdown>{seg}</ReactMarkdown>
+              </div>
+              {adAfter.has(i) && <AdSlot />}
+            </Fragment>
+          ))}
         </div>
 
         {p.sourceUrl && (
