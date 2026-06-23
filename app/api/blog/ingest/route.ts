@@ -19,6 +19,8 @@ const Schema = z.object({
   sourceUrl: z.string().url().optional().nullable(),
   heroImage: z.string().url().optional().nullable(),
   model: z.string().optional().nullable(),
+  // Slug SEO opcional: si llega, se usa ese (keyword exacta) en vez de derivarlo del título.
+  slug: z.string().min(2).max(80).optional().nullable(),
 });
 
 async function uniqueSlug(base: string): Promise<string> {
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
   const d = parsed.data;
-  const slug = await uniqueSlug(blogSlugify(d.title));
+  const slug = await uniqueSlug(blogSlugify(d.slug || d.title));
 
   const { rows } = await query<{ id: number }>(
     `INSERT INTO blog_posts
