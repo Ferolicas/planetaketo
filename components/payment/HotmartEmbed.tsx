@@ -19,17 +19,18 @@ import { getSid } from '@/lib/analytics/consent';
 
 const CHECKOUT_URL = process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL || '';
 
-export default function HotmartEmbed({ onSuccess }: { onSuccess: () => void }) {
+export default function HotmartEmbed({ onSuccess, productSlug = null }: { onSuccess: () => void; productSlug?: string | null }) {
   const [loaded, setLoaded] = useState(false);
 
-  // Añade ?sck=<pk_sid> y avisa al backend de que se inició el checkout.
+  // Añade ?sck=<pk_sid>[~slug] (Hotmart lo devuelve en el postback) y avisa al backend.
   const checkoutUrl = useMemo(() => {
     if (!CHECKOUT_URL) return '';
     const sid = getSid();
-    if (!sid) return CHECKOUT_URL;
+    const sck = [sid, productSlug].filter(Boolean).join('~');
+    if (!sck) return CHECKOUT_URL;
     const sep = CHECKOUT_URL.includes('?') ? '&' : '?';
-    return `${CHECKOUT_URL}${sep}sck=${encodeURIComponent(sid)}`;
-  }, []);
+    return `${CHECKOUT_URL}${sep}sck=${encodeURIComponent(sck)}`;
+  }, [productSlug]);
 
   useEffect(() => {
     const sid = getSid();
@@ -37,11 +38,11 @@ export default function HotmartEmbed({ onSuccess }: { onSuccess: () => void }) {
       fetch('/api/checkout/hotmart/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: sid }),
+        body: JSON.stringify({ sessionId: sid, productSlug: productSlug ?? undefined }),
         keepalive: true,
       }).catch(() => {});
     }
-  }, []);
+  }, [productSlug]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {

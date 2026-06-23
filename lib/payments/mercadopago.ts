@@ -80,6 +80,12 @@ export async function finalizeMpPayment(payment: MpPayment): Promise<ProcessSale
 
   const sessionId =
     typeof payment.metadata?.session_uuid === 'string' ? payment.metadata.session_uuid : null;
+  const productSlug =
+    typeof payment.metadata?.product_slug === 'string' ? payment.metadata.product_slug : null;
+  const productName =
+    typeof payment.metadata?.product_name === 'string'
+      ? payment.metadata.product_name
+      : PRODUCT_CONFIG.name;
 
   return finalizeSale({
     provider: 'mercadopago',
@@ -91,8 +97,9 @@ export async function finalizeMpPayment(payment: MpPayment): Promise<ProcessSale
     amount: payment.transaction_amount ?? 0,
     currency: (payment.currency_id ?? 'COP').toLowerCase(),
     status: 'paid',
-    productName: PRODUCT_CONFIG.name,
+    productName,
     externalCustomerId: null,
     sessionId,
+    productSlug,
   });
 }

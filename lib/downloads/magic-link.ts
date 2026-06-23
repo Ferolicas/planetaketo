@@ -12,6 +12,7 @@ const MAX_DOWNLOADS = 2;
 export interface DownloadLinkRow {
   id: string;
   file_name: string | null;
+  product_slug: string | null;
   download_count: number;
   max_downloads: number;
   expires_at: string | null;
@@ -20,16 +21,18 @@ export interface DownloadLinkRow {
 export async function createMagicLink(
   customerId: string,
   paymentId: string,
-  fileName: string
+  fileName: string,
+  productSlug: string | null = null,
+  maxDownloads: number = MAX_DOWNLOADS
 ): Promise<{ token: string; downloadUrl: string }> {
   const token = crypto.randomBytes(32).toString('hex');
 
   const row = await queryOne<{ token: string }>(
     `INSERT INTO download_links
-        (customer_id, payment_id, token, file_name, download_count, max_downloads, expires_at)
-     VALUES ($1, $2, $3, $4, 0, $5, now() + interval '30 days')
+        (customer_id, payment_id, token, file_name, product_slug, download_count, max_downloads, expires_at)
+     VALUES ($1, $2, $3, $4, $5, 0, $6, now() + interval '30 days')
      RETURNING token`,
-    [customerId, paymentId, token, fileName, MAX_DOWNLOADS]
+    [customerId, paymentId, token, fileName, productSlug, maxDownloads]
   );
 
   if (!row) throw new Error('No se pudo crear el enlace de descarga');
@@ -43,7 +46,7 @@ export async function getDownloadLink(
   token: string
 ): Promise<DownloadLinkRow | null> {
   return queryOne<DownloadLinkRow>(
-    `SELECT id, file_name, download_count, max_downloads, expires_at
+    `SELECT id, file_name, product_slug, download_count, max_downloads, expires_at
      FROM download_links WHERE token = $1`,
     [token]
   );

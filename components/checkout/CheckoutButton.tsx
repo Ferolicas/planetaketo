@@ -9,6 +9,8 @@ interface CheckoutButtonProps {
   /** Clave del botón para la analítica propia (data-cta). El clic lo registra el
    *  tracker mediante un listener delegado, SOLO si hay consentimiento. */
   cta?: string;
+  /** Slug del producto/bundle del catálogo. Si falta = método keto. */
+  productSlug?: string | null;
 }
 
 /**
@@ -16,7 +18,7 @@ interface CheckoutButtonProps {
  * y embebe el checkout adecuado (Stripe para el mundo, Mercado Pago para
  * Colombia) sin salir del sitio.
  */
-export default function CheckoutButton({ children, className, cta }: CheckoutButtonProps) {
+export default function CheckoutButton({ children, className, cta, productSlug = null }: CheckoutButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -25,7 +27,7 @@ export default function CheckoutButton({ children, className, cta }: CheckoutBut
         {children}
       </button>
 
-      <PaymentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <PaymentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} productSlug={productSlug} />
     </>
   );
 }

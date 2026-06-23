@@ -11,11 +11,19 @@ import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur } from '@/lib/payments/fx';
 import { markCheckoutStarted } from '@/lib/analytics/session-link';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import catalog from '@/data/catalog.json';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Busca un producto o bundle del catálogo por slug → precio EUR + título.
+function findCatalogItem(slug: string): { slug: string; title: string; price: number } | null {
+  const all = [...(catalog.products as { slug: string; title: string; price: number }[]),
+    ...(catalog.bundles as { slug: string; title: string; price: number }[])];
+  return all.find((x) => x.slug === slug) ?? null;
+}
 
 // ============================================================
 // Stripe Payment Element — crea un PaymentIntent en la MONEDA LOCAL del visitante
@@ -35,23 +43,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'not_configured' }, { status: 500 });
   }
 
-  // UUID de la visita (analítica) para enlazar la venta. Opcional.
+  // UUID de la visita (analítica) + slug del producto. Opcionales.
   let sessionId: string | null = null;
+  let productSlug: string | null = null;
   try {
-    const body = (await req.json()) as { sessionId?: unknown };
+    const body = (await req.json()) as { sessionId?: unknown; productSlug?: unknown };
     if (typeof body?.sessionId === 'string' && UUID_RE.test(body.sessionId)) {
       sessionId = body.sessionId;
+    }
+    if (typeof body?.productSlug === 'string' && /^[a-z0-9-]+$/.test(body.productSlug)) {
+      productSlug = body.productSlug;
     }
   } catch {
     /* sin body o JSON inválido: el checkout sigue sin enlace */
   }
 
   try {
-    // Precio base en EUR
-    const row = await queryOne<{ discount_price: string | number | null }>(
-      `SELECT discount_price FROM "homeContent" WHERE id = 'default'`
-    );
-    const eurPrice = Number(row?.discount_price ?? 10);
+    // Precio base en EUR. Si llega un productSlug del catálogo, ese precio y nombre;
+    // si no, el método keto por defecto (precio de "homeContent").
+    let eurPrice: number;
+    let productName = PRODUCT_CONFIG.name;
+    let resolvedSlug: string | null = null;
+    const item = productSlug ? findCatalogItem(productSlug) : null;
+    if (item) {
+      eurPrice = item.price;
+      productName = item.title;
+      resolvedSlug = item.slug;
+    } else {
+      const row = await queryOne<{ discount_price: string | number | null }>(
+        `SELECT discount_price FROM "homeContent" WHERE id = 'default'`
+      );
+      eurPrice = Number(row?.discount_price ?? 10);
+    }
 
     // Moneda local del visitante (Colombia no llega aquí: va por Mercado Pago)
     const geo = await getGeoFromRequest(req);
@@ -79,8 +102,9 @@ export async function POST(req: NextRequest) {
       currency: finalCurrency.toLowerCase(),
       automatic_payment_methods: { enabled: true },
       metadata: {
-        productName: PRODUCT_CONFIG.name,
+        productName,
         presentment_currency: finalCurrency,
+        ...(resolvedSlug ? { product_slug: resolvedSlug } : {}),
         ...(sessionId ? { session_uuid: sessionId } : {}),
       },
     });

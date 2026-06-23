@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
       productName: sale.productName,
       externalCustomerId: null,
       sessionId: sale.sessionId,
+      productSlug: sale.productSlug,
     });
 
     return NextResponse.json({

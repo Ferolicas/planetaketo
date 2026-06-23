@@ -13,14 +13,16 @@ const HotmartEmbed = dynamic(() => import('./HotmartEmbed'), { ssr: false });
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Slug del producto del catálogo (multi-producto). Si falta = método keto. */
+  productSlug?: string | null;
 }
 
 type Status = 'paying' | 'success' | 'pending' | 'error';
 
-export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose, productSlug = null }: PaymentModalProps) {
   // Detección de región 100% automática (sin switch manual): Colombia → Mercado
-  // Pago; resto → Stripe.
-  const { region, loading } = useCheckoutRegion();
+  // Pago; resto → Stripe. Los precios son los del producto si llega productSlug.
+  const { region, loading } = useCheckoutRegion(undefined, productSlug);
   const [status, setStatus] = useState<Status>('paying');
   const [message, setMessage] = useState('');
 
@@ -115,6 +117,7 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
           ) : provider === 'mercadopago' && copAmount ? (
             <MercadoPagoBrick
               amountCop={copAmount}
+              productSlug={productSlug}
               onSuccess={() => setStatus('success')}
               onPending={(m) => {
                 setMessage(m);
@@ -126,10 +129,11 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
               }}
             />
           ) : provider === 'hotmart' ? (
-            <HotmartEmbed onSuccess={() => setStatus('success')} />
+            <HotmartEmbed productSlug={productSlug} onSuccess={() => setStatus('success')} />
           ) : (
             <StripeEmbedded
               amountLabel={display.fmt(display.discount)}
+              productSlug={productSlug}
               onSuccess={() => setStatus('success')}
               onFailure={(m) => {
                 setMessage(m);

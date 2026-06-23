@@ -32,11 +32,12 @@ const appearance: Appearance = {
 
 interface Props {
   amountLabel: string;
+  productSlug?: string | null;
   onSuccess: () => void;
   onFailure: (msg: string) => void;
 }
 
-export default function StripeEmbedded({ amountLabel, onSuccess, onFailure }: Props) {
+export default function StripeEmbedded({ amountLabel, productSlug = null, onSuccess, onFailure }: Props) {
   const [clientSecret, setClientSecret] = useState('');
   const [unavailable, setUnavailable] = useState(false);
 
@@ -49,7 +50,7 @@ export default function StripeEmbedded({ amountLabel, onSuccess, onFailure }: Pr
     fetch('/api/checkout/stripe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId: getSid() }), // enlaza la venta con la visita
+      body: JSON.stringify({ sessionId: getSid(), productSlug }), // enlaza venta + producto
     })
       .then((r) => r.json())
       .then((d) => {
@@ -61,7 +62,7 @@ export default function StripeEmbedded({ amountLabel, onSuccess, onFailure }: Pr
     return () => {
       alive = false;
     };
-  }, []);
+  }, [productSlug]);
 
   if (unavailable) {
     return (

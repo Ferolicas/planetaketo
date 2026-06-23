@@ -27,12 +27,13 @@ function ensureMpInit(): boolean {
 
 interface Props {
   amountCop: number;
+  productSlug?: string | null;
   onSuccess: () => void;
   onPending: (msg: string) => void;
   onFailure: (msg: string) => void;
 }
 
-export default function MercadoPagoBrick({ amountCop, onSuccess, onPending, onFailure }: Props) {
+export default function MercadoPagoBrick({ amountCop, productSlug = null, onSuccess, onPending, onFailure }: Props) {
   const [available, setAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function MercadoPagoBrick({ amountCop, onSuccess, onPending, onFa
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             // session_uuid enlaza la venta con la visita (analítica).
-            body: JSON.stringify({ ...formData, session_uuid: getSid() ?? undefined }),
+            body: JSON.stringify({ ...formData, session_uuid: getSid() ?? undefined, productSlug: productSlug ?? undefined }),
           });
           const data = await res.json();
 

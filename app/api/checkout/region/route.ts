@@ -3,10 +3,17 @@ import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur, convertEurToCop } from '@/lib/payments/fx';
 import { isLatamCountry, hotmartSpread } from '@/lib/payments/country-currency';
+import catalog from '@/data/catalog.json';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+function findCatalogItem(slug: string): { slug: string; price: number; regular: number } | null {
+  const all = [...(catalog.products as { slug: string; price: number; regular: number }[]),
+    ...(catalog.bundles as { slug: string; price: number; regular: number }[])];
+  return all.find((x) => x.slug === slug) ?? null;
+}
 
 // ============================================================
 // Región de cobro del visitante: pasarela + precios en su MONEDA LOCAL.
@@ -56,25 +63,36 @@ export async function GET(req: NextRequest) {
       ? 'hotmart'
       : 'stripe';
 
-  // 2) Precios base en EUR (fuente de verdad)
+  // 2) Precios base en EUR (fuente de verdad). Si llega ?slug= de un producto del
+  // catálogo, esos precios; si no, el método keto por defecto (tabla homeContent).
   const num = (v: unknown, d: number) => (v === null || v === undefined ? d : Number(v));
+  const slug = req.nextUrl.searchParams.get('slug');
+  const item = slug ? findCatalogItem(slug) : null;
   let eur = { ...DEFAULTS };
-  try {
-    const row = await queryOne<{
-      regular_price: string | number | null;
-      discount_price: string | number | null;
-      discount_percentage: string | number | null;
-    }>(
-      `SELECT regular_price, discount_price, discount_percentage
-       FROM "homeContent" WHERE id = 'default'`
-    );
+  if (item) {
     eur = {
-      regular: num(row?.regular_price, DEFAULTS.regular),
-      discount: num(row?.discount_price, DEFAULTS.discount),
-      percentage: num(row?.discount_percentage, DEFAULTS.percentage),
+      regular: item.regular,
+      discount: item.price,
+      percentage: Math.round((1 - item.price / item.regular) * 100),
     };
-  } catch (error) {
-    console.error('[region] fallo leyendo precios, uso defaults:', error);
+  } else {
+    try {
+      const row = await queryOne<{
+        regular_price: string | number | null;
+        discount_price: string | number | null;
+        discount_percentage: string | number | null;
+      }>(
+        `SELECT regular_price, discount_price, discount_percentage
+         FROM "homeContent" WHERE id = 'default'`
+      );
+      eur = {
+        regular: num(row?.regular_price, DEFAULTS.regular),
+        discount: num(row?.discount_price, DEFAULTS.discount),
+        percentage: num(row?.discount_percentage, DEFAULTS.percentage),
+      };
+    } catch (error) {
+      console.error('[region] fallo leyendo precios, uso defaults:', error);
+    }
   }
 
   // 3) Precios en la moneda local

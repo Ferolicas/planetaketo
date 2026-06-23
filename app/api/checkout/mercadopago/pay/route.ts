@@ -13,11 +13,18 @@ import { PRODUCT_CONFIG } from '@/lib/product';
 import { getClientIp } from '@/lib/geo';
 import { markCheckoutStarted } from '@/lib/analytics/session-link';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import catalog from '@/data/catalog.json';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function findCatalogItem(slug: string): { slug: string; title: string; price: number } | null {
+  const all = [...(catalog.products as { slug: string; title: string; price: number }[]),
+    ...(catalog.bundles as { slug: string; title: string; price: number }[])];
+  return all.find((x) => x.slug === slug) ?? null;
+}
 
 // ============================================================
 // Crea el pago de Mercado Pago (Colombia) a partir del formData del Payment Brick.
@@ -66,6 +73,15 @@ export async function POST(req: NextRequest) {
       : null;
   delete form.session_uuid;
 
+  // Slug del producto del catálogo (multi-producto). Se quita del form de MP.
+  const productSlug =
+    typeof form.productSlug === 'string' && /^[a-z0-9-]+$/.test(form.productSlug)
+      ? form.productSlug
+      : null;
+  delete form.productSlug;
+  const item = productSlug ? findCatalogItem(productSlug) : null;
+  const productName = item ? item.title : PRODUCT_CONFIG.name;
+
   const formPayer = (form.payer ?? {}) as BrickPayer;
   const email = formPayer.email?.trim();
 
@@ -81,11 +97,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'missing_email' }, { status: 400 });
   }
 
-  // Precio EUR → COP en vivo (fuente de verdad: BD; importe recalculado en servidor).
-  const row = await queryOne<{ discount_price: string | number | null }>(
-    `SELECT discount_price FROM "homeContent" WHERE id = 'default'`
-  );
-  const eur = Number(row?.discount_price ?? 10);
+  // Precio EUR → COP en vivo. Del catálogo si hay producto; si no, keto (BD).
+  let eur: number;
+  if (item) {
+    eur = item.price;
+  } else {
+    const row = await queryOne<{ discount_price: string | number | null }>(
+      `SELECT discount_price FROM "homeContent" WHERE id = 'default'`
+    );
+    eur = Number(row?.discount_price ?? 10);
+  }
   const { cop } = await convertEurToCop(eur);
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin;
@@ -105,12 +126,13 @@ export async function POST(req: NextRequest) {
       {
         ...form,
         transaction_amount: cop,
-        description: PRODUCT_CONFIG.name,
+        description: productName,
         external_reference: orderId,
         notification_url: `${origin}/api/mercadopago/webhook`,
         callback_url: `${origin}/gracias`, // PSE/Efecty redirigen al banco y vuelven aquí
         metadata: {
-          product_name: PRODUCT_CONFIG.name,
+          product_name: productName,
+          ...(item ? { product_slug: item.slug } : {}),
           ...(sessionId ? { session_uuid: sessionId } : {}),
         },
         additional_info: {

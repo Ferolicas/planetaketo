@@ -1,8 +1,5 @@
 import type { Metadata } from 'next';
-import HeroSales from '@/components/home/HeroSales';
-import WhyChooseUs from '@/components/home/WhyChooseUs';
-import SocialProof from '@/components/home/SocialProof';
-import FinalCTA from '@/components/home/FinalCTA';
+import Landing from '@/components/home/Landing';
 import JsonLd from '@/components/seo/JsonLd';
 import { bookSchema } from '@/lib/seo';
 
@@ -15,11 +12,9 @@ export default function HomePage() {
   return (
     <>
       <JsonLd data={bookSchema} />
-      {/* Hero siempre visible; las secciones de abajo revelan sus tarjetas al scroll */}
-      <HeroSales />
-      <WhyChooseUs />
-      <SocialProof />
-      <FinalCTA />
+      {/* La home ES el catálogo: landing mobile-first con todos los productos,
+          cada tarjeta con su contenido y checkout directo (sin paso intermedio). */}
+      <Landing />
     </>
   );
 }

@@ -38,29 +38,32 @@ export const REGION_FALLBACK: CheckoutRegion = {
   },
 };
 
-export async function fetchRegion(force?: 'co' | 'world'): Promise<CheckoutRegion> {
-  const url = '/api/checkout/region' + (force ? `?force=${force}` : '');
+export async function fetchRegion(force?: 'co' | 'world', slug?: string | null): Promise<CheckoutRegion> {
+  const qs = new URLSearchParams();
+  if (force) qs.set('force', force);
+  if (slug) qs.set('slug', slug);
+  const url = '/api/checkout/region' + (qs.toString() ? `?${qs.toString()}` : '');
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('region_fetch_failed');
   return (await res.json()) as CheckoutRegion;
 }
 
-/** Hook: detecta la región una vez (o cuando cambia `force`). */
-export function useCheckoutRegion(force?: 'co' | 'world') {
+/** Hook: detecta la región (precios del producto `slug` si se pasa, o keto). */
+export function useCheckoutRegion(force?: 'co' | 'world', slug?: string | null) {
   const [region, setRegion] = useState<CheckoutRegion | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetchRegion(force)
+    fetchRegion(force, slug)
       .then((r) => alive && setRegion(r))
       .catch(() => alive && setRegion(REGION_FALLBACK))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
     };
-  }, [force]);
+  }, [force, slug]);
 
   return { region, loading };
 }

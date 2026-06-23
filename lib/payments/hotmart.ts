@@ -45,6 +45,8 @@ export interface HotmartSale {
   eventId: string | null;
   /** UUID de la visita propagado por el parámetro `sck` (si llegó válido). */
   sessionId: string | null;
+  /** Slug del producto del catálogo, propagado en el `sck` tras `~`. */
+  productSlug: string | null;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -87,7 +89,11 @@ export function parseHotmartSale(
   const tracking = purchase.tracking ?? {};
   const sckRaw =
     tracking.source_sck ?? tracking.sck ?? purchase.sck ?? data.sck ?? null;
-  const sessionId = typeof sckRaw === 'string' && UUID_RE.test(sckRaw) ? sckRaw : null;
+  // sck = "<uuid-visita>~<slug-producto>" (o solo el uuid). Lo separamos.
+  const sckStr = typeof sckRaw === 'string' ? sckRaw : '';
+  const [sckSid, sckSlug] = sckStr.split('~');
+  const sessionId = sckSid && UUID_RE.test(sckSid) ? sckSid : null;
+  const productSlug = sckSlug && /^[a-z0-9-]+$/.test(sckSlug) ? sckSlug : null;
 
   const extracted = {
     email: String(buyer.email ?? '').trim(),
@@ -112,6 +118,7 @@ export function parseHotmartSale(
       productName: String(product.name ?? PRODUCT_CONFIG.name),
       eventId: payload?.id ? String(payload.id) : null,
       sessionId,
+      productSlug,
     },
   };
 }
