@@ -1,48 +1,62 @@
-# Estado de los 30 blogs SEO — para revisar y pushear
+# Estado de los 30 blogs SEO — LISTOS para revisar y pushear
 
-> Sesión nocturna. **Regla aplicada:** solo estilo de vida/comida/prevención. NADA de enfermedades (diabetes, hipertensión, hígado, tiroides, colesterol). Cada blog hecho a mano, único, con **fuente real verificada** (cero citas inventadas), CTA al libro relevante, FAQ y anti-canibalización.
+> **✅ LOS 30 BLOGS ESTÁN ESCRITOS Y COMMITEADOS** (sin push). Cada uno hecho a mano, único, 1.500+ palabras, con **fuente real verificada** (Harvard Nutrition Source, Mayo Clinic, CDC, PMC — cero citas inventadas), CTA al libro relevante, FAQ y anti-canibalización.
+> **Regla aplicada:** solo estilo de vida/comida/prevención. NADA de enfermedades (diabetes, hipertensión, hígado, tiroides, colesterol).
 
-## Qué hay hecho (commiteado, sin push)
+## Infraestructura (commits locales)
+- `app/api/blog/ingest/route.ts` → acepta `slug` propio (SEO) además del derivado del título.
+- `scripts/blog/ingest-drafts.mjs` → ingesta los `.md` de `content/blog/` como **borradores** (status=draft).
+- `docs/seo-keyword-research.md` → investigación + análisis competencia + mapa de 30 keywords.
 
-**Infraestructura**
-- `app/api/blog/ingest/route.ts` → ahora acepta `slug` propio (SEO) además del derivado del título.
-- `scripts/blog/ingest-drafts.mjs` → ingesta los `.md` de `content/blog/` como **borradores**.
-- `docs/seo-keyword-research.md` → investigación + análisis competencia + **mapa de 30 keywords** (actualizado: temas de enfermedad reemplazados por estilo de vida).
-
-**8 blogs escritos (de 30)** — en `content/blog/`, 1.500+ palabras cada uno:
-| # | Slug | Fuente verificada | Libro |
+## Los 30 blogs (en `content/blog/`)
+| Slug | Keyword | Libro | Fuente |
 |---|---|---|---|
-| 1 | `calorias-en-keto` | Mayo Clinic + CDC | Método Keto |
-| 2 | `que-es-dieta-keto` | Harvard Nutrition Source | Método Keto |
-| 3 | `que-es-la-cetosis` | Harvard Nutrition Source | Método Keto |
-| 4 | `deficit-calorico-que-es` | Mayo Clinic + CDC | Método Bajo en Calorías |
-| 5 | `keto-ganar-musculo` | PMC (músculo/proteína) | Método Gym Keto |
-| 6 | `keto-para-principiantes` | Harvard Nutrition Source | Método Keto |
-| 7 | `low-carb-vs-keto` | Harvard Nutrition Source | Método Low Carb |
-| 8 | `proteina-en-keto` | PMC + Harvard | Método Gym Keto |
-
-## Por qué 8 y no 30 (honestidad)
-Cada blog se redacta a mano con su fuente verificada por WebFetch, como pediste ("calidad por encima de velocidad, sin moldes"). Eso, hecho bien, **no entra en una sola sesión** (límite de contexto). Quedan **22 por escribir**, todos ya planificados (keyword + slug + título + libro) en `seo-keyword-research.md`. Se continúan en la siguiente sesión con el mismo patrón, o tu n8n los va sumando 1/día.
-
-## Los 22 que faltan (del mapa, ya planificados)
-`alimentos-keto-permitidos`, `errores-dieta-keto`, `gripe-keto`, `calcular-macros-keto`, `contar-calorias-keto`, `cuanto-peso-pierde-keto`, `estancamiento-keto`, `ayuno-intermitente-keto`, `dieta-baja-carbohidratos`, `carbohidratos-al-dia-adelgazar`, `keto-rendimiento-deportivo`, `recomposicion-corporal`, `keto-y-alcohol`, `keto-fuera-de-casa`, `meal-prep-keto`, `edulcorantes-keto`, `pan-keto-sin-harina`, `postres-keto-sin-azucar`, `desayunos-keto`, `snacks-keto`, `electrolitos-keto`, `suplementos-keto`.
-
-## Code TODO (mejoras SEO del render — commits locales, aún no hechas)
-Para que los blogs rendericen "SEO perfecto" al publicarse, falta (no bloquea publicar):
-- Schema `BreadcrumbList` + `FAQPage` en `app/blog/[slug]/page.tsx`.
-- AdSense **in-content distribuido** (hoy 2 bloques fijos; objetivo: tras intro + cada 4-5 párrafos + final, ≤30%).
-- Banner del **libro relevante por post** (hoy `BookBanner` es genérico; el CTA al libro ya va dentro del texto de cada blog).
-- Autor **Ferney (Person) + bio** en el schema y la cabecera (E-E-A-T).
-- Imágenes hero on-domain (webp, nombre con keyword) — los `.md` van sin `heroImage` por ahora.
+| `que-es-dieta-keto` | qué es la dieta keto | Método Keto | Harvard |
+| `keto-para-principiantes` | keto para principiantes | Método Keto | Harvard |
+| `que-es-la-cetosis` | qué es la cetosis | Método Keto | Harvard |
+| `gripe-keto` | gripe keto | Método Keto | Harvard |
+| `alimentos-keto-permitidos` | alimentos keto permitidos | Recetario Keto | Harvard |
+| `errores-dieta-keto` | errores en keto | Método Keto | Harvard |
+| `calorias-en-keto` | calorías en keto | Método Keto | Mayo + CDC |
+| `calcular-macros-keto` | calcular macros keto | Método Keto | Harvard |
+| `deficit-calorico-que-es` | déficit calórico | Método Bajo en Cal | Mayo + CDC |
+| `contar-calorias-keto` | contar calorías en keto | Método Bajo en Cal | Mayo |
+| `cuanto-peso-pierde-keto` | cuánto peso se pierde en keto | Método Keto | CDC |
+| `estancamiento-keto` | estancamiento en keto | Método Keto | CDC |
+| `ayuno-intermitente-keto` | ayuno intermitente y keto | Método Keto | Harvard |
+| `low-carb-vs-keto` | low carb vs keto | Método Low Carb | Harvard |
+| `dieta-baja-carbohidratos` | dieta baja en carbohidratos | Método Low Carb | Harvard |
+| `carbohidratos-al-dia-adelgazar` | carbohidratos al día para adelgazar | Método Low Carb | Harvard |
+| `keto-ganar-musculo` | keto ganar músculo | Método Gym Keto | PMC |
+| `proteina-en-keto` | proteína en keto | Método Gym Keto | PMC + Harvard |
+| `keto-rendimiento-deportivo` | keto y rendimiento deportivo | Método Deportistas Keto | Harvard |
+| `recomposicion-corporal` | recomposición corporal | Método Gym | PMC |
+| `keto-y-alcohol` | keto y alcohol | Bebidas y Postres Keto | Harvard |
+| `keto-fuera-de-casa` | comer keto fuera de casa | Método Keto | Harvard |
+| `meal-prep-keto` | meal prep keto | Comidas Rápidas Keto | Harvard |
+| `edulcorantes-keto` | edulcorantes keto | Bebidas y Postres Keto | Harvard |
+| `pan-keto-sin-harina` | pan keto sin harina | Recetario Keto | Harvard |
+| `postres-keto-sin-azucar` | postres keto sin azúcar | Bebidas y Postres Keto | Harvard |
+| `desayunos-keto` | qué desayunar en keto | Recetario Keto | Harvard |
+| `snacks-keto` | snacks keto | Comidas Rápidas Keto | Harvard |
+| `electrolitos-keto` | electrolitos en keto | Guía Suplementos | Harvard |
+| `suplementos-keto` | suplementos keto | Guía Suplementos | Harvard |
 
 ## Cómo publicarlos (cuando despiertes)
-1. Revisa los 8 `.md` en `content/blog/` (y el mapa en `seo-keyword-research.md`).
-2. Si te cuadra: **push** de los commits del blog (`6db21a1`, el de +2, `docs(seo)`, el de slug).
-3. En tu equipo o el VPS:
+1. Revisa los `.md` en `content/blog/` (y el mapa en `seo-keyword-research.md`).
+2. **Push** de los commits del blog (van del `3fb40cc` en adelante; `git log --oneline origin/main..HEAD`).
+3. En tu equipo o el VPS, con el endpoint ya desplegado:
    ```
    BLOG_INGEST_SECRET=<tu secreto> node scripts/blog/ingest-drafts.mjs https://planetaketo.es
    ```
    → entran como **borradores** en `/admin`. Revisas y publicas los que quieras.
+
+## Code TODO opcional (mejoras de render SEO — aún NO hechas, no bloquean publicar)
+- Schema `BreadcrumbList` + `FAQPage` en `app/blog/[slug]/page.tsx`.
+- AdSense **in-content distribuido** (hoy 2 bloques fijos → tras intro + cada 4-5 párrafos + final, ≤30%).
+- Banner del libro relevante por post (el CTA al libro ya va dentro del texto de cada blog).
+- Autor **Ferney (Person) + bio** en el schema (E-E-A-T).
+- Imágenes hero on-domain (webp, nombre con keyword) — los `.md` van sin `heroImage`.
 
 ## Importante
 - **Nada se pusheó ni se publicó.** Todo en commits locales para tu revisión.
