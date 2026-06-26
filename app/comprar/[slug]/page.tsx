@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import catalog from '@/data/catalog.json';
 import CheckoutButton from '@/components/checkout/CheckoutButton';
+import { formatPrice } from '@/lib/utils';
 
 type Item = {
   id: string; slug: string; title: string; price: number; regular: number;
@@ -57,8 +58,8 @@ export default async function ComprarPage({ params }: { params: Promise<{ slug: 
             )}
 
             <div className="mt-5 flex items-baseline gap-3">
-              <span className="text-[#2d4a3e] font-extrabold text-4xl">{item.price}€</span>
-              <span className="text-[#9aa39a] line-through text-lg">{item.regular}€</span>
+              <span className="text-[#2d4a3e] font-extrabold text-4xl">{formatPrice(item.price)}</span>
+              <span className="text-[#9aa39a] line-through text-lg">{formatPrice(item.regular)}</span>
               <span className="text-[#c97b5a] font-bold text-sm bg-[#f6e4dc] rounded-full px-2.5 py-1">-{pct(item.price, item.regular)}%</span>
             </div>
 
@@ -67,7 +68,7 @@ export default async function ComprarPage({ params }: { params: Promise<{ slug: 
               cta={`comprar:${item.slug}`}
               className="mt-6 w-full block text-center bg-[#2d4a3e] hover:bg-[#26412f] text-[#faf6ef] font-bold rounded-xl py-4 text-base transition-colors cursor-pointer"
             >
-              Comprar ahora · {item.price}€
+              Comprar ahora · {formatPrice(item.price)}
             </CheckoutButton>
 
             <p className="text-center text-[#8a7c63] text-xs mt-4">Pago seguro · Entrega inmediata por email · Pago único</p>
