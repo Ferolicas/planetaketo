@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import catalog from '@/data/catalog.json';
 import CheckoutButton from '@/components/checkout/CheckoutButton';
+import { formatPrice } from '@/lib/utils';
 
 type Product = {
   id: string; slug: string; title: string; for: string;
@@ -126,8 +127,8 @@ function Bullets({ items }: { items: string[] }) {
 function PriceRow({ price, regular }: { price: number; regular: number }) {
   return (
     <div className="flex items-baseline gap-2.5 font-sans">
-      <span className="text-[#2d4a3e] font-extrabold text-[30px] leading-none tracking-[-0.01em]">{price}€</span>
-      <span className="text-[#9aa39a] line-through text-lg">{regular}€</span>
+      <span className="text-[#2d4a3e] font-extrabold text-[30px] leading-none tracking-[-0.01em]">{formatPrice(price)}</span>
+      <span className="text-[#9aa39a] line-through text-lg">{formatPrice(regular)}</span>
       <span className="text-[#c97b5a] font-bold text-xs bg-[#f6e4dc] rounded-full px-2 py-0.5">-{pct(price, regular)}%</span>
     </div>
   );
@@ -157,7 +158,7 @@ function ProductCard({ p, featured = false }: { p: Product; featured?: boolean }
           cta={`comprar:${p.slug}`}
           className={`mt-4 w-full py-3.5 text-[15px] ${CTA}`}
         >
-          Lo quiero · {p.price}€ <Arrow />
+          Lo quiero · {formatPrice(p.price)} <Arrow />
         </CheckoutButton>
         <p className="text-center text-[#8a7c63] text-[11px] mt-2.5">Descarga inmediata · pago único · acceso de por vida</p>
       </div>
