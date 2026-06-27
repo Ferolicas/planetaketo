@@ -11,6 +11,20 @@ const WHATSAPP_NUMBER = '+19176726696';
 const FROM_EMAIL = 'Planeta Keto <info@planetaketo.es>';
 const KETOSCAN_DEFAULT_PASSWORD = 'Cliente1234*';
 
+/** Nombre + resumen ("qué vas a lograr") del producto/bundle, desde el catálogo. */
+function resolveProductBlurb(
+  slug: string | null | undefined,
+  fallbackName: string
+): { name: string; summary: string } {
+  const all: Array<{ slug: string; title: string; for?: string; note?: string }> = [
+    ...(catalog.products as Array<{ slug: string; title: string; for?: string }>),
+    ...(catalog.bundles as Array<{ slug: string; title: string; note?: string }>),
+  ];
+  const item = slug ? all.find((p) => p.slug === slug) : null;
+  if (!item) return { name: fallbackName, summary: '' };
+  return { name: item.title, summary: item.for || item.note || '' };
+}
+
 export type ProcessSaleResult =
   | { status: 'created'; paymentId: string; emailSent: boolean }
   | { status: 'already_processed'; paymentId: string }
@@ -186,12 +200,15 @@ export async function finalizeSale(
   // Email de compra (lo enviamos NOSOTROS, no la pasarela)
   let emailSent = false;
   try {
+    const blurb = resolveProductBlurb(opts.productSlug, opts.productName);
     const emailResult = await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
-      subject: '¡Gracias por tu compra! Tu libro está listo 💚',
+      subject: `¡Gracias por tu compra! ${blurb.name} 💚`,
       html: getPurchaseEmailTemplate({
         customerName: opts.name,
+        productName: blurb.name,
+        productSummary: blurb.summary,
         downloadUrl,
         whatsappNumber: WHATSAPP_NUMBER,
       }),
