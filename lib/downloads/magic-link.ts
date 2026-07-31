@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { query, queryOne } from '@/lib/db';
+import { queryOne } from '@/lib/db';
 
 // ============================================================
 // Enlaces mágicos de descarga del libro de PAGO (tabla download_links, pg).
@@ -31,13 +31,18 @@ export async function createMagicLink(
     `INSERT INTO download_links
         (customer_id, payment_id, token, file_name, product_slug, download_count, max_downloads, expires_at)
      VALUES ($1, $2, $3, $4, $5, 0, $6, now() + interval '30 days')
+     ON CONFLICT (payment_id) WHERE payment_id IS NOT NULL DO UPDATE SET
+       file_name = EXCLUDED.file_name,
+       product_slug = COALESCE(download_links.product_slug, EXCLUDED.product_slug),
+       max_downloads = 2
      RETURNING token`,
     [customerId, paymentId, token, fileName, productSlug, maxDownloads]
   );
 
   if (!row) throw new Error('No se pudo crear el enlace de descarga');
 
-  const downloadUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/download/${row.token}`;
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://planetaketo.es').replace(/\/$/, '');
+  const downloadUrl = `${siteUrl}/download/${row.token}`;
   return { token: row.token, downloadUrl };
 }
 
@@ -52,14 +57,20 @@ export async function getDownloadLink(
   );
 }
 
-// Incrementa el contador tras una descarga exitosa.
-export async function incrementDownload(id: string): Promise<void> {
-  await query(
+// Reserva una descarga de forma ATÓMICA. Dos peticiones paralelas nunca pueden
+// rebasar el máximo; se llama después de haber obtenido el archivo y justo antes
+// de responderlo al cliente.
+export async function claimDownload(id: string): Promise<boolean> {
+  const claimed = await queryOne<{ id: string }>(
     `UPDATE download_links
      SET download_count = download_count + 1, last_download_at = now()
-     WHERE id = $1`,
+     WHERE id = $1
+       AND download_count < max_downloads
+       AND (expires_at IS NULL OR expires_at > now())
+     RETURNING id`,
     [id]
   );
+  return Boolean(claimed);
 }
 
 export function isDownloadUsable(link: DownloadLinkRow): {

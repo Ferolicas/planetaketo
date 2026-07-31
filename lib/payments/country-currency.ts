@@ -56,7 +56,8 @@ export function currencyForCountry(cc: string | null | undefined): string | null
 // Enrutado de cobro por país:
 //   Colombia (CO)        → Mercado Pago (PSE/Nequi nativos, ~3-4%)
 //   Resto de LATAM       → Hotmart (métodos locales: Yape, SPEI, OXXO, PIX…)
-//   Resto del mundo      → Stripe (tarjeta/wallets en moneda local)
+//   Europa               → Stripe (tarjeta/wallets en moneda local)
+//   Otros/desconocidos   → Hotmart (fallback sin desviar LATAM a Stripe)
 // ============================================================
 export const LATAM_COUNTRIES = new Set([
   'AR', 'BO', 'BR', 'CL', 'CO', 'CR', 'CU', 'DO', 'EC', 'GT',
@@ -65,6 +66,20 @@ export const LATAM_COUNTRIES = new Set([
 
 export function isLatamCountry(cc: string | null | undefined): boolean {
   return cc ? LATAM_COUNTRIES.has(cc.toUpperCase()) : false;
+}
+
+// Stripe se reserva para Europa. País desconocido o fuera de Europa usa
+// Hotmart como fallback, de modo que nunca desviamos LATAM a Stripe.
+export const EUROPE_COUNTRIES = new Set([
+  'AD', 'AL', 'AM', 'AT', 'AZ', 'BA', 'BE', 'BG', 'BY', 'CH', 'CY',
+  'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GE', 'GR', 'HR',
+  'HU', 'IE', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD', 'ME',
+  'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'RU', 'SE', 'SI',
+  'SK', 'SM', 'TR', 'UA', 'VA', 'XK',
+]);
+
+export function isEuropeanCountry(cc: string | null | undefined): boolean {
+  return cc ? EUROPE_COUNTRIES.has(cc.toUpperCase()) : false;
 }
 
 // ============================================================

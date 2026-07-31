@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 // Región de cobro del visitante (pasarela + precios en su MONEDA LOCAL),
 // consumida por el modal de pago y por los precios de la home. Habla con
 // /api/checkout/region.
-//   Colombia → Mercado Pago (COP) · resto → Stripe (moneda local del país)
+//   Colombia → Mercado Pago · Europa → Stripe · resto → Hotmart
 // ============================================================
 
 export interface LocalPrices {
@@ -30,7 +30,7 @@ export interface CheckoutRegion {
 
 export const REGION_FALLBACK: CheckoutRegion = {
   country: null,
-  provider: 'stripe',
+  provider: 'hotmart',
   currency: 'EUR',
   prices: {
     eur: { regular: 39.75, discount: 10, percentage: 50 },
@@ -38,7 +38,7 @@ export const REGION_FALLBACK: CheckoutRegion = {
   },
 };
 
-export async function fetchRegion(force?: 'co' | 'world', slug?: string | null): Promise<CheckoutRegion> {
+export async function fetchRegion(force?: 'co' | 'world' | 'latam', slug?: string | null): Promise<CheckoutRegion> {
   const qs = new URLSearchParams();
   if (force) qs.set('force', force);
   if (slug) qs.set('slug', slug);
@@ -49,7 +49,7 @@ export async function fetchRegion(force?: 'co' | 'world', slug?: string | null):
 }
 
 /** Hook: detecta la región (precios del producto `slug` si se pasa, o keto). */
-export function useCheckoutRegion(force?: 'co' | 'world', slug?: string | null) {
+export function useCheckoutRegion(force?: 'co' | 'world' | 'latam', slug?: string | null) {
   const [region, setRegion] = useState<CheckoutRegion | null>(null);
   const [loading, setLoading] = useState(true);
 

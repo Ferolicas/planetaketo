@@ -30,7 +30,7 @@ const SaleSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
   transaction: z.string().min(1),
-  amount: z.number().nonnegative(),
+  amount: z.number().positive(),
   currency: z.string().min(1),
 });
 
@@ -61,7 +61,11 @@ export type ParseResult =
  */
 export function parseHotmartSale(
   payload: any,
-  opts?: { expectedProductId?: string | null }
+  opts?: {
+    expectedProductId?: string | null;
+    expectedProductSlug?: string | null;
+    expectedProductName?: string | null;
+  }
 ): ParseResult {
   const event = String(payload?.event ?? '').toUpperCase();
   if (!APPROVED_EVENTS.has(event)) {
@@ -94,11 +98,20 @@ export function parseHotmartSale(
   const [sckSid, sckSlug] = sckStr.split('~');
   const sessionId = sckSid && UUID_RE.test(sckSid) ? sckSid : null;
   const productSlug = sckSlug && /^[a-z0-9-]+$/.test(sckSlug) ? sckSlug : null;
+  if (
+    opts?.expectedProductSlug &&
+    productSlug &&
+    productSlug !== opts.expectedProductSlug
+  ) {
+    return { ok: false, reason: 'other_product' };
+  }
 
   const extracted = {
     email: String(buyer.email ?? '').trim(),
     name: String(buyer.name ?? buyer.first_name ?? 'Cliente').trim() || 'Cliente',
-    transaction: String(purchase.transaction ?? data.transaction ?? payload?.id ?? '').trim(),
+    // El ID del evento NO sustituye al transaction: APPROVED y COMPLETE tienen
+    // eventos distintos y usarlo duplicaría una misma venta.
+    transaction: String(purchase.transaction ?? data.transaction ?? '').trim(),
     amount: Number(price.value ?? price.amount ?? purchase.value ?? 0) || 0,
     currency: String(
       price.currency_value ?? price.currency_code ?? purchase.currency ?? 'EUR'
@@ -115,10 +128,10 @@ export function parseHotmartSale(
     sale: {
       ...parsed.data,
       country: typeof countryRaw === 'string' ? countryRaw : null,
-      productName: String(product.name ?? PRODUCT_CONFIG.name),
+      productName: opts?.expectedProductName || String(product.name ?? PRODUCT_CONFIG.name),
       eventId: payload?.id ? String(payload.id) : null,
       sessionId,
-      productSlug,
+      productSlug: opts?.expectedProductSlug ?? productSlug,
     },
   };
 }

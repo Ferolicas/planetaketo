@@ -78,6 +78,24 @@ test('parseHotmartSale rechaza payload sin email/transaction', () => {
   assert.ok(!r.ok && r.reason === 'missing_fields');
 });
 
+test('parseHotmartSale no usa el id del evento como transaction ni acepta importe cero', () => {
+  const missingTransaction = {
+    ...approved,
+    data: { ...approved.data, purchase: { ...approved.data.purchase, transaction: undefined } },
+  };
+  const zeroAmount = {
+    ...approved,
+    data: {
+      ...approved.data,
+      purchase: { ...approved.data.purchase, price: { value: 0, currency_value: 'EUR' } },
+    },
+  };
+  const first = parseHotmartSale(missingTransaction);
+  const second = parseHotmartSale(zeroAmount);
+  assert.ok(!first.ok && first.reason === 'missing_fields');
+  assert.ok(!second.ok && second.reason === 'missing_fields');
+});
+
 test('parseHotmartSale usa transaction como id y nombre por defecto "Cliente"', () => {
   const r = parseHotmartSale({
     event: 'PURCHASE_COMPLETE',

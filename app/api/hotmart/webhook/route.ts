@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { finalizeSale } from '@/lib/payments/process-sale';
 import { parseHotmartSale, pickHottok, verifyHottok } from '@/lib/payments/hotmart';
+import { getHotmartProductById } from '@/lib/payments/hotmart-checkouts';
+import catalog from '@/data/catalog.json';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,8 +41,27 @@ export async function POST(req: NextRequest) {
   const event = String(payload?.event ?? '').toUpperCase();
   console.log(`[hotmart] webhook recibido: ${event || 'sin-evento'} | id=${payload?.id ?? '?'}`);
 
+  // El ID firmado por Hotmart es la fuente de verdad del producto. `sck` solo
+  // transporta analítica y jamás decide qué libro se entrega.
+  const payloadProductId = payload?.data?.product?.id ?? null;
+  const mappedProduct = getHotmartProductById(payloadProductId);
+  if (!mappedProduct) {
+    return NextResponse.json({ received: true, ignored: 'other_product' });
+  }
+  const all = [
+    ...(catalog.products as { slug: string; title: string }[]),
+    ...(catalog.bundles as { slug: string; title: string }[]),
+  ];
+  const catalogItem = all.find((item) => item.slug === mappedProduct.slug);
+  if (!catalogItem) {
+    console.error(`[hotmart] producto sin catálogo: ${mappedProduct.slug}`);
+    return NextResponse.json({ error: 'product_not_configured' }, { status: 500 });
+  }
+
   const parsed = parseHotmartSale(payload, {
-    expectedProductId: process.env.HOTMART_PRODUCT_ID ?? null,
+    expectedProductId: String(mappedProduct.config.productId),
+    expectedProductSlug: mappedProduct.slug,
+    expectedProductName: catalogItem.title,
   });
 
   if (!parsed.ok) {

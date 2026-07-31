@@ -5,7 +5,7 @@ import { PRODUCT_CONFIG } from '@/lib/product';
 // ============================================================
 // Cliente de Mercado Pago (server-side). Cobro para COLOMBIA (COP).
 // La cuenta es de Colombia (site MCO): cobra en pesos colombianos.
-// El resto del mundo va por Stripe (ver lib/payments/stripe.ts).
+// Europa va por Stripe y el resto por Hotmart.
 //
 // No lanzamos en import-time: las rutas comprueban isMpConfigured() antes de usar.
 // ============================================================

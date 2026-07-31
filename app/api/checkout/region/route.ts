@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur, convertEurToCop } from '@/lib/payments/fx';
-import { isLatamCountry, hotmartSpread } from '@/lib/payments/country-currency';
+import { hotmartSpread, isEuropeanCountry } from '@/lib/payments/country-currency';
+import { hasHotmartCheckout } from '@/lib/payments/hotmart-checkouts';
 import catalog from '@/data/catalog.json';
 
 export const runtime = 'nodejs';
@@ -18,8 +19,10 @@ function findCatalogItem(slug: string): { slug: string; price: number; regular: 
 // ============================================================
 // Región de cobro del visitante: pasarela + precios en su MONEDA LOCAL.
 //   country === 'CO'  → Mercado Pago, precios en COP
-//   resto del mundo   → Stripe, precios en la moneda local del país (detectada
-//                       por geo). Si no se puede determinar/convertir → EUR.
+//   Europa            → Stripe
+//   resto/desconocido → Hotmart
+// Los precios se muestran en la moneda local detectada; si no se puede
+// determinar o convertir, se muestran en EUR.
 //
 // Precio base (EUR) desde "homeContent". Conversión EUR→moneda local EN VIVO.
 // Override manual con ?force=co|world (debug). El frontend formatea con Intl.
@@ -44,7 +47,8 @@ export async function GET(req: NextRequest) {
     country = 'CO';
     currency = 'COP';
   } else if (force === 'world') {
-    country = 'XX';
+    // Compatibilidad del modo QA histórico: simula Europa/Stripe.
+    country = (req.nextUrl.searchParams.get('cc') || 'ES').toUpperCase();
     currency = (req.nextUrl.searchParams.get('cur') || 'EUR').toUpperCase();
   } else if (force === 'latam') {
     // Depuración: simula un país LATAM (≠ Colombia) → Hotmart.
@@ -56,18 +60,24 @@ export async function GET(req: NextRequest) {
     currency = geo.currency;
   }
 
+  const slug = req.nextUrl.searchParams.get('slug');
+  const item = slug ? findCatalogItem(slug) : null;
+  if (slug && !item) {
+    return NextResponse.json({ error: 'unknown_product' }, { status: 400 });
+  }
   const isColombia = country === 'CO';
   const provider: 'mercadopago' | 'hotmart' | 'stripe' = isColombia
     ? 'mercadopago'
-    : isLatamCountry(country)
-      ? 'hotmart'
-      : 'stripe';
+    : isEuropeanCountry(country)
+      ? 'stripe'
+      : 'hotmart';
+  if (provider === 'hotmart' && !hasHotmartCheckout(slug)) {
+    return NextResponse.json({ error: 'hotmart_product_unavailable' }, { status: 503 });
+  }
 
   // 2) Precios base en EUR (fuente de verdad). Si llega ?slug= de un producto del
   // catálogo, esos precios; si no, el método keto por defecto (tabla homeContent).
   const num = (v: unknown, d: number) => (v === null || v === undefined ? d : Number(v));
-  const slug = req.nextUrl.searchParams.get('slug');
-  const item = slug ? findCatalogItem(slug) : null;
   let eur = { ...DEFAULTS };
   if (item) {
     eur = {

@@ -34,35 +34,59 @@ interface Props {
   amountLabel: string;
   productSlug?: string | null;
   onSuccess: () => void;
+  onPending: (msg: string) => void;
   onFailure: (msg: string) => void;
 }
 
-export default function StripeEmbedded({ amountLabel, productSlug = null, onSuccess, onFailure }: Props) {
+export default function StripeEmbedded({
+  amountLabel,
+  productSlug = null,
+  onSuccess,
+  onPending,
+  onFailure,
+}: Props) {
   const [clientSecret, setClientSecret] = useState('');
   const [unavailable, setUnavailable] = useState(false);
+  const [checkoutAttemptId] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
     if (!stripePromise) {
       setUnavailable(true);
       return;
     }
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 20_000);
     let alive = true;
-    fetch('/api/checkout/stripe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId: getSid(), productSlug }), // enlaza venta + producto
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        if (!alive) return;
-        if (d?.clientSecret) setClientSecret(d.clientSecret);
-        else setUnavailable(true);
-      })
-      .catch(() => alive && setUnavailable(true));
+
+    const preparePayment = async () => {
+      try {
+        const response = await fetch('/api/checkout/stripe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: getSid(),
+            productSlug,
+            checkoutAttemptId,
+          }),
+          signal: controller.signal,
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.clientSecret) throw new Error('stripe_prepare_failed');
+        if (alive) setClientSecret(data.clientSecret);
+      } catch {
+        if (alive) setUnavailable(true);
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    };
+
+    void preparePayment();
     return () => {
       alive = false;
+      controller.abort();
+      window.clearTimeout(timeout);
     };
-  }, [productSlug]);
+  }, [checkoutAttemptId, productSlug]);
 
   if (unavailable) {
     return (
@@ -83,12 +107,17 @@ export default function StripeEmbedded({ amountLabel, productSlug = null, onSucc
 
   return (
     <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
-      <CheckoutForm amountLabel={amountLabel} onSuccess={onSuccess} onFailure={onFailure} />
+      <CheckoutForm
+        amountLabel={amountLabel}
+        onSuccess={onSuccess}
+        onPending={onPending}
+        onFailure={onFailure}
+      />
     </Elements>
   );
 }
 
-function CheckoutForm({ amountLabel, onSuccess, onFailure }: Props) {
+function CheckoutForm({ amountLabel, onSuccess, onPending, onFailure }: Props) {
   const stripe = useStripe();
   const elements = useElements();
   const [email, setEmail] = useState('');
@@ -105,22 +134,49 @@ function CheckoutForm({ amountLabel, onSuccess, onFailure }: Props) {
     setSubmitting(true);
     setError('');
 
-    const { error: stripeError } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/gracias`,
-        receipt_email: email,
-      },
-      redirect: 'if_required',
-    });
+    try {
+      const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/gracias`,
+          receipt_email: email,
+        },
+        redirect: 'if_required',
+      });
 
-    if (stripeError) {
-      const msg = stripeError.message || 'No se pudo completar el pago.';
+      if (stripeError) {
+        const msg = stripeError.message || 'No se pudo completar el pago.';
+        setError(msg);
+        if (!['validation_error', 'card_error'].includes(stripeError.type)) {
+          onFailure(msg);
+        }
+        return;
+      }
+
+      if (paymentIntent?.status === 'succeeded') {
+        onSuccess();
+      } else if (
+        !paymentIntent ||
+        paymentIntent.status === 'processing' ||
+        paymentIntent.status === 'requires_action'
+      ) {
+        onPending('Tu banco está confirmando el pago.');
+      } else {
+        const msg = 'El pago no se confirmó. Revisa los datos o prueba con otra tarjeta.';
+        setError(msg);
+        onFailure(msg);
+      }
+    } catch (caught) {
+      const isIntegrationError =
+        (caught as { name?: string })?.name === 'IntegrationError';
+      const msg = isIntegrationError
+        ? 'El formulario de pago no pudo validarse. Inténtalo de nuevo.'
+        : 'No pudimos confirmar la respuesta del banco. Revisa tu correo o movimientos antes de volver a pagar.';
       setError(msg);
+      if (isIntegrationError) onFailure(msg);
+      else onPending(msg);
+    } finally {
       setSubmitting(false);
-      if (stripeError.type !== 'validation_error') onFailure(msg);
-    } else {
-      onSuccess();
     }
   };
 
@@ -131,7 +187,6 @@ function CheckoutForm({ amountLabel, onSuccess, onFailure }: Props) {
         <PaymentElement
           options={{
             layout: 'accordion',
-            fields: { billingDetails: { address: 'never' } },
           }}
         />
         {error && <p className="text-red-600 text-sm">{error}</p>}

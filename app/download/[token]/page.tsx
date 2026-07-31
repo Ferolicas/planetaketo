@@ -12,6 +12,19 @@ interface DownloadState {
   remainingDownloads?: number;
 }
 
+function responseFileName(response: Response, fallback: string): string {
+  const disposition = response.headers.get('content-disposition') || '';
+  const utf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  if (utf8) {
+    try {
+      return decodeURIComponent(utf8);
+    } catch {
+      // Continúa con filename simple.
+    }
+  }
+  return disposition.match(/filename="?([^";]+)"?/i)?.[1] || fallback;
+}
+
 export default function PurchaseDownloadPage() {
   const params = useParams();
   const token = params.token as string;
@@ -52,7 +65,10 @@ export default function PurchaseDownloadPage() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'El_Metodo_Keto_Definitivo_Planeta_Keto.pdf';
+        const fallback = response.headers.get('content-type')?.includes('zip')
+          ? 'Pack_Planeta_Keto.zip'
+          : 'Libro_Planeta_Keto.pdf';
+        a.download = responseFileName(response, validateData.fileName || fallback);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -105,7 +121,7 @@ export default function PurchaseDownloadPage() {
         {/* Header */}
         <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white text-center">
           <h1 className="text-2xl font-bold mb-1">Planeta Keto</h1>
-          <p className="text-green-100 text-sm">Método Keto 70 Días</p>
+          <p className="text-green-100 text-sm">Tu compra digital</p>
         </div>
 
         {/* Content */}
@@ -161,7 +177,7 @@ export default function PurchaseDownloadPage() {
                 ¡Descarga Completada!
               </h2>
               <p className="text-gray-600 mb-4">
-                Tu Método Keto se ha descargado correctamente.
+                Tu libro o pack se ha descargado correctamente.
               </p>
 
               {state.remainingDownloads !== undefined && state.remainingDownloads > 0 && (
@@ -172,7 +188,7 @@ export default function PurchaseDownloadPage() {
 
               <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800">
-                  <strong>¡Gracias por tu compra!</strong> Revisa tu carpeta de descargas para encontrar el PDF.
+                  <strong>¡Gracias por tu compra!</strong> Revisa tu carpeta de descargas para encontrar el archivo.
                 </p>
               </div>
 

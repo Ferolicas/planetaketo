@@ -16,8 +16,9 @@ tienda.
 - Next.js 15 App Router, React 19 y TypeScript.
 - PostgreSQL nativo mediante `pg` y `lib/db.ts`.
 - Autenticación propia del panel: bcrypt + cookie HMAC `session`.
-- Stripe para tarjeta, Mercado Pago para Colombia y Hotmart para checkout local
-  de productos que tengan una URL configurada.
+- Stripe solo para Europa, Mercado Pago para Colombia y Hotmart para el resto
+  (incluido LATAM excepto Colombia). Los 31 checkouts Hotmart viven en
+  `data/hotmart-products.json`.
 - Resend para la entrega postpago y Sanity como origen privado de los PDF.
 - Gestor de producción: pnpm (`pnpm-lock.yaml`). `package-lock.json` es legado.
 
@@ -36,6 +37,8 @@ No hacer commit, push ni deploy sin una instrucción explícita del usuario.
 - Landing y catálogo: `components/home/`, `data/catalog.json`
 - Checkout cliente: `components/checkout/`, `components/payment/`
 - Pagos y postventa: `lib/payments/`
+- Catálogo operativo Hotmart: `data/hotmart-products.json`,
+  `scripts/hotmart-bulk-api.py`
 - Descargas: `lib/downloads/`, `app/api/download/`
 - Autenticación admin: `lib/auth/session.ts`, `app/api/auth/`
 - PostgreSQL: `lib/db.ts`
@@ -74,4 +77,5 @@ No hacer commit, push ni deploy sin una instrucción explícita del usuario.
   `www`.
 - Los webhooks y los efectos postventa pueden repetirse; la idempotencia no es
   opcional.
-
+- Una venta confirmada pero incompleta debe quedar en `retry_pending`; el cron
+  ejecuta `scripts/reconcile-deliveries.sh` y repara la entrega.

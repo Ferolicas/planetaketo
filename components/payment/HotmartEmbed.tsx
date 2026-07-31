@@ -17,20 +17,32 @@ import { getSid } from '@/lib/analytics/consent';
 // Hotmart devuelve en el postback) para enlazar la venta con la visita.
 // ============================================================
 
-const CHECKOUT_URL = process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL || '';
+interface Props {
+  checkoutUrl: string;
+  onSuccess: () => void;
+  onFailure: (msg: string) => void;
+  productSlug?: string | null;
+}
 
-export default function HotmartEmbed({ onSuccess, productSlug = null }: { onSuccess: () => void; productSlug?: string | null }) {
+export default function HotmartEmbed({
+  checkoutUrl: baseCheckoutUrl,
+  onSuccess,
+  onFailure,
+  productSlug = null,
+}: Props) {
   const [loaded, setLoaded] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
 
   // Añade ?sck=<pk_sid>[~slug] (Hotmart lo devuelve en el postback) y avisa al backend.
   const checkoutUrl = useMemo(() => {
-    if (!CHECKOUT_URL) return '';
+    if (!baseCheckoutUrl) return '';
     const sid = getSid();
     const sck = [sid, productSlug].filter(Boolean).join('~');
-    if (!sck) return CHECKOUT_URL;
-    const sep = CHECKOUT_URL.includes('?') ? '&' : '?';
-    return `${CHECKOUT_URL}${sep}sck=${encodeURIComponent(sck)}`;
-  }, [productSlug]);
+    const url = new URL(baseCheckoutUrl);
+    url.searchParams.set('checkoutMode', '2');
+    if (sck) url.searchParams.set('sck', sck);
+    return url.toString();
+  }, [baseCheckoutUrl, productSlug]);
 
   useEffect(() => {
     const sid = getSid();
@@ -53,7 +65,23 @@ export default function HotmartEmbed({ onSuccess, productSlug = null }: { onSucc
     return () => window.removeEventListener('message', onMessage);
   }, [onSuccess]);
 
-  if (!CHECKOUT_URL) {
+  const externalCheckoutUrl = useMemo(() => {
+    if (!baseCheckoutUrl) return '';
+    const sid = getSid();
+    const sck = [sid, productSlug].filter(Boolean).join('~');
+    const url = new URL(baseCheckoutUrl);
+    if (sck) url.searchParams.set('sck', sck);
+    return url.toString();
+  }, [baseCheckoutUrl, productSlug]);
+
+  useEffect(() => {
+    setShowFallback(false);
+    if (!checkoutUrl) return;
+    const timeout = window.setTimeout(() => setShowFallback(true), 10_000);
+    return () => window.clearTimeout(timeout);
+  }, [checkoutUrl]);
+
+  if (!checkoutUrl) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center px-8">
         <p className="text-red-600 font-semibold">El pago no está disponible ahora.</p>
@@ -68,6 +96,16 @@ export default function HotmartEmbed({ onSuccess, productSlug = null }: { onSucc
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
           <div className="w-14 h-14 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
           <p className="mt-4 text-gray-600 font-medium">Preparando pago seguro...</p>
+          {showFallback && externalCheckoutUrl && (
+            <a
+              href={externalCheckoutUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 rounded-full bg-forest px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              Abrir pago seguro en otra ventana
+            </a>
+          )}
         </div>
       )}
       <iframe
@@ -76,7 +114,18 @@ export default function HotmartEmbed({ onSuccess, productSlug = null }: { onSucc
         className="w-full h-full border-0"
         allow="payment *; clipboard-write"
         onLoad={() => setLoaded(true)}
+        onError={() => onFailure('hotmart_load_error')}
       />
+      {loaded && showFallback && externalCheckoutUrl && (
+        <a
+          href={externalCheckoutUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-4 py-2 text-xs font-semibold text-forest shadow-lg ring-1 ring-forest/20"
+        >
+          ¿No responde? Abrir pago seguro
+        </a>
+      )}
     </div>
   );
 }

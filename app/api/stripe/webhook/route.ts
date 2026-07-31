@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { getStripe, isStripeConfigured } from '@/lib/payments/stripe';
-import { PRODUCT_CONFIG } from '@/lib/product';
 import { finalizeSale } from '@/lib/payments/process-sale';
+import catalog from '@/data/catalog.json';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // ============================================================
-// Webhook de Stripe — disparador de la entrega para el cobro mundial.
+// Webhook de Stripe — disparador de la entrega para cobros en Europa.
 // Tras pago confirmado, entregamos el libro (Resend + magic link) vía
 // finalizeSale(). finalizeSale es idempotente por id externo del pago, así que
 // los reintentos de Stripe (y el solapamiento con la confirmación del front)
@@ -66,6 +66,17 @@ function resultPayload(result: Awaited<ReturnType<typeof finalizeSale>>) {
   };
 }
 
+function verifiedProduct(slug: string | null | undefined): { slug: string; title: string } {
+  const resolved = slug || 'metodo-keto';
+  const all = [
+    ...(catalog.products as { slug: string; title: string }[]),
+    ...(catalog.bundles as { slug: string; title: string }[]),
+  ];
+  const item = all.find((entry) => entry.slug === resolved);
+  if (!item) throw new Error(`Producto Stripe desconocido: ${resolved}`);
+  return item;
+}
+
 async function handleCheckoutSession(event: Stripe.Event): Promise<NextResponse> {
   const session = event.data.object as Stripe.Checkout.Session;
 
@@ -90,6 +101,11 @@ async function handleCheckoutSession(event: Stripe.Event): Promise<NextResponse>
     }
   }
 
+  if (!session.payment_intent) {
+    return NextResponse.json({ received: true, ignored: 'missing_payment_intent' });
+  }
+  const product = verifiedProduct(session.metadata?.product_slug);
+
   const result = await finalizeSale({
     provider: 'stripe',
     externalId: String(session.payment_intent), // clave de idempotencia
@@ -100,10 +116,10 @@ async function handleCheckoutSession(event: Stripe.Event): Promise<NextResponse>
     amount: (session.amount_total || 0) / 100,
     currency: session.currency || 'eur',
     status: session.payment_status || 'paid',
-    productName: (session.metadata?.productName as string) || PRODUCT_CONFIG.name,
+    productName: product.title,
     externalCustomerId: typeof session.customer === 'string' ? session.customer : null,
     sessionId: (session.metadata?.session_uuid as string) || null,
-    productSlug: (session.metadata?.product_slug as string) || null,
+    productSlug: product.slug,
   });
 
   return NextResponse.json(resultPayload(result));
@@ -112,27 +128,41 @@ async function handleCheckoutSession(event: Stripe.Event): Promise<NextResponse>
 async function handlePaymentIntent(event: Stripe.Event): Promise<NextResponse> {
   const pi = event.data.object as Stripe.PaymentIntent;
 
-  // En Embedded Checkout la venta se cierra en checkout.session.completed.
-  // Solo procesamos aquí si llega email por metadata (caminos alternativos).
-  const email = (pi.metadata?.customerEmail as string) || pi.receipt_email || '';
-  if (!email) {
-    return NextResponse.json({ received: true, status: 'deferred_to_session' });
+  // El Payment Element de la tienda genera payment_intent.succeeded.
+  let email = (pi.metadata?.customerEmail as string) || pi.receipt_email || '';
+  let name = (pi.metadata?.customerName as string) || 'Cliente';
+  let country: string | null = null;
+  if (pi.payment_method && (!email || name === 'Cliente')) {
+    try {
+      const paymentMethod = await getStripe().paymentMethods.retrieve(
+        typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method.id
+      );
+      email = paymentMethod.billing_details.email || email;
+      name = paymentMethod.billing_details.name || name;
+      country = paymentMethod.billing_details.address?.country || null;
+    } catch (error) {
+      console.warn('[stripe] no se pudo recuperar el método de pago:', (error as Error).message);
+    }
   }
+  if (!email) {
+    throw new Error('Stripe confirmó el pago pero no devolvió email del comprador');
+  }
+  const product = verifiedProduct(pi.metadata?.product_slug);
 
   const result = await finalizeSale({
     provider: 'stripe',
     externalId: pi.id,
     externalRef: null,
     email,
-    name: (pi.metadata?.customerName as string) || 'Cliente',
-    country: null,
-    amount: pi.amount / 100,
+    name,
+    country,
+    amount: (pi.amount_received || pi.amount) / 100,
     currency: pi.currency,
     status: 'paid',
-    productName: (pi.metadata?.productName as string) || PRODUCT_CONFIG.name,
+    productName: product.title,
     externalCustomerId: typeof pi.customer === 'string' ? pi.customer : null,
     sessionId: (pi.metadata?.session_uuid as string) || null,
-    productSlug: (pi.metadata?.product_slug as string) || null,
+    productSlug: product.slug,
   });
 
   return NextResponse.json(resultPayload(result));

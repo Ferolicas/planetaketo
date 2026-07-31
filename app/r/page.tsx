@@ -18,7 +18,7 @@ const paidFeatures = [
 
 export default function RecursosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { region } = useCheckoutRegion();
+  const { region } = useCheckoutRegion(undefined, 'metodo-keto');
   const p = regionDisplay(region);
 
   return (
@@ -88,7 +88,7 @@ export default function RecursosPage() {
                 </div>
                 <p className="text-mint-pale/80 text-sm mt-1">Pago único, sin suscripciones</p>
               </div>
-              <CheckoutButton className="w-full rounded-full bg-cta py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-white cursor-pointer">
+              <CheckoutButton productSlug="metodo-keto" className="w-full rounded-full bg-cta py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-white cursor-pointer">
                 Comprar · {p.fmt(p.discount)}
               </CheckoutButton>
             </div>

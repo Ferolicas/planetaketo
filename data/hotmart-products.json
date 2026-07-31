@@ -1,0 +1,283 @@
+{
+  "products": {
+    "metodo-keto": {
+      "productId": 6135067,
+      "ucode": "befd8d89-8afa-46d2-bbdf-644399f3add5",
+      "offerId": 11579193,
+      "offerCode": "5wuf0omy",
+      "price": 24.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/E101576748X?off=5wuf0omy"
+    },
+    "metodo-low-carb": {
+      "productId": 8217824,
+      "ucode": "cc8ad2db-0e31-47e7-86b6-4e81aa49f3d0",
+      "offerId": 14790970,
+      "offerCode": "mxc5ocmd",
+      "price": 24.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/U106942046K?off=mxc5ocmd"
+    },
+    "metodo-bajo-en-calorias": {
+      "productId": 8217875,
+      "ucode": "e883b5c3-5c7a-4976-86c3-165fe72a034a",
+      "offerId": 14791042,
+      "offerCode": "7z58ayb5",
+      "price": 24.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/Q106942156P?off=7z58ayb5"
+    },
+    "metodo-deportistas-keto": {
+      "productId": 8230760,
+      "ucode": "68bcfb44-c669-46b0-86ef-d6bc84bcfc81",
+      "offerId": 14810656,
+      "offerCode": "h1dc0y7d",
+      "price": 29.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/Y106970294S?off=h1dc0y7d"
+    },
+    "metodo-deportistas-low-carb": {
+      "productId": 8230805,
+      "ucode": "bc7fdeb5-a2a4-43ed-8e9f-340db48518ff",
+      "offerId": 14810721,
+      "offerCode": "fo4vf6tm",
+      "price": 29.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/V106970749L?off=fo4vf6tm"
+    },
+    "metodo-deportistas-bajo-en-calorias": {
+      "productId": 8230803,
+      "ucode": "78f3a15c-afed-4e2f-a642-a246b1b0bdf4",
+      "offerId": 14810719,
+      "offerCode": "it1exwbb",
+      "price": 29.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/L106970747L?off=it1exwbb"
+    },
+    "metodo-gym-keto": {
+      "productId": 8230801,
+      "ucode": "769c8c10-36c9-4387-854c-311a7a45b02b",
+      "offerId": 14810717,
+      "offerCode": "fwejxmj4",
+      "price": 29.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/U106970745N?off=fwejxmj4"
+    },
+    "metodo-gym-low-carb": {
+      "productId": 8230804,
+      "ucode": "bce2c056-2ac0-4bb4-97ba-2211b8870d3d",
+      "offerId": 14810720,
+      "offerCode": "gl6v9w48",
+      "price": 29.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/Q106970748I?off=gl6v9w48"
+    },
+    "metodo-gym-bajo-en-calorias": {
+      "productId": 8230809,
+      "ucode": "3050a563-d018-424e-aa72-6f2f17e99d51",
+      "offerId": 14810725,
+      "offerCode": "8mf88ohi",
+      "price": 29.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/Q106970753E?off=8mf88ohi"
+    },
+    "recetario-keto": {
+      "productId": 8230808,
+      "ucode": "0793afea-a681-4ea0-9adf-a8dee440709e",
+      "offerId": 14810724,
+      "offerCode": "idzqajec",
+      "price": 19.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/R106970752T?off=idzqajec"
+    },
+    "recetario-low-carb": {
+      "productId": 8230806,
+      "ucode": "d1af2d74-4788-4c27-95f4-c373df285604",
+      "offerId": 14810722,
+      "offerCode": "ck0w62xq",
+      "price": 14.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/X106970750D?off=ck0w62xq"
+    },
+    "recetario-bajo-en-calorias": {
+      "productId": 8230807,
+      "ucode": "b3c8412e-7d1d-4d7c-aca7-806390cf5778",
+      "offerId": 14810723,
+      "offerCode": "iw7x5gv1",
+      "price": 12.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/Y106970751U?off=iw7x5gv1"
+    },
+    "bebidas-y-postres-keto": {
+      "productId": 8230813,
+      "ucode": "5f8f0226-644a-464d-bfae-a9415009ba8f",
+      "offerId": 14810729,
+      "offerCode": "r4lxt10v",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/T106970757X?off=r4lxt10v"
+    },
+    "bebidas-y-postres-low-carb": {
+      "productId": 8230810,
+      "ucode": "2d54a049-bb1e-4e9a-8b0f-d8b8185f4a3d",
+      "offerId": 14810726,
+      "offerCode": "qsvlpj4h",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/W106970754Q?off=qsvlpj4h"
+    },
+    "bebidas-y-postres-ligeros": {
+      "productId": 8230812,
+      "ucode": "7aeade4a-ccd6-43c4-997a-57cbe5c2ff87",
+      "offerId": 14810728,
+      "offerCode": "r0jld0uu",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/A106970756I?off=r0jld0uu"
+    },
+    "comidas-rapidas-keto": {
+      "productId": 8230811,
+      "ucode": "7a87e26b-7e0a-4a26-b036-fcdccb6c33e5",
+      "offerId": 14810727,
+      "offerCode": "8nijao8i",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/N106970755A?off=8nijao8i"
+    },
+    "comidas-rapidas-low-carb": {
+      "productId": 8230817,
+      "ucode": "a458945f-14ef-4e41-87f8-ab03d0d56606",
+      "offerId": 14810733,
+      "offerCode": "kcfpp7tt",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/S106970761N?off=kcfpp7tt"
+    },
+    "comidas-rapidas-ligeras": {
+      "productId": 8230814,
+      "ucode": "968afa52-0a37-4c0b-8dbc-e74a938967a9",
+      "offerId": 14810730,
+      "offerCode": "ryoapda7",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/L106970758P?off=ryoapda7"
+    },
+    "tradicionales-latinas-keto": {
+      "productId": 8230816,
+      "ucode": "f6949601-d0e7-471a-99c3-b86985076df7",
+      "offerId": 14810732,
+      "offerCode": "npnxjokp",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/G106970760J?off=npnxjokp"
+    },
+    "tradicionales-latinas-low-carb": {
+      "productId": 8230815,
+      "ucode": "34dd67dc-b0b8-4c2c-af0f-2bb017cc56dc",
+      "offerId": 14810731,
+      "offerCode": "ez7xqumc",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/C106970759N?off=ez7xqumc"
+    },
+    "tradicionales-latinas-ligeras": {
+      "productId": 8230820,
+      "ucode": "092dec99-7511-433c-a734-b2df2821eb5d",
+      "offerId": 14810736,
+      "offerCode": "yzaqy0nk",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/X106970764E?off=yzaqy0nk"
+    },
+    "tradicionales-europeas-keto": {
+      "productId": 8230818,
+      "ucode": "8ccd77dc-58fd-4a99-88dc-3c415c6fcecb",
+      "offerId": 14810734,
+      "offerCode": "7ph9u4bu",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/E106970762H?off=7ph9u4bu"
+    },
+    "tradicionales-europeas-low-carb": {
+      "productId": 8230821,
+      "ucode": "34ba6246-38f6-4b0c-aaea-36c377b8bc94",
+      "offerId": 14810737,
+      "offerCode": "zrv3qch5",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/Y106970765P?off=zrv3qch5"
+    },
+    "tradicionales-europeas-ligeras": {
+      "productId": 8230819,
+      "ucode": "f66538d6-32cc-4fd8-868e-065a2b3e99ff",
+      "offerId": 14810735,
+      "offerCode": "4t2gt3yn",
+      "price": 9.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/L106970763A?off=4t2gt3yn"
+    },
+    "guia-suplementos": {
+      "productId": 8230822,
+      "ucode": "106d3f9c-c632-418b-896e-8244d2f3d723",
+      "offerId": 14810739,
+      "offerCode": "56hgf7je",
+      "price": 12.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/Y106970766R?off=56hgf7je"
+    },
+    "pack-keto-completo": {
+      "productId": 8230888,
+      "ucode": "5fa76b7b-2544-4af7-8a24-39db921cc8a1",
+      "offerId": 14810828,
+      "offerCode": "4i5e0md8",
+      "price": 39.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/D106970923U?off=4i5e0md8"
+    },
+    "pack-low-carb-completo": {
+      "productId": 8230887,
+      "ucode": "ef322a91-83cc-479d-876d-53266e31914f",
+      "offerId": 14810827,
+      "offerCode": "jb8rgjom",
+      "price": 36.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/S106970922A?off=jb8rgjom"
+    },
+    "pack-bajo-en-calorias-completo": {
+      "productId": 8230889,
+      "ucode": "e0571159-0ce3-4dc8-afe3-8beb815959cd",
+      "offerId": 14810829,
+      "offerCode": "nn2gxeuu",
+      "price": 34.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/F106970924F?off=nn2gxeuu"
+    },
+    "pack-deportista-total": {
+      "productId": 8230886,
+      "ucode": "c32de4c1-df92-4475-9f12-325349462f32",
+      "offerId": 14810826,
+      "offerCode": "ltt63ke8",
+      "price": 46.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/R106970921W?off=ltt63ke8"
+    },
+    "pack-gym-total": {
+      "productId": 8230884,
+      "ucode": "85f12b78-be8b-4458-9acb-eebd84db8b38",
+      "offerId": 14810824,
+      "offerCode": "jwmshdcx",
+      "price": 46.9,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/W106970919Q?off=jwmshdcx"
+    },
+    "mega-pack-planeta-keto": {
+      "productId": 8230883,
+      "ucode": "9049b808-1ced-4cd8-9097-f491cadaa16b",
+      "offerId": 14810823,
+      "offerCode": "cc1yjimt",
+      "price": 149.0,
+      "currency": "EUR",
+      "checkoutUrl": "https://pay.hotmart.com/P106970918B?off=cc1yjimt"
+    }
+  }
+}

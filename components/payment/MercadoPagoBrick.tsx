@@ -35,6 +35,7 @@ interface Props {
 
 export default function MercadoPagoBrick({ amountCop, productSlug = null, onSuccess, onPending, onFailure }: Props) {
   const [available, setAvailable] = useState<boolean | null>(null);
+  const [checkoutAttemptId] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
     setAvailable(ensureMpInit());
@@ -70,26 +71,64 @@ export default function MercadoPagoBrick({ amountCop, productSlug = null, onSucc
           },
         }}
         onSubmit={async ({ formData }) => {
-          const res = await fetch('/api/checkout/mercadopago/pay', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            // session_uuid enlaza la venta con la visita (analítica).
-            body: JSON.stringify({ ...formData, session_uuid: getSid() ?? undefined, productSlug: productSlug ?? undefined }),
-          });
-          const data = await res.json();
+          const controller = new AbortController();
+          const timeout = window.setTimeout(() => controller.abort(), 30_000);
+          try {
+            const res = await fetch('/api/checkout/mercadopago/pay', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              // session_uuid enlaza la venta con la visita (analítica).
+              body: JSON.stringify({
+                ...formData,
+                session_uuid: getSid() ?? undefined,
+                productSlug: productSlug ?? undefined,
+                checkoutAttemptId,
+              }),
+              signal: controller.signal,
+            });
+            const data = await res.json().catch(() => null);
 
-          if (data?.status === 'approved') {
-            onSuccess();
-          } else if (data?.redirect_url) {
-            // PSE/Efecty: completar el pago en el banco/punto.
-            window.location.href = data.redirect_url as string;
-          } else if (data?.status === 'in_process' || data?.status === 'pending') {
-            onPending(String(data?.status_detail ?? 'pending'));
-          } else {
-            onFailure(String(data?.status_detail ?? data?.error ?? 'rejected'));
+            if (!res.ok) {
+              onFailure(String(data?.error ?? 'payment_error'));
+              return;
+            }
+            if (!data || typeof data !== 'object') {
+              onFailure('invalid_response');
+              return;
+            }
+
+            if (data.status === 'approved') {
+              onSuccess();
+            } else if (typeof data.redirect_url === 'string') {
+              // PSE/Efecty: completar el pago en el banco/punto.
+              let redirect: URL;
+              try {
+                redirect = new URL(data.redirect_url);
+              } catch {
+                onFailure('invalid_response');
+                return;
+              }
+              if (redirect.protocol !== 'https:') {
+                onFailure('invalid_response');
+                return;
+              }
+              window.location.assign(redirect.toString());
+            } else if (data.status === 'in_process' || data.status === 'pending') {
+              onPending(String(data.status_detail ?? 'pending'));
+            } else {
+              onFailure(String(data.status_detail ?? data.error ?? 'rejected'));
+            }
+          } catch (error) {
+            onPending(
+              (error as { name?: string })?.name === 'AbortError'
+                ? 'payment_timeout'
+                : 'network_uncertain'
+            );
+          } finally {
+            window.clearTimeout(timeout);
           }
         }}
-        onError={(error) => onFailure(String((error as { message?: string })?.message ?? 'brick_error'))}
+        onError={() => onFailure('brick_error')}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { X, CheckCircle, ShieldCheck, Clock, AlertCircle } from 'lucide-react';
 import { useCheckoutRegion, regionDisplay } from '@/lib/hooks/useCheckoutRegion';
+import { getHotmartCheckoutUrl } from '@/lib/payments/hotmart-checkouts';
 
 // Los SDKs de pago son de navegador: cargarlos solo en cliente (sin SSR).
 const StripeEmbedded = dynamic(() => import('./StripeEmbedded'), { ssr: false });
@@ -21,8 +22,8 @@ interface PaymentModalProps {
 type Status = 'paying' | 'success' | 'pending' | 'error';
 
 export default function PaymentModal({ isOpen, onClose, productSlug = null }: PaymentModalProps) {
-  // Detección de región 100% automática (sin switch manual): Colombia → Mercado
-  // Pago; resto → Stripe. Los precios son los del producto si llega productSlug.
+  // Detección automática: Colombia → Mercado Pago; Europa → Stripe; resto →
+  // Hotmart. Los precios son los del producto si llega productSlug.
   const { region, loading } = useCheckoutRegion(undefined, productSlug);
   const [status, setStatus] = useState<Status>('paying');
   const [message, setMessage] = useState('');
@@ -53,11 +54,10 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
   if (!isOpen || !mounted) return null;
 
   const display = regionDisplay(region);
-  const rawProvider = region?.provider ?? 'stripe';
-  // Red de seguridad: si Hotmart aún no tiene URL de checkout configurada, el
-  // resto de LATAM cae a Stripe (tarjeta en moneda local) para no bloquear ventas.
-  const hotmartReady = Boolean(process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL);
-  const provider = rawProvider === 'hotmart' && !hotmartReady ? 'stripe' : rawProvider;
+  const provider = region?.provider ?? 'hotmart';
+  // Cada URL Hotmart vende un producto concreto. La API regional devuelve 503
+  // si faltase una URL; nunca desviamos una compra LATAM a Stripe.
+  const hotmartUrl = getHotmartCheckoutUrl(productSlug);
   // Colombia → Mercado Pago: el importe en COP es el precio local.
   const copAmount = provider === 'mercadopago' ? region?.prices.local.discount : undefined;
 
@@ -96,7 +96,8 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
               icon={<Clock className="w-12 h-12 text-amber-500" />}
               title="Pago en proceso"
               lines={[
-                'Tu pago se está confirmando. En cuanto se apruebe te enviaremos el enlace de descarga por correo.',
+                message ||
+                  'Tu pago se está confirmando. En cuanto se apruebe te enviaremos el enlace de descarga por correo.',
               ]}
               onClose={onClose}
             />
@@ -125,7 +126,7 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
               productSlug={productSlug}
               onSuccess={() => setStatus('success')}
               onPending={(m) => {
-                setMessage(m);
+                setMessage(traducirPendiente(m));
                 setStatus('pending');
               }}
               onFailure={(m) => {
@@ -134,12 +135,24 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
               }}
             />
           ) : provider === 'hotmart' ? (
-            <HotmartEmbed productSlug={productSlug} onSuccess={() => setStatus('success')} />
+            <HotmartEmbed
+              checkoutUrl={hotmartUrl}
+              productSlug={productSlug}
+              onSuccess={() => setStatus('success')}
+              onFailure={(m) => {
+                setMessage(traducirError(m));
+                setStatus('error');
+              }}
+            />
           ) : (
             <StripeEmbedded
               amountLabel={display.fmt(display.discount)}
               productSlug={productSlug}
               onSuccess={() => setStatus('success')}
+              onPending={(m) => {
+                setMessage(m);
+                setStatus('pending');
+              }}
               onFailure={(m) => {
                 setMessage(m);
                 setStatus('error');
@@ -211,6 +224,26 @@ function traducirError(code: string): string {
     cc_rejected_bad_filled_date: 'Revisa la fecha de vencimiento.',
     cc_rejected_call_for_authorize: 'Debes autorizar el pago con tu banco.',
     cc_rejected_high_risk: 'El pago fue rechazado. Prueba con otro medio.',
+    bank_unavailable: 'El banco no está disponible ahora. Espera un momento e inténtalo de nuevo.',
+    missing_email: 'Introduce tu correo para recibir la compra.',
+    invalid_response: 'La pasarela devolvió una respuesta inesperada. Inténtalo de nuevo.',
+    payment_error: 'La pasarela no pudo iniciar el pago. Inténtalo de nuevo.',
+    brick_error: 'No se pudo cargar el formulario de Mercado Pago. Inténtalo de nuevo.',
+    hotmart_timeout: 'Hotmart tardó demasiado en cargar. Inténtalo de nuevo.',
+    hotmart_load_error: 'No se pudo cargar Hotmart. Comprueba internet e inténtalo de nuevo.',
   };
   return map[code] || 'El pago fue rechazado. Inténtalo con otro método.';
+}
+
+function traducirPendiente(code: string): string {
+  const map: Record<string, string> = {
+    payment_timeout:
+      'La pasarela tardó demasiado en responder. Revisa tu correo o movimientos antes de volver a pagar.',
+    network_uncertain:
+      'Se perdió la conexión mientras se procesaba. Revisa tu correo o movimientos antes de volver a pagar.',
+  };
+  return (
+    map[code] ||
+    'Tu pago se está confirmando. En cuanto se apruebe te enviaremos el enlace de descarga por correo.'
+  );
 }

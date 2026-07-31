@@ -86,6 +86,30 @@ export async function getProductBySlug(slug: string): Promise<ProductPdf | null>
   );
 }
 
+export interface BundleArchive {
+  id: string;
+  title: string;
+  slug: string;
+  fileUrl: string | null;
+  fileName: string | null;
+  mimeType: string | null;
+}
+
+/** ZIP privado de un pack. Hotmart/Stripe/MP nunca sirven estos bytes. */
+export async function getBundleArchiveBySlug(slug: string): Promise<BundleArchive | null> {
+  return sanityQuery<BundleArchive | null>(
+    `*[_type == "deliveryBundle" && slug.current == $slug][0] {
+      "id": _id,
+      title,
+      "slug": slug.current,
+      "fileUrl": archive.asset->url,
+      "fileName": archive.asset->originalFilename,
+      "mimeType": archive.asset->mimeType
+    }`,
+    { slug }
+  );
+}
+
 /**
  * Descarga los bytes del asset PDF desde el CDN de Sanity.
  * Funciona con dataset público; si fuese privado, reintenta con el token.

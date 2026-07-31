@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { queryOne } from '@/lib/db';
 import {
   isMpConfigured,
@@ -10,7 +9,7 @@ import {
 } from '@/lib/payments/mercadopago';
 import { convertEurToCop } from '@/lib/payments/fx';
 import { PRODUCT_CONFIG } from '@/lib/product';
-import { getClientIp } from '@/lib/geo';
+import { getClientIp, getGeoFromRequest } from '@/lib/geo';
 import { markCheckoutStarted } from '@/lib/analytics/session-link';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import catalog from '@/data/catalog.json';
@@ -80,7 +79,19 @@ export async function POST(req: NextRequest) {
       : null;
   delete form.productSlug;
   const item = productSlug ? findCatalogItem(productSlug) : null;
+  if (productSlug && !item) {
+    return NextResponse.json({ error: 'unknown_product' }, { status: 400 });
+  }
   const productName = item ? item.title : PRODUCT_CONFIG.name;
+
+  const checkoutAttemptId =
+    typeof form.checkoutAttemptId === 'string' && UUID_RE.test(form.checkoutAttemptId)
+      ? form.checkoutAttemptId
+      : null;
+  delete form.checkoutAttemptId;
+  if (!checkoutAttemptId) {
+    return NextResponse.json({ error: 'invalid_checkout_attempt' }, { status: 400 });
+  }
 
   const formPayer = (form.payer ?? {}) as BrickPayer;
   const email = formPayer.email?.trim();
@@ -97,6 +108,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'missing_email' }, { status: 400 });
   }
 
+  const geo = await getGeoFromRequest(req);
+  if (geo.country && geo.country !== 'CO') {
+    return NextResponse.json({ error: 'wrong_provider' }, { status: 403 });
+  }
+
   // Precio EUR → COP en vivo. Del catálogo si hay producto; si no, keto (BD).
   let eur: number;
   if (item) {
@@ -110,7 +126,9 @@ export async function POST(req: NextRequest) {
   const { cop } = await convertEurToCop(eur);
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin;
-  const orderId = crypto.randomUUID();
+  // El UUID nace una sola vez en el checkout. Si la red corta la respuesta y el
+  // navegador reenvía, Mercado Pago devuelve el mismo pago y nunca cobra doble.
+  const orderId = checkoutAttemptId;
   const ip = getClientIp(req.headers); // MP exige additional_info.ip_address
   const existingAddInfo = (form.additional_info ?? {}) as Record<string, unknown>;
 

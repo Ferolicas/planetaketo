@@ -50,7 +50,7 @@ export default function WhyChooseUs() {
           <p className="text-mint-pale/90 mb-7 max-w-xl mx-auto">
             Únete a las miles de personas que ya han logrado sus objetivos con Planeta Keto.
           </p>
-          <CheckoutButton cta="empezar_ahora" className="inline-flex items-center rounded-full bg-cta px-9 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-white cursor-pointer">
+          <CheckoutButton productSlug="metodo-keto" cta="empezar_ahora" className="inline-flex items-center rounded-full bg-cta px-9 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-white cursor-pointer">
             Empezar ahora
           </CheckoutButton>
         </div>
