@@ -19,7 +19,7 @@ const bookFeatures = [
 ];
 
 export default function HeroSales() {
-  const { region } = useCheckoutRegion();
+  const { region } = useCheckoutRegion(undefined, 'metodo-keto');
   const p = regionDisplay(region);
 
   return (
@@ -56,7 +56,7 @@ export default function HeroSales() {
             </ul>
 
             <div className="flex flex-col sm:flex-row items-center gap-5 justify-center lg:justify-start">
-              <CheckoutButton cta="quiero_mi_metodo" className="group inline-flex items-center justify-center gap-2 rounded-full bg-cta px-8 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
+              <CheckoutButton productSlug="metodo-keto" cta="quiero_mi_metodo" className="group inline-flex items-center justify-center gap-2 rounded-full bg-cta px-8 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
                 Quiero mi método · -{p.percentage}%
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </CheckoutButton>
@@ -133,7 +133,7 @@ export default function HeroSales() {
                 <span className="text-4xl font-bold text-forest-dark">{p.fmt(p.discount)}</span>
                 <span className="text-2xl text-gray-400 line-through">{p.fmt(p.regular)}</span>
               </div>
-              <CheckoutButton cta="comprar_ahora" className="block w-full text-center rounded-full bg-cta px-8 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
+              <CheckoutButton productSlug="metodo-keto" cta="comprar_ahora" className="block w-full text-center rounded-full bg-cta px-8 py-4 text-lg font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white cursor-pointer">
                 Comprar ahora
               </CheckoutButton>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-gray-500">

@@ -36,6 +36,8 @@ export async function GET(
     return NextResponse.json({
       valid: true,
       remainingDownloads: link.max_downloads - link.download_count,
+      fileName: link.file_name,
+      productSlug: link.product_slug,
       downloadUrl: `/api/download/${token}`,
     });
   } catch (error) {

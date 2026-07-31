@@ -9,6 +9,7 @@ import { PRODUCT_CONFIG } from '@/lib/product';
 import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur } from '@/lib/payments/fx';
+import { isEuropeanCountry } from '@/lib/payments/country-currency';
 import { markCheckoutStarted } from '@/lib/analytics/session-link';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import catalog from '@/data/catalog.json';
@@ -46,16 +47,28 @@ export async function POST(req: NextRequest) {
   // UUID de la visita (analítica) + slug del producto. Opcionales.
   let sessionId: string | null = null;
   let productSlug: string | null = null;
+  let checkoutAttemptId: string | null = null;
   try {
-    const body = (await req.json()) as { sessionId?: unknown; productSlug?: unknown };
+    const body = (await req.json()) as {
+      sessionId?: unknown;
+      productSlug?: unknown;
+      checkoutAttemptId?: unknown;
+    };
     if (typeof body?.sessionId === 'string' && UUID_RE.test(body.sessionId)) {
       sessionId = body.sessionId;
     }
     if (typeof body?.productSlug === 'string' && /^[a-z0-9-]+$/.test(body.productSlug)) {
       productSlug = body.productSlug;
     }
+    if (typeof body?.checkoutAttemptId === 'string' && UUID_RE.test(body.checkoutAttemptId)) {
+      checkoutAttemptId = body.checkoutAttemptId;
+    }
   } catch {
     /* sin body o JSON inválido: el checkout sigue sin enlace */
+  }
+
+  if (!checkoutAttemptId) {
+    return NextResponse.json({ error: 'invalid_checkout_attempt' }, { status: 400 });
   }
 
   try {
@@ -65,6 +78,9 @@ export async function POST(req: NextRequest) {
     let productName = PRODUCT_CONFIG.name;
     let resolvedSlug: string | null = null;
     const item = productSlug ? findCatalogItem(productSlug) : null;
+    if (productSlug && !item) {
+      return NextResponse.json({ error: 'unknown_product' }, { status: 400 });
+    }
     if (item) {
       eurPrice = item.price;
       productName = item.title;
@@ -78,6 +94,9 @@ export async function POST(req: NextRequest) {
 
     // Moneda local del visitante (Colombia no llega aquí: va por Mercado Pago)
     const geo = await getGeoFromRequest(req);
+    if (geo.country && !isEuropeanCountry(geo.country)) {
+      return NextResponse.json({ error: 'wrong_provider' }, { status: 403 });
+    }
     const supported = await stripeSupportedCurrencies();
     let currency = (geo.currency || 'EUR').toUpperCase();
     if (!supported.has(currency)) currency = supported.has('USD') ? 'USD' : 'EUR';
@@ -97,17 +116,21 @@ export async function POST(req: NextRequest) {
 
     const amount = toStripeAmount(amountMajor, finalCurrency);
 
-    const intent = await getStripe().paymentIntents.create({
-      amount,
-      currency: finalCurrency.toLowerCase(),
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        productName,
-        presentment_currency: finalCurrency,
-        ...(resolvedSlug ? { product_slug: resolvedSlug } : {}),
-        ...(sessionId ? { session_uuid: sessionId } : {}),
+    const intent = await getStripe().paymentIntents.create(
+      {
+        amount,
+        currency: finalCurrency.toLowerCase(),
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          productName,
+          presentment_currency: finalCurrency,
+          checkout_attempt: checkoutAttemptId,
+          ...(resolvedSlug ? { product_slug: resolvedSlug } : {}),
+          ...(sessionId ? { session_uuid: sessionId } : {}),
+        },
       },
-    });
+      { idempotencyKey: `planetaketo:${checkoutAttemptId}` }
+    );
 
     // Analítica: la visita ha iniciado checkout (aún no completado).
     await markCheckoutStarted(sessionId);

@@ -1,25 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  claimDownload,
   getDownloadLink,
-  incrementDownload,
   isDownloadUsable,
 } from '@/lib/downloads/magic-link';
-import { getPaidProduct, getProductBySlug, fetchSanityFile } from '@/lib/sanity';
+import {
+  fetchSanityFile,
+  getBundleArchiveBySlug,
+  getPaidProduct,
+  getProductBySlug,
+} from '@/lib/sanity';
 import catalog from '@/data/catalog.json';
 
 type Cat = { id: string; slug: string; title: string };
-const cProducts = catalog.products as Cat[];
 const cBundles = catalog.bundles as (Cat & { includes: string[] })[];
-const bundleSlugs = (b: { includes: string[] }) =>
-  b.includes[0] === 'ALL' ? cProducts.map((p) => p.slug) : b.includes.map((id) => cProducts.find((p) => p.id === id)?.slug).filter(Boolean) as string[];
-
 export const runtime = 'nodejs';
+
+function contentDisposition(fileName: string): string {
+  const clean = fileName.replace(/[\r\n"]/g, '').replace(/[\\/]/g, '-');
+  const ascii = clean.normalize('NFKD').replace(/[^\x20-\x7E]/g, '') || 'descarga';
+  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(clean)}`;
+}
+
+async function claimOrLimit(linkId: string): Promise<NextResponse | null> {
+  if (await claimDownload(linkId)) return null;
+  return NextResponse.json({ error: 'Límite de descargas alcanzado o enlace expirado' }, { status: 403 });
+}
 
 // Descarga del libro de PAGO. Servido por proxy/stream desde Sanity
 // (nunca se expone la URL del CDN). Token válido = pago confirmado.
 // Límite de 2 descargas + expiración. Se incrementa solo si la entrega tuvo éxito.
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
@@ -46,36 +58,28 @@ export async function GET(
       );
     }
 
-    // BUNDLE: si el slug comprado es un pack del catálogo, entregamos varios PDFs.
+    // BUNDLE: una descarga = un ZIP completo. Así el pack, incluido el Mega Pack,
+    // obedece exactamente el mismo máximo de 2 descargas que un libro individual.
     const bundle = link.product_slug ? cBundles.find((b) => b.slug === link.product_slug) : null;
     if (bundle) {
-      const slugs = bundleSlugs(bundle);
-      const bookSlug = request.nextUrl.searchParams.get('book');
-      if (bookSlug && slugs.includes(bookSlug)) {
-        const book = await getProductBySlug(bookSlug);
-        if (!book?.pdfUrl) {
-          return NextResponse.json({ error: 'Ese libro no está disponible' }, { status: 500 });
-        }
-        const buf = await fetchSanityFile(book.pdfUrl);
-        await incrementDownload(link.id);
-        return new NextResponse(buf, {
-          status: 200,
-          headers: {
-            'Content-Type': book.mimeType || 'application/pdf',
-            'Content-Disposition': `attachment; filename="${book.fileName || book.title + '.pdf'}"`,
-            'Content-Length': buf.byteLength.toString(),
-            'Cache-Control': 'no-store',
-          },
-        });
+      const archive = await getBundleArchiveBySlug(bundle.slug);
+      if (!archive?.fileUrl) {
+        console.error(`[download] pack sin ZIP en Sanity: ${bundle.slug}`);
+        return NextResponse.json({ error: 'El pack no está disponible en este momento' }, { status: 500 });
       }
-      // Página de descargas del pack: un botón por libro incluido.
-      const items = slugs.map((s) => cProducts.find((p) => p.slug === s)!).filter(Boolean);
-      const rows = items.map((p) =>
-        `<a class="b" href="/api/download/${token}?book=${p.slug}">⬇ ${p.title}</a>`).join('');
-      const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tu pack · Planeta Keto</title>
-<style>body{font-family:system-ui,sans-serif;background:#faf6ef;color:#2c3028;margin:0;padding:28px 18px;max-width:520px;margin:0 auto}h1{color:#2d4a3e;font-size:24px}p{color:#5d6b5a}.b{display:block;background:#2d4a3e;color:#faf6ef;text-decoration:none;font-weight:700;border-radius:12px;padding:15px 18px;margin:10px 0}</style></head>
-<body><h1>🌿 Tu pack está listo</h1><p>Descarga cada libro incluido (puedes volver a este enlace durante 30 días):</p>${rows}<p style="font-size:13px;margin-top:20px">¿Problemas? Escríbenos a info@planetaketo.es</p></body></html>`;
-      return new NextResponse(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+      const buffer = await fetchSanityFile(archive.fileUrl);
+      const rejected = await claimOrLimit(link.id);
+      if (rejected) return rejected;
+      const fileName = archive.fileName || `${bundle.slug}.zip`;
+      return new NextResponse(buffer, {
+        status: 200,
+        headers: {
+          'Content-Type': archive.mimeType || 'application/zip',
+          'Content-Disposition': contentDisposition(fileName),
+          'Content-Length': buffer.byteLength.toString(),
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      });
     }
 
     // Producto que el cliente compró: si el enlace tiene product_slug, ese; si no
@@ -95,7 +99,8 @@ export async function GET(
 
     // Descargamos el asset; solo si llega bien incrementamos el contador.
     const buffer = await fetchSanityFile(product.pdfUrl);
-    await incrementDownload(link.id);
+    const rejected = await claimOrLimit(link.id);
+    if (rejected) return rejected;
 
     const fileName =
       product.fileName || link.file_name || 'Metodo Keto Definitivo - Planeta Keto.pdf';
@@ -104,7 +109,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': product.mimeType || 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Disposition': contentDisposition(fileName),
         'Content-Length': buffer.byteLength.toString(),
         'Cache-Control': 'no-store, no-cache, must-revalidate',
       },

@@ -30,8 +30,8 @@ export default function GraciasClient() {
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-3">¡Gracias por tu compra! 💚</h1>
         <p className="text-gray-600 mb-2">
-          Tu pago se ha confirmado. En unos minutos recibirás en tu correo el enlace
-          para descargar <strong>El Método Keto Definitivo</strong>.
+          Estamos verificando la confirmación de la pasarela. En cuanto quede aprobada,
+          recibirás en tu correo el enlace para descargar <strong>tu libro o pack</strong>.
         </p>
         <p className="text-sm text-gray-500 mb-8">
           Si no lo ves, revisa la carpeta de spam o promociones.

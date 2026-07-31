@@ -21,7 +21,7 @@ export default function BookBanner() {
           <p className="mt-2 text-sm text-mint-pale/80">
             Menús día a día, calculadoras y listas de compra. Sin pasar hambre, sin harinas.
           </p>
-          <CheckoutButton className="mt-4 inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-cta px-7 py-3 font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white">
+          <CheckoutButton productSlug="metodo-keto" className="mt-4 inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-cta px-7 py-3 font-bold text-forest-dark shadow-cta transition-colors hover:bg-cta-dark hover:text-white">
             Conseguir el método
           </CheckoutButton>
         </div>
