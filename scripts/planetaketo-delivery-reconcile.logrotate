@@ -1,4 +1,5 @@
 /var/log/planetaketo-delivery-reconcile.log {
+    su root root
     daily
     rotate 14
     compress

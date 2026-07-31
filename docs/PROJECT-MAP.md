@@ -190,6 +190,9 @@ No copiar valores de `.env.local` a documentación, logs, commits o respuestas.
   `pm2 startOrReload`.
 - Conserva los tres builds más recientes y valida `http://127.0.0.1:3011/`.
 - Caddy sirve `planetaketo.es` y redirige `www` al dominio canónico.
+- La CSP report-only de Caddy permite Stripe, Hotmart y los recursos que el
+  Payment Brick carga desde `*.mercadopago.com`, `*.mercadolibre.com` y
+  `*.mlstatic.com`.
 - Cron: reconciliación postventa cada 5 minutos, backup específico 03:30,
   ingesta de recetas 06:30 y limpieza de analítica 04:15; existen además
   backups globales del VPS.
