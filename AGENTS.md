@@ -31,6 +31,23 @@ tienda.
 
 No hacer commit, push ni deploy sin una instrucción explícita del usuario.
 
+## SEO (agosto 2026)
+
+- **Página pilar `/dieta-keto`**: la guía que compite por «dieta keto / dieta
+  cetogénica / keto para principiantes» (patrón de Diet Doctor: definición
+  directa en el primer párrafo + guía completa). Enlazada desde la tira
+  `GuideStrip` (todas las recetas y blogs), el footer y el sitemap (0.95).
+- Home con título keyword-first («Dieta Keto: …»), hreflang es/x-default,
+  BreadcrumbList en recetas, `/llms.txt` dinámico desde BD (guía + recetas +
+  blog, para asistentes de IA) y robots.txt con los rastreadores de IA
+  permitidos. ⚠️ Si Cloudflare tiene activado el bloqueo de bots de IA, ese
+  ajuste ANULA los permisos: apagarlo en el panel para visibilidad en IAs.
+- **Enlaces cruzados del holding**: footer y guía enlazan las calculadoras de
+  olcas.app (macros, calorías); olcas enlaza de vuelta a /recetas y /dieta-keto.
+  NO crear granjas de enlaces ni páginas vacías: penalización de Google.
+- Build local: requiere `.env.local` con DATABASE_URL y RESEND_API_KEY de
+  relleno (gitignorado); el build real corre en el VPS con el `.env` completo.
+
 ## Estructura esencial
 
 - Páginas y API: `app/`
