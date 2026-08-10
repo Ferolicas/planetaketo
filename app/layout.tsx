@@ -31,21 +31,29 @@ const raleway = Bricolage_Grotesque({
 export const metadata: Metadata = {
   metadataBase: new URL('https://planetaketo.es'),
   title: {
-    default: 'Planeta Keto — Pierde peso con el Método Keto Definitivo',
+    // Keyword primero («dieta keto» es la consulta; el nombre de marca después),
+    // siguiendo el patrón de la guía que hoy gana esa búsqueda.
+    default: 'Dieta Keto: método de 70 días, recetas y menús | Planeta Keto',
     template: '%s | Planeta Keto',
   },
   description:
-    'El método keto de 70 días con recetas, calculadoras y listas de compra. Pierde peso sin pasar hambre y sin ejercicio obligatorio. Acceso de por vida.',
-  keywords: 'keto, dieta cetogénica, recetas keto, perder peso, método keto, plan keto 70 días',
+    'Pierde peso con la dieta keto: método de 70 días con menús, recetas con macros y listas de compra. Sin pasar hambre y sin ejercicio obligatorio. Acceso de por vida.',
+  keywords: 'dieta keto, dieta cetogénica, recetas keto, perder peso, método keto, plan keto 70 días',
   authors: [{ name: 'Planeta Keto' }],
+  alternates: {
+    canonical: '/',
+    // Español neutro (España + LATAM): «es» genérico, no es-ES, para no
+    // restringir el país; x-default apunta a la misma versión.
+    languages: { es: 'https://planetaketo.es', 'x-default': 'https://planetaketo.es' },
+  },
   openGraph: {
     type: 'website',
     locale: 'es_ES',
     url: 'https://planetaketo.es',
     siteName: 'Planeta Keto',
-    title: 'Planeta Keto — Pierde peso con el Método Keto Definitivo',
+    title: 'Dieta Keto: método de 70 días, recetas y menús | Planeta Keto',
     description:
-      'El método keto de 70 días con recetas, calculadoras y listas de compra. Pierde peso sin pasar hambre.',
+      'Pierde peso con la dieta keto: método de 70 días con menús, recetas con macros y listas de compra. Sin pasar hambre.',
     images: [{ url: '/libro.png', width: 1200, height: 630, alt: 'Método Keto 70 Días — Planeta Keto' }],
   },
   twitter: {

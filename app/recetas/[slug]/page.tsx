@@ -59,6 +59,19 @@ export default async function RecipePage({ params }: Params) {
   return (
     <div className="bg-cream">
       <JsonLd data={recipeJsonLd(r)} />
+      {/* Migas para el buscador: sitúan la receta en la jerarquía del sitio y
+          pintan la ruta «Inicio › Recetas keto › …» bajo el resultado. */}
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://planetaketo.es' },
+            { '@type': 'ListItem', position: 2, name: 'Recetas keto', item: 'https://planetaketo.es/recetas' },
+            { '@type': 'ListItem', position: 3, name: r.title, item: `https://planetaketo.es/recetas/${r.slug}` },
+          ],
+        }}
+      />
       <article className="container mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
         <nav className="flex flex-wrap items-center gap-1 text-sm text-gray-500">
           <Link href="/" className="hover:text-forest">Inicio</Link>

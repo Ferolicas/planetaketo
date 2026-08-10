@@ -9,7 +9,7 @@ export default function Footer() {
   return (
     <footer className="bg-forest-dark text-mint-pale/90">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="space-y-4">
             <div className="flex items-center gap-2.5">
               <Image src="/LOGO.png" alt="Planeta Keto" width={36} height={36} className="h-9 w-9 object-contain" />
@@ -40,6 +40,45 @@ export default function Footer() {
               </a>
             </div>
           </div>
+
+          {/* Enlaza el clúster keto desde TODO el sitio (guía pilar, recetario,
+              blog) y las calculadoras gratuitas del holding en olcas.app —
+              enlazado cruzado legítimo entre propiedades propias. */}
+          <nav aria-label="Recursos keto">
+            <h4 className="font-serif font-semibold text-white mb-4">Recursos keto</h4>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <Link href="/dieta-keto" className="hover:text-cta transition-colors">
+                  Guía de la dieta keto
+                </Link>
+              </li>
+              <li>
+                <Link href="/recetas" className="hover:text-cta transition-colors">
+                  Recetas keto gratis
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="hover:text-cta transition-colors">
+                  Blog keto
+                </Link>
+              </li>
+              <li>
+                <Link href="/catalogo" className="hover:text-cta transition-colors">
+                  Método Keto 70 Días
+                </Link>
+              </li>
+              <li>
+                <a href="https://olcas.app/calculadoras/macronutrientes" className="hover:text-cta transition-colors">
+                  Calculadora de macros
+                </a>
+              </li>
+              <li>
+                <a href="https://olcas.app/calculadoras/calorias-diarias" className="hover:text-cta transition-colors">
+                  Calculadora de calorías
+                </a>
+              </li>
+            </ul>
+          </nav>
 
           <div>
             <h4 className="font-serif font-semibold text-white mb-4">Soporte</h4>
