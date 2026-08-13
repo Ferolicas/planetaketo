@@ -1,6 +1,6 @@
 # Planeta Keto — mapa vivo del proyecto
 
-Actualizado: 2026-07-31 · Base auditada: `b15c1c2` + flujo multipasarela actual
+Actualizado: 2026-08-13 · Commit: `80f1082`
 
 ## 1. Resumen operativo
 
@@ -166,6 +166,21 @@ Invariantes:
 4. La reserva del contador es atómica y nunca supera 2, incluso con peticiones
    simultáneas.
 
+### Sustitución de libros y packs
+
+1. Sanity mantiene 26 documentos `product` con archivo: 25 libros de pago y el
+   planificador gratuito.
+2. Los 6 packs viven en documentos `deliveryBundle`; cada `archive` debe
+   reconstruirse después de sustituir cualquier PDF incluido.
+3. Se suben primero los 32 assets nuevos sin cambiar referencias, se verifican
+   tamaño y hash, y después se actualizan las 32 referencias en una sola
+   transacción de Sanity.
+4. Los assets anteriores no se borran durante la operación: sus referencias se
+   guardan para rollback inmediato.
+5. Hotmart conserva solo `ENTREGA_POR_EMAIL_PLANETA_KETO.pdf`. Sus compradores
+   reciben el enlace mágico de Planeta Keto, por lo que actualizar Sanity también
+   actualiza la entrega de las 31 ofertas Hotmart sin duplicar archivos allí.
+
 ## 6. Integraciones y variables
 
 Variables necesarias, sin valores:
@@ -219,6 +234,9 @@ No copiar valores de `.env.local` a documentación, logs, commits o respuestas.
   confirmación de pago, pero no puede garantizar disponibilidad de terceros.
 - Hotmart es solo pasarela: cada producto conserva únicamente un PDF informativo;
   la entrega comercial siempre sale de Planeta Keto por enlace mágico.
+- Los PDF con transparencias no deben posprocesarse con Ghostscript
+  (`PDFSETTINGS=/ebook`): puede ocultar fondos y convertir sombras en franjas
+  negras. La fuente válida es la exportación directa de Chromium/Skia.
 - `README.md` conserva descripciones de una arquitectura antigua y no es fuente
   de verdad.
 - `package-lock.json` es legado y contiene un cambio local ajeno; no mezclarlo

@@ -20,6 +20,9 @@ tienda.
   (incluido LATAM excepto Colombia). Los 31 checkouts Hotmart viven en
   `data/hotmart-products.json`.
 - Resend para la entrega postpago y Sanity como origen privado de los PDF.
+- Hotmart conserva solo `ENTREGA_POR_EMAIL_PLANETA_KETO.pdf`: los 25 libros de
+  pago, el planificador gratuito y los 6 ZIP de packs se actualizan en Sanity.
+  Nunca subir los archivos comerciales a Hotmart ni crear una entrega duplicada.
 - Gestor de producción: pnpm (`pnpm-lock.yaml`). `package-lock.json` es legado.
 
 ## Comandos
@@ -78,6 +81,9 @@ No hacer commit, push ni deploy sin una instrucción explícita del usuario.
   `pnpm build`.
 - Conservar intacto `public/`: Caddy y el despliegue atómico dependen de los
   estáticos del repositorio.
+- Al sustituir libros: subir primero los 32 assets nuevos a Sanity, verificar
+  hashes y cambiar las 32 referencias en una única mutación; conservar las
+  referencias anteriores para rollback.
 
 ## Gotchas
 
