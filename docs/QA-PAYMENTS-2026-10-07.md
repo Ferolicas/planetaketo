@@ -25,8 +25,9 @@ datos, pero tampoco existe una prueba aprobada completa reciente de Stripe o
 Mercado Pago. Las credenciales instaladas son LIVE y no hay credenciales sandbox,
 por lo que no se hizo ningún cargo para fabricar esa evidencia.
 
-Estado al cerrar este informe: corrección validada y preparada para `main`; la
-producción conserva el comportamiento anterior hasta ejecutar el deploy.
+Estado al cerrar este informe: corrección publicada en `main` mediante
+`4452f3c`; producción conserva el comportamiento anterior hasta ejecutar el
+deploy manual.
 
 ## Hallazgos
 
