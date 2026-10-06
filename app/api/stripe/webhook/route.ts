@@ -6,6 +6,7 @@ import catalog from '@/data/catalog.json';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ============================================================
 // Webhook de Stripe — disparador de la entrega para cobros en Europa.
@@ -77,8 +78,40 @@ function verifiedProduct(slug: string | null | undefined): { slug: string; title
   return item;
 }
 
+function hasPlanetaCheckoutMarker(metadata: Stripe.Metadata | null): boolean {
+  if (!metadata) return false;
+  return (
+    metadata.integration === 'planetaketo' &&
+    typeof metadata.checkout_attempt === 'string' &&
+    UUID_RE.test(metadata.checkout_attempt)
+  );
+}
+
+function verifiedPaymentIntentProduct(pi: Stripe.PaymentIntent): { slug: string; title: string } {
+  if (!hasPlanetaCheckoutMarker(pi.metadata)) {
+    throw new Error('PaymentIntent ajeno a Planeta Keto');
+  }
+  if (!pi.livemode) throw new Error('PaymentIntent no LIVE; entrega bloqueada');
+
+  const expectedAmount = Number(pi.metadata.expected_amount_minor);
+  const expectedCurrency = pi.metadata.expected_currency?.toLowerCase();
+  if (!Number.isSafeInteger(expectedAmount) || expectedAmount <= 0 || pi.amount !== expectedAmount) {
+    throw new Error('Importe Stripe no coincide con el creado por el servidor');
+  }
+  if (!expectedCurrency || pi.currency.toLowerCase() !== expectedCurrency) {
+    throw new Error('Moneda Stripe no coincide con la creada por el servidor');
+  }
+  return verifiedProduct(pi.metadata.product_slug);
+}
+
 async function handleCheckoutSession(event: Stripe.Event): Promise<NextResponse> {
   const session = event.data.object as Stripe.Checkout.Session;
+
+  // La tienda actual usa Payment Intents. Solo conservamos compatibilidad con
+  // Checkout Sessions que lleven la misma marca server-side del proyecto.
+  if (!hasPlanetaCheckoutMarker(session.metadata)) {
+    return NextResponse.json({ received: true, ignored: 'foreign_checkout_session' });
+  }
 
   // Solo entregamos si el pago está realmente cobrado.
   if (session.payment_status && session.payment_status !== 'paid') {
@@ -128,6 +161,10 @@ async function handleCheckoutSession(event: Stripe.Event): Promise<NextResponse>
 async function handlePaymentIntent(event: Stripe.Event): Promise<NextResponse> {
   const pi = event.data.object as Stripe.PaymentIntent;
 
+  if (!hasPlanetaCheckoutMarker(pi.metadata)) {
+    return NextResponse.json({ received: true, ignored: 'foreign_payment_intent' });
+  }
+
   // El Payment Element de la tienda genera payment_intent.succeeded.
   let email = (pi.metadata?.customerEmail as string) || pi.receipt_email || '';
   let name = (pi.metadata?.customerName as string) || 'Cliente';
@@ -147,7 +184,7 @@ async function handlePaymentIntent(event: Stripe.Event): Promise<NextResponse> {
   if (!email) {
     throw new Error('Stripe confirmó el pago pero no devolvió email del comprador');
   }
-  const product = verifiedProduct(pi.metadata?.product_slug);
+  const product = verifiedPaymentIntentProduct(pi);
 
   const result = await finalizeSale({
     provider: 'stripe',

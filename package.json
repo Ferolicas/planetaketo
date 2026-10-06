@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "qa:payments": "tsx scripts/test-hotmart-webhook.ts && node scripts/verify-payment-catalog.mjs"
+    "qa:payments": "tsx scripts/test-hotmart-webhook.ts && node scripts/verify-payment-catalog.mjs && tsx scripts/test-payment-reliability.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

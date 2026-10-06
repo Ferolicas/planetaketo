@@ -1,6 +1,6 @@
 # Planeta Keto — mapa vivo del proyecto
 
-Actualizado: 2026-08-13 · Commit: `80f1082`
+Actualizado: 2026-10-07 · Rama: `main`
 
 ## 1. Resumen operativo
 
@@ -36,8 +36,8 @@ Navegador (producto identificado solo por slug de catálogo)
   ├─ Colombia ──> Mercado Pago Brick ──> /api/checkout/mercadopago/pay
   └─ Resto/LATAM no CO ──> checkout Hotmart específico del producto
 
-Stripe / Mercado Pago / Hotmart
-  └─ webhook firmado
+Stripe / Hotmart ──> webhook firmado
+Mercado Pago ──────> Webhook firmado o IPN verificada contra API
        └─ finalizeSale()
             ├─ PostgreSQL: customers + payments + download_links
             ├─ newsletter + ketoscan_accounts
@@ -46,6 +46,8 @@ Stripe / Mercado Pago / Hotmart
             └─ analytics_sessions: venta_completada
 
 Cron cada 5 minutos
+  ├─ reconcileApprovedMpPayments()
+  │    └─ rescata aprobados MP que perdieron todos sus callbacks
   └─ reconcilePendingDeliveries()
        └─ repara efectos incompletos con locks e idempotencia
 ```
@@ -144,12 +146,16 @@ Invariantes:
 1. `CheckoutButton` abre `PaymentModal`.
 2. `/api/checkout/region` determina país, moneda, precio y proveedor.
 3. El proveedor tokeniza/cobra; el servidor nunca recibe datos de tarjeta.
-4. El webhook firmado consulta o valida el objeto real del proveedor.
+4. El webhook consulta o valida el objeto real del proveedor. La IPN de Mercado
+   Pago se acepta solo después de consultar la API y verificar marca, producto,
+   referencia, modo LIVE, moneda e importe creados por el servidor.
 5. Solo un estado aprobado invoca `finalizeSale()`.
 6. `finalizeSale()` bloquea por pago/cliente, registra una sola venta y ejecuta
    efectos idempotentes.
 7. Si Resend, DB o un efecto secundario falla, el proveedor recibe 5xx y el pago
    queda `retry_pending`; el reconciliador periódico completa lo pendiente.
+8. Aunque Mercado Pago pierda todos sus callbacks, el mismo cron descubre los
+   pagos aprobados recientes por API y ejecuta la entrega idempotente.
 
 ### Autenticación admin
 
@@ -229,6 +235,11 @@ No copiar valores de `.env.local` a documentación, logs, commits o respuestas.
 
 ## 9. Riesgos y deuda conocida
 
+- Auditoría de pagos 2026-10-07: corregidos en código el bloqueo infinito de
+  Stripe y el rechazo de callbacks IPN de Mercado Pago. MP cuenta además con
+  descubrimiento periódico de aprobados. Falta desplegar y no existe sandbox
+  para ejecutar una aprobación completa sin dinero LIVE. Evidencia en
+  `docs/QA-PAYMENTS-2026-10-07.md`.
 - Bancos y proveedores externos pueden rechazar, demorar o interrumpir una
   transacción; el sistema evita duplicados y rescata la entrega una vez existe
   confirmación de pago, pero no puede garantizar disponibilidad de terceros.
