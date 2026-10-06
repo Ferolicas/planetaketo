@@ -10,6 +10,10 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import { getSid } from '@/lib/analytics/consent';
+import {
+  PaymentConfirmationTimeoutError,
+  withPaymentConfirmationTimeout,
+} from '@/lib/payments/promise-timeout';
 
 // ============================================================
 // Stripe Payment Element dentro del modal (cobro mundial, EUR).
@@ -20,6 +24,9 @@ import { getSid } from '@/lib/analytics/consent';
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
+const STRIPE_SLOW_NOTICE_MS = 15_000;
+const STRIPE_SUBMIT_TIMEOUT_MS = 30_000;
+const STRIPE_CONFIRM_TIMEOUT_MS = 90_000;
 
 const appearance: Appearance = {
   theme: 'stripe',
@@ -123,6 +130,7 @@ function CheckoutForm({ amountLabel, onSuccess, onPending, onFailure }: Props) {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [slowNotice, setSlowNotice] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,16 +141,42 @@ function CheckoutForm({ amountLabel, onSuccess, onPending, onFailure }: Props) {
     }
     setSubmitting(true);
     setError('');
+    setSlowNotice('');
+
+    let slowNoticeTimer: number | undefined;
+    let confirmationStarted = false;
 
     try {
-      const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/gracias`,
-          receipt_email: email,
-        },
-        redirect: 'if_required',
-      });
+      // Stripe recomienda validar/recoger los datos del Payment Element antes
+      // de confirmar. Así los errores de formulario nunca entran en la fase de
+      // cobro ni dejan el botón esperando una llamada que no debía hacerse.
+      const submitted = await withPaymentConfirmationTimeout(
+        elements.submit(),
+        STRIPE_SUBMIT_TIMEOUT_MS
+      );
+      if (submitted.error) {
+        setError(submitted.error.message || 'Revisa los datos del pago.');
+        return;
+      }
+
+      slowNoticeTimer = window.setTimeout(() => {
+        setSlowNotice(
+          'Tu banco está tardando más de lo habitual. No cierres esta ventana ni vuelvas a pagar.'
+        );
+      }, STRIPE_SLOW_NOTICE_MS);
+
+      confirmationStarted = true;
+      const { error: stripeError, paymentIntent } = await withPaymentConfirmationTimeout(
+        stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}/gracias`,
+            receipt_email: email,
+          },
+          redirect: 'if_required',
+        }),
+        STRIPE_CONFIRM_TIMEOUT_MS
+      );
 
       if (stripeError) {
         const msg = stripeError.message || 'No se pudo completar el pago.';
@@ -167,6 +201,16 @@ function CheckoutForm({ amountLabel, onSuccess, onPending, onFailure }: Props) {
         onFailure(msg);
       }
     } catch (caught) {
+      if (caught instanceof PaymentConfirmationTimeoutError) {
+        if (confirmationStarted) {
+          onPending(
+            'El banco tardó demasiado en responder. No vuelvas a pagar: revisa tu correo o movimientos mientras confirmamos el resultado.'
+          );
+        } else {
+          onFailure('El formulario de pago tardó demasiado en responder. Puedes intentarlo de nuevo.');
+        }
+        return;
+      }
       const isIntegrationError =
         (caught as { name?: string })?.name === 'IntegrationError';
       const msg = isIntegrationError
@@ -176,6 +220,7 @@ function CheckoutForm({ amountLabel, onSuccess, onPending, onFailure }: Props) {
       if (isIntegrationError) onFailure(msg);
       else onPending(msg);
     } finally {
+      if (slowNoticeTimer) window.clearTimeout(slowNoticeTimer);
       setSubmitting(false);
     }
   };
@@ -189,6 +234,7 @@ function CheckoutForm({ amountLabel, onSuccess, onPending, onFailure }: Props) {
             layout: 'accordion',
           }}
         />
+        {slowNotice && <p className="text-amber-700 text-sm">{slowNotice}</p>}
         {error && <p className="text-red-600 text-sm">{error}</p>}
       </div>
       <div className="p-4 border-t border-gray-100">

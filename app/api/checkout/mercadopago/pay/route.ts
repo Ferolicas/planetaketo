@@ -5,6 +5,8 @@ import {
   createMpPayment,
   mpRedirectUrl,
   finalizeMpPayment,
+  MP_DEFAULT_PRODUCT_SLUG,
+  MP_INTEGRATION_ID,
   type MpPayment,
 } from '@/lib/payments/mercadopago';
 import { convertEurToCop } from '@/lib/payments/fx';
@@ -83,6 +85,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'unknown_product' }, { status: 400 });
   }
   const productName = item ? item.title : PRODUCT_CONFIG.name;
+  const resolvedProductSlug = item?.slug ?? MP_DEFAULT_PRODUCT_SLUG;
 
   const checkoutAttemptId =
     typeof form.checkoutAttemptId === 'string' && UUID_RE.test(form.checkoutAttemptId)
@@ -149,8 +152,11 @@ export async function POST(req: NextRequest) {
         notification_url: `${origin}/api/mercadopago/webhook`,
         callback_url: `${origin}/gracias`, // PSE/Efecty redirigen al banco y vuelven aquí
         metadata: {
+          integration: MP_INTEGRATION_ID,
+          integration_version: '2026-10-07',
           product_name: productName,
-          ...(item ? { product_slug: item.slug } : {}),
+          product_slug: resolvedProductSlug,
+          expected_amount_cop: cop,
           ...(sessionId ? { session_uuid: sessionId } : {}),
         },
         additional_info: {

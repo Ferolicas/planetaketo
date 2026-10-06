@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     // si no, el método keto por defecto (precio de "homeContent").
     let eurPrice: number;
     let productName = PRODUCT_CONFIG.name;
-    let resolvedSlug: string | null = null;
+    let resolvedSlug = 'metodo-keto';
     const item = productSlug ? findCatalogItem(productSlug) : null;
     if (productSlug && !item) {
       return NextResponse.json({ error: 'unknown_product' }, { status: 400 });
@@ -122,10 +122,14 @@ export async function POST(req: NextRequest) {
         currency: finalCurrency.toLowerCase(),
         automatic_payment_methods: { enabled: true },
         metadata: {
+          integration: 'planetaketo',
+          integration_version: '2026-10-07',
           productName,
           presentment_currency: finalCurrency,
+          expected_amount_minor: String(amount),
+          expected_currency: finalCurrency.toLowerCase(),
           checkout_attempt: checkoutAttemptId,
-          ...(resolvedSlug ? { product_slug: resolvedSlug } : {}),
+          product_slug: resolvedSlug,
           ...(sessionId ? { session_uuid: sessionId } : {}),
         },
       },
