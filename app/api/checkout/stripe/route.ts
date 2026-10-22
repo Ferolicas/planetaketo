@@ -9,7 +9,6 @@ import { PRODUCT_CONFIG } from '@/lib/product';
 import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur } from '@/lib/payments/fx';
-import { isEuropeanCountry } from '@/lib/payments/country-currency';
 import { markCheckoutStarted } from '@/lib/analytics/session-link';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import catalog from '@/data/catalog.json';
@@ -92,9 +91,10 @@ export async function POST(req: NextRequest) {
       eurPrice = Number(row?.discount_price ?? 10);
     }
 
-    // Moneda local del visitante (Colombia no llega aquí: va por Mercado Pago)
+    // Moneda local del visitante. Stripe cobra a todo el mundo salvo Colombia,
+    // que va por Mercado Pago.
     const geo = await getGeoFromRequest(req);
-    if (geo.country && !isEuropeanCountry(geo.country)) {
+    if (geo.country === 'CO') {
       return NextResponse.json({ error: 'wrong_provider' }, { status: 403 });
     }
     const supported = await stripeSupportedCurrencies();

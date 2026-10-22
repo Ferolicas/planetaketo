@@ -67,8 +67,8 @@ export default function CookiesPage() {
 
       <h2>3. Cookies de las pasarelas de pago</h2>
       <p>
-        Únicamente <strong>cuando inicias un pago</strong>, la pasarela correspondiente (Stripe, Mercado
-        Pago o pasarela-antigua) puede instalar sus propias cookies para procesar la transacción y prevenir el
+        Únicamente <strong>cuando inicias un pago</strong>, la pasarela correspondiente (Stripe o Mercado
+        Pago) puede instalar sus propias cookies para procesar la transacción y prevenir el
         fraude, según sus respectivas políticas. Son necesarias para completar la compra.
       </p>
 

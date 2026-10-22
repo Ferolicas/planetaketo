@@ -4,7 +4,7 @@
 -- ============================================================
 -- Eventos mínimos para medir el embudo real:
 --   type='pageview'        -> una carga de página pública
---   type='checkout_click'  -> clic en un botón "Comprar" (abre el modal pasarela-antigua)
+--   type='checkout_click'  -> clic en un botón "Comprar" (abre el modal de pago)
 -- visitor_id = cookie anónima (pk_vid) para contar visitantes únicos.
 -- ------------------------------------------------------------
 

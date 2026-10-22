@@ -42,9 +42,7 @@ export default function TerminosPage() {
       <h2>4. Pago</h2>
       <p>
         El pago se procesa de forma segura a través de pasarelas externas según tu país:{' '}
-        <strong>Stripe</strong> (resto del mundo), <strong>Mercado Pago</strong> (Colombia) y{' '}
-        <strong>pasarela-antigua</strong> (resto de Latinoamérica). En las compras a través de pasarela-antigua, esta
-        plataforma puede actuar como vendedor/intermediario y aplicar además sus propias condiciones.
+        <strong>Stripe</strong> (resto del mundo) y <strong>Mercado Pago</strong> (Colombia).
         No almacenamos los datos completos de tu tarjeta.
       </p>
 

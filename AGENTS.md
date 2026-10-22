@@ -16,13 +16,11 @@ tienda.
 - Next.js 15 App Router, React 19 y TypeScript.
 - PostgreSQL nativo mediante `pg` y `lib/db.ts`.
 - Autenticación propia del panel: bcrypt + cookie HMAC `session`.
-- Stripe solo para Europa, Mercado Pago para Colombia y pasarela-antigua para el resto
-  (incluido LATAM excepto Colombia). Los 31 checkouts pasarela-antigua viven en
-  `data/pasarela-antigua-products.json`.
+- Stripe para todo el mundo salvo Colombia (moneda local si Stripe la soporta)
+  y Mercado Pago para Colombia.
 - Resend para la entrega postpago y Sanity como origen privado de los PDF.
-- pasarela-antigua conserva solo `ENTREGA_POR_EMAIL_PLANETA_KETO.pdf`: los 25 libros de
-  pago, el planificador gratuito y los 6 ZIP de packs se actualizan en Sanity.
-  Nunca subir los archivos comerciales a pasarela-antigua ni crear una entrega duplicada.
+- Los 25 libros de pago, el planificador gratuito y los 6 ZIP de packs se
+  actualizan en Sanity.
 - Gestor de producción: pnpm (`pnpm-lock.yaml`). `package-lock.json` es legado.
 
 ## Comandos
@@ -57,8 +55,6 @@ No hacer commit, push ni deploy sin una instrucción explícita del usuario.
 - Landing y catálogo: `components/home/`, `data/catalog.json`
 - Checkout cliente: `components/checkout/`, `components/payment/`
 - Pagos y postventa: `lib/payments/`
-- Catálogo operativo pasarela-antigua: `data/pasarela-antigua-products.json`,
-  `scripts/pasarela-antigua-bulk-api.py`
 - Descargas: `lib/downloads/`, `app/api/download/`
 - Autenticación admin: `lib/auth/session.ts`, `app/api/auth/`
 - PostgreSQL: `lib/db.ts`
@@ -74,7 +70,6 @@ No hacer commit, push ni deploy sin una instrucción explícita del usuario.
   aprobado verificado por el proveedor o su webhook.
 - `finalizeSale()` debe seguir siendo idempotente por ID externo.
 - No registrar tokens, secretos, firmas, datos de tarjeta ni payloads sensibles.
-- No reutilizar una URL de pasarela-antigua para un producto distinto del que vende.
 - No probar el checkout con credenciales LIVE haciendo cargos reales.
 - `.env.local` contiene secretos LIVE y está fuera de Git.
 - Antes de entregar cambios: `git diff --check`, `pnpm exec tsc --noEmit` y
@@ -95,7 +90,7 @@ No hacer commit, push ni deploy sin una instrucción explícita del usuario.
   cerrado debe iniciar consultas de región ni cargar SDKs de pago.
 - React Strict Mode puede remontar efectos. Todo inicio automático de checkout
   debe ser cancelable o deduplicado.
-- Stripe, Mercado Pago y pasarela-antigua en producción usan credenciales LIVE.
+- Stripe y Mercado Pago en producción usan credenciales LIVE.
 - `www.planetaketo.es` redirige de forma permanente al dominio canónico sin
   `www`.
 - Los webhooks y los efectos postventa pueden repetirse; la idempotencia no es

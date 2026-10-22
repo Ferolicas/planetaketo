@@ -95,7 +95,7 @@ export interface BundleArchive {
   mimeType: string | null;
 }
 
-/** ZIP privado de un pack. pasarela-antigua/Stripe/MP nunca sirven estos bytes. */
+/** ZIP privado de un pack. Stripe/MP nunca sirven estos bytes. */
 export async function getBundleArchiveBySlug(slug: string): Promise<BundleArchive | null> {
   return sanityQuery<BundleArchive | null>(
     `*[_type == "deliveryBundle" && slug.current == $slug][0] {

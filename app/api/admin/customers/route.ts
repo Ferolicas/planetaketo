@@ -5,7 +5,7 @@ import { getSession } from '@/lib/auth/session';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Lista de compradores reales (tabla customers, alimentada por el webhook de pasarela-antigua).
+// Lista de compradores reales (tabla customers, alimentada por las ventas de Stripe y Mercado Pago).
 // Solo email + país (la UI muestra bandera + email).
 export async function GET() {
   const session = await getSession();

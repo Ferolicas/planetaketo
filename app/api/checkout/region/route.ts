@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
 import { getGeoFromRequest } from '@/lib/geo';
 import { convertEur, convertEurToCop } from '@/lib/payments/fx';
-import { pasarela-antiguaSpread, isEuropeanCountry } from '@/lib/payments/country-currency';
-import { haspasarela-antiguaCheckout } from '@/lib/payments/pasarela-antigua-checkouts';
+import { isStripeConfigured, stripeSupportedCurrencies } from '@/lib/payments/stripe';
 import catalog from '@/data/catalog.json';
 
 export const runtime = 'nodejs';
@@ -19,8 +18,7 @@ function findCatalogItem(slug: string): { slug: string; price: number; regular: 
 // ============================================================
 // Región de cobro del visitante: pasarela + precios en su MONEDA LOCAL.
 //   country === 'CO'  → Mercado Pago, precios en COP
-//   Europa            → Stripe
-//   resto/desconocido → pasarela-antigua
+//   resto del mundo   → Stripe (moneda local si Stripe la soporta; si no, USD/EUR)
 // Los precios se muestran en la moneda local detectada; si no se puede
 // determinar o convertir, se muestran en EUR.
 //
@@ -51,7 +49,7 @@ export async function GET(req: NextRequest) {
     country = (req.nextUrl.searchParams.get('cc') || 'ES').toUpperCase();
     currency = (req.nextUrl.searchParams.get('cur') || 'EUR').toUpperCase();
   } else if (force === 'latam') {
-    // Depuración: simula un país LATAM (≠ Colombia) → pasarela-antigua.
+    // Depuración: simula un país LATAM (≠ Colombia) → Stripe.
     country = (req.nextUrl.searchParams.get('cc') || 'PE').toUpperCase();
     currency = (req.nextUrl.searchParams.get('cur') || 'PEN').toUpperCase();
   } else {
@@ -66,14 +64,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unknown_product' }, { status: 400 });
   }
   const isColombia = country === 'CO';
-  const provider: 'mercadopago' | 'pasarela-antigua' | 'stripe' = isColombia
-    ? 'mercadopago'
-    : isEuropeanCountry(country)
-      ? 'stripe'
-      : 'pasarela-antigua';
-  if (provider === 'pasarela-antigua' && !haspasarela-antiguaCheckout(slug)) {
-    return NextResponse.json({ error: 'pasarela-antigua_product_unavailable' }, { status: 503 });
-  }
+  const provider: 'mercadopago' | 'stripe' = isColombia ? 'mercadopago' : 'stripe';
 
   // 2) Precios base en EUR (fuente de verdad). Si llega ?slug= de un producto del
   // catálogo, esos precios; si no, el método keto por defecto (tabla homeContent).
@@ -106,7 +97,14 @@ export async function GET(req: NextRequest) {
   }
 
   // 3) Precios en la moneda local
-  const targetCurrency = (isColombia ? 'COP' : currency || 'EUR').toUpperCase();
+  let targetCurrency = (isColombia ? 'COP' : currency || 'EUR').toUpperCase();
+  // Stripe: misma regla que /api/checkout/stripe, para que el precio mostrado sea
+  // EXACTAMENTE la moneda en la que se cobra (moneda local si Stripe la soporta;
+  // si no, USD y, en último caso, EUR).
+  if (provider === 'stripe' && targetCurrency !== 'EUR' && isStripeConfigured()) {
+    const supported = await stripeSupportedCurrencies();
+    if (!supported.has(targetCurrency)) targetCurrency = supported.has('USD') ? 'USD' : 'EUR';
+  }
   let local: LocalPrices = { currency: 'EUR', regular: eur.regular, discount: eur.discount, rate: 1 };
 
   try {
@@ -127,20 +125,6 @@ export async function GET(req: NextRequest) {
     }
   } catch (error) {
     console.error('[region] fallo conversión de moneda, uso EUR:', error);
-  }
-
-  // pasarela-antigua convierte a la moneda local a SU tasa (spread ~7-8% sobre el mercado),
-  // así que su checkout cobra un poco más que nuestra conversión mid-market. Para
-  // que el precio mostrado en la web COINCIDA con el checkout de pasarela-antigua, aplicamos
-  // el mismo margen SOLO en países pasarela-antigua. En Stripe/MP cobramos el importe exacto
-  // que mostramos, así que ahí NO se toca. Ajustable con pasarela-antigua_FX_SPREAD.
-  if (provider === 'pasarela-antigua' && local.currency !== 'EUR') {
-    const spread = pasarela-antiguaSpread(country); // spread cambial de pasarela-antigua por país
-    local = {
-      ...local,
-      regular: Math.round(local.regular * (1 + spread)),
-      discount: Math.round(local.discount * (1 + spread)),
-    };
   }
 
   return NextResponse.json(

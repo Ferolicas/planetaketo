@@ -34,9 +34,9 @@ Navegador (producto identificado solo por slug de catálogo)
   ├─ Landing / catálogo ──> /api/checkout/region
   ├─ Europa ──> Stripe Payment Element ──> /api/checkout/stripe
   ├─ Colombia ──> Mercado Pago Brick ──> /api/checkout/mercadopago/pay
-  └─ Resto/LATAM no CO ──> checkout pasarela-antigua específico del producto
+  └─ Resto del mundo ──> Stripe (moneda local si Stripe la soporta)
 
-Stripe / pasarela-antigua ──> webhook firmado
+Stripe / Mercado Pago ──> webhook firmado
 Mercado Pago ──────> Webhook firmado o IPN verificada contra API
        └─ finalizeSale()
             ├─ PostgreSQL: customers + payments + download_links
@@ -59,11 +59,10 @@ Componentes centrales:
 | Entrada pública | `app/page.tsx`, `components/home/Landing.tsx` |
 | Fuente del catálogo | `data/catalog.json` |
 | Botón/modal | `components/checkout/CheckoutButton.tsx`, `components/payment/PaymentModal.tsx` |
-| Proveedores cliente | `StripeEmbedded.tsx`, `MercadoPagoBrick.tsx`, `pasarela-antiguaEmbed.tsx` |
+| Proveedores cliente | `StripeEmbedded.tsx`, `MercadoPagoBrick.tsx` |
 | Precio/región | `app/api/checkout/region/route.ts`, `lib/payments/country-currency.ts`, `lib/payments/fx.ts` |
 | Stripe | `app/api/checkout/stripe/route.ts`, `app/api/stripe/webhook/route.ts`, `lib/payments/stripe.ts` |
 | Mercado Pago | `app/api/checkout/mercadopago/pay/route.ts`, `app/api/mercadopago/webhook/route.ts`, `lib/payments/mercadopago.ts` |
-| pasarela-antigua | `app/api/checkout/pasarela-antigua/start/route.ts`, `app/api/pasarela-antigua/webhook/route.ts`, `lib/payments/pasarela-antigua.ts`, `lib/payments/pasarela-antigua-checkouts.ts`, `data/pasarela-antigua-products.json` |
 | Postventa común | `lib/payments/process-sale.ts` |
 | Descarga | `lib/downloads/magic-link.ts`, `app/api/download/[token]/route.ts` |
 | Recuperación postventa | `scripts/reconcile-deliveries.ts`, `scripts/reconcile-deliveries.sh` |
@@ -94,8 +93,7 @@ API de negocio:
 | `GET /api/checkout/region` | Resuelve país, proveedor y precios |
 | `POST /api/checkout/stripe` | Crea PaymentIntent con importe recalculado |
 | `POST /api/checkout/mercadopago/pay` | Crea pago MP con importe recalculado |
-| `POST /api/checkout/pasarela-antigua/start` | Marca inicio de checkout |
-| `POST /api/{stripe,mercadopago,pasarela-antigua}/webhook` | Verifica proveedor y finaliza venta |
+| `POST /api/{stripe,mercadopago}/webhook` | Verifica proveedor y finaliza venta |
 | `GET /api/download/validate/[token]` | Valida enlace mágico |
 | `GET /api/download/[token]` | Sirve PDF o ZIP y reserva una de 2 descargas de forma atómica |
 | `POST /api/lead/{subscribe,download}` | Alta de lead/descarga gratuita |
@@ -183,9 +181,8 @@ Invariantes:
    transacción de Sanity.
 4. Los assets anteriores no se borran durante la operación: sus referencias se
    guardan para rollback inmediato.
-5. pasarela-antigua conserva solo `ENTREGA_POR_EMAIL_PLANETA_KETO.pdf`. Sus compradores
-   reciben el enlace mágico de Planeta Keto, por lo que actualizar Sanity también
-   actualiza la entrega de las 31 ofertas pasarela-antigua sin duplicar archivos allí.
+5. Los compradores reciben el enlace mágico de Planeta Keto, por lo que
+   actualizar Sanity actualiza la entrega de todos los productos.
 
 ## 6. Integraciones y variables
 
@@ -196,8 +193,6 @@ Variables necesarias, sin valores:
   `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 - Mercado Pago: `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`,
   `NEXT_PUBLIC_MP_PUBLIC_KEY`.
-- pasarela-antigua: `pasarela-antigua_WEBHOOK_token-antiguo`. Los IDs, ofertas, precios y URLs públicas
-  por producto están en `data/pasarela-antigua-products.json`; ningún secreto vive allí.
 - Entrega/contenido: `RESEND_API_KEY`, `SANITY_PROJECT_ID`,
   `SANITY_DATASET`, `SANITY_API_TOKEN`.
 - Automatización: `BLOG_INGEST_SECRET`, proveedores de IA y variables de FX.
@@ -211,7 +206,7 @@ No copiar valores de `.env.local` a documentación, logs, commits o respuestas.
   `pm2 startOrReload`.
 - Conserva los tres builds más recientes y valida `http://127.0.0.1:3011/`.
 - Caddy sirve `planetaketo.es` y redirige `www` al dominio canónico.
-- La CSP report-only de Caddy permite Stripe, pasarela-antigua y los recursos que el
+- La CSP report-only de Caddy permite Stripe y los recursos que el
   Payment Brick carga desde `*.mercadopago.com`, `*.mercadolibre.com` y
   `*.mlstatic.com`.
 - Cron: reconciliación postventa cada 5 minutos, backup específico 03:30,
@@ -243,8 +238,7 @@ No copiar valores de `.env.local` a documentación, logs, commits o respuestas.
 - Bancos y proveedores externos pueden rechazar, demorar o interrumpir una
   transacción; el sistema evita duplicados y rescata la entrega una vez existe
   confirmación de pago, pero no puede garantizar disponibilidad de terceros.
-- pasarela-antigua es solo pasarela: cada producto conserva únicamente un PDF informativo;
-  la entrega comercial siempre sale de Planeta Keto por enlace mágico.
+- La entrega comercial siempre sale de Planeta Keto por enlace mágico.
 - Los PDF con transparencias no deben posprocesarse con Ghostscript
   (`PDFSETTINGS=/ebook`): puede ocultar fondos y convertir sombras en franjas
   negras. La fuente válida es la exportación directa de Chromium/Skia.

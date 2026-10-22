@@ -23,7 +23,7 @@ const GONE_HTML = `<!doctype html><html lang="es"><head><meta charset="utf-8"><m
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // CRITICAL: nunca tocar rutas de API. El webhook de pasarela-antigua DEBE recibir
+  // CRITICAL: nunca tocar rutas de API. Los webhooks de pago DEBEN recibir
   // respuestas directas, no redirecciones ni 410.
   if (pathname.startsWith('/api/')) {
     return NextResponse.next();

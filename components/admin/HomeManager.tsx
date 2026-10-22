@@ -108,7 +108,7 @@ export default function HomeManager() {
                 placeholder="10"
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">Precio mostrado en la web (debe coincidir con el del producto en pasarela-antigua)</p>
+            <p className="text-xs text-gray-500 mt-2">Precio base en EUR: se convierte a la moneda local del comprador</p>
           </div>
 
           <div>
@@ -141,11 +141,11 @@ export default function HomeManager() {
             </div>
             <div>
               <h4 className="text-sm font-semibold text-emerald-800 mb-1">
-                El cobro se realiza en pasarela-antigua
+                El cobro usa este precio
               </h4>
               <p className="text-sm text-emerald-700">
-                Este precio es solo informativo para la web. El importe que se cobra
-                de verdad se configura en el producto de pasarela-antigua: manténlos sincronizados.
+                Stripe y Mercado Pago cobran este importe (convertido a la moneda local
+                del comprador). Lo que ves en la web es lo que se cobra.
               </p>
             </div>
           </div>

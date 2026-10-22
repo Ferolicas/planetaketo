@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 // Región de cobro del visitante (pasarela + precios en su MONEDA LOCAL),
 // consumida por el modal de pago y por los precios de la home. Habla con
 // /api/checkout/region.
-//   Colombia → Mercado Pago · Europa → Stripe · resto → pasarela-antigua
+//   Colombia → Mercado Pago · resto del mundo → Stripe
 // ============================================================
 
 export interface LocalPrices {
@@ -23,14 +23,14 @@ export interface RegionPrices {
 
 export interface CheckoutRegion {
   country: string | null;
-  provider: 'stripe' | 'mercadopago' | 'pasarela-antigua';
+  provider: 'stripe' | 'mercadopago';
   currency: string;
   prices: RegionPrices;
 }
 
 export const REGION_FALLBACK: CheckoutRegion = {
   country: null,
-  provider: 'pasarela-antigua',
+  provider: 'stripe',
   currency: 'EUR',
   prices: {
     eur: { regular: 39.75, discount: 10, percentage: 50 },

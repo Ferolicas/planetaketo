@@ -1,6 +1,6 @@
 // ============================================================
 // Configuración del producto (neutral respecto a la pasarela de pago).
-// Antes vivía en lib/stripe/config.ts; se separó al migrar el cobro a pasarela-antigua.
+// Antes vivía en lib/stripe/config.ts; se separó al hacer el cobro independiente de la pasarela.
 // ============================================================
 
 export const PRODUCT_CONFIG = {

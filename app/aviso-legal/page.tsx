@@ -54,8 +54,8 @@ export default function AvisoLegalPage() {
 
       <h2>6. Pagos</h2>
       <p>
-        Los pagos se procesan a través de pasarelas externas según el país del comprador (Stripe,
-        Mercado Pago y pasarela-antigua). El titular no almacena datos completos de tarjetas de pago.
+        Los pagos se procesan a través de pasarelas externas según el país del comprador (Stripe
+        y Mercado Pago). El titular no almacena datos completos de tarjetas de pago.
       </p>
 
       <h2>7. Legislación aplicable</h2>

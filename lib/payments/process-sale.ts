@@ -76,7 +76,7 @@ export async function ensureKetoscanAccount(email: string): Promise<void> {
 }
 
 export interface FinalizeSaleOpts {
-  provider: 'pasarela-antigua' | 'stripe' | 'mercadopago';
+  provider: 'stripe' | 'mercadopago';
   externalId: string;
   externalRef?: string | null;
   email: string;

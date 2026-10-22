@@ -15,8 +15,8 @@ interface CheckoutButtonProps {
 
 /**
  * Botón de compra. Abre el modal de pago de Planeta Keto, que detecta la región
- * y embebe el checkout adecuado (Mercado Pago Colombia, Stripe Europa y
- * pasarela-antigua para LATAM/resto) sin cargar SDKs hasta que se abre.
+ * y embebe el checkout adecuado (Mercado Pago en Colombia y Stripe en el
+ * resto del mundo) sin cargar SDKs hasta que se abre.
  */
 export default function CheckoutButton({ children, className, cta, productSlug = null }: CheckoutButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);

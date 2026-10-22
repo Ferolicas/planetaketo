@@ -6,7 +6,7 @@ import catalog from '@/data/catalog.json';
 // ============================================================
 // Cliente de Mercado Pago (server-side). Cobro para COLOMBIA (COP).
 // La cuenta es de Colombia (site MCO): cobra en pesos colombianos.
-// Europa va por Stripe y el resto por pasarela-antigua.
+// El resto del mundo va por Stripe.
 //
 // No lanzamos en import-time: las rutas comprueban isMpConfigured() antes de usar.
 // ============================================================

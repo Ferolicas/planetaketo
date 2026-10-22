@@ -51,7 +51,6 @@ export default function PrivacidadPage() {
       <ul>
         <li><strong>Stripe</strong> — procesamiento de pagos (resto del mundo).</li>
         <li><strong>Mercado Pago</strong> — procesamiento de pagos (Colombia).</li>
-        <li><strong>pasarela-antigua</strong> — procesamiento de pagos (resto de Latinoamérica).</li>
         <li><strong>Resend</strong> — envío de correos transaccionales.</li>
         <li><strong>Sanity</strong> — alojamiento del archivo del libro.</li>
         <li><strong>Proveedor de hosting (VPS)</strong> — infraestructura del sitio.</li>

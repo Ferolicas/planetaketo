@@ -1,6 +1,6 @@
 # QA de pagos — 2026-10-07
 
-Alcance: Stripe (Europa), Mercado Pago (Colombia), pasarela-antigua (resto), webhooks,
+Alcance: Stripe, Mercado Pago (Colombia), webhooks,
 postventa y reconciliación. Entorno: producción `https://planetaketo.es`, sin
 cargos reales y sin modificar datos de clientes.
 
@@ -43,24 +43,21 @@ deploy manual.
 ## Cobertura que sí pasó
 
 - Home HTTPS 200; `www` redirige 301 al canónico; PM2 online y sin reinicios.
-- Región/precio: Stripe ES 24,90 EUR, Mercado Pago CO 91.500 COP y pasarela-antigua PE
-  104 PEN respondieron correctamente para `metodo-keto`.
+- Región/precio: Stripe ES 24,90 EUR, y Mercado Pago CO 91.500 COP
+  respondieron correctamente para `metodo-keto`.
 - Stripe: Payment Element LIVE visible en móvil y escritorio; importe correcto;
   email y métodos presentes. Al pulsar Pagar con tarjeta incompleta muestra la
   validación y vuelve a habilitar el botón. Con la confirmación retenida, el
   aviso y el cambio a pendiente pasaron la regresión E2E.
 - Mercado Pago: Payment Brick visible con crédito, débito, PSE y Efecty.
-- pasarela-antigua: checkout embebido visible para producto individual y mega pack; los
-  31 enlaces del catálogo respondieron correctamente y son únicos.
 - Entradas inválidas: checkout y webhooks devuelven 4xx/204 controlados, nunca
   500.
-- Sondas firmadas y sin efecto económico: Stripe 200 en evento ignorado,
-  pasarela-antigua 200 en evento no aprobatorio y Mercado Pago 200 consultando un pago ya
+- Sondas firmadas y sin efecto económico: Stripe 200 en evento ignorado
+  y Mercado Pago 200 consultando un pago ya
   rechazado (`skipped`).
-- pasarela-antigua: 9/9 pruebas puras del webhook; catálogo 25 productos + 6 packs.
 - Regresiones permanentes: timeout Stripe y seis rechazos de procedencia MP
   (otra integración, sandbox, referencia, moneda, producto e importe).
-- Postventa: 3 pagos pasarela-antigua y 2 registros Stripe históricos tienen enlace,
+- Postventa: Los registros de pago históricos tienen enlace,
   correo, newsletter, Ketoscan y `delivery_status=completed`; 0 pendientes.
 - Reconciliador instalado cada 5 minutos.
 - `git diff --check`, `pnpm exec tsc --noEmit` y `pnpm build`: PASS.
@@ -69,7 +66,7 @@ deploy manual.
 
 No se confirmó una transacción aprobada porque producción solo tiene
 credenciales LIVE. Una prueba completa segura requiere credenciales sandbox de
-Stripe y Mercado Pago, y compra de prueba de productor en pasarela-antigua. Hasta entonces,
+Stripe y Mercado Pago. Hasta entonces,
 Stripe y Mercado Pago quedan `NOT_RUN` desde autorización hasta webhook y entrega;
 presentarlos como E2E aprobados sería incorrecto.
 
@@ -77,7 +74,7 @@ presentarlos como E2E aprobados sería incorrecto.
 
 1. Desplegar el commit y repetir smoke tests, PM2 y callbacks en producción.
 2. Montar sandbox y automatizar tarjeta aprobada/rechazada/3DS, PSE pendiente→
-   aprobado y pasarela-antigua aprobado→entrega para los 31 productos. Es la única forma
+   aprobado. Es la única forma
    de cubrir autorización real sin arriesgar dinero LIVE.
 3. Corregir la analítica del embudo y eliminar la consulta pública innecesaria a
    `/api/auth/me`; son hallazgos no bloqueantes y no causan pérdida del cobro.

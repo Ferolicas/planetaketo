@@ -72,9 +72,8 @@ export default function DesistimientoPage() {
       <h2>4. Devolución del importe</h2>
       <p>
         Si procede el reembolso, lo realizaremos por el <strong>mismo medio de pago</strong> que usaste,
-        a la mayor brevedad. El tiempo en verse reflejado depende de la pasarela (Stripe, Mercado Pago
-        o pasarela-antigua) y de tu banco. En las compras gestionadas por <strong>pasarela-antigua</strong>, el reembolso
-        puede tramitarse a través de su propia plataforma.
+        a la mayor brevedad. El tiempo en verse reflejado depende de la pasarela (Stripe o Mercado
+        Pago) y de tu banco.
       </p>
 
       <h2>5. Compras desde Latinoamérica</h2>

@@ -54,55 +54,7 @@ export function currencyForCountry(cc: string | null | undefined): string | null
 
 // ============================================================
 // Enrutado de cobro por país:
-//   Colombia (CO)        → Mercado Pago (PSE/Nequi nativos, ~3-4%)
-//   Resto de LATAM       → pasarela-antigua (métodos locales: Yape, SPEI, OXXO, PIX…)
-//   Europa               → Stripe (tarjeta/wallets en moneda local)
-//   Otros/desconocidos   → pasarela-antigua (fallback sin desviar LATAM a Stripe)
+//   Colombia (CO)  → Mercado Pago (PSE/Nequi nativos)
+//   Resto del mundo → Stripe (tarjeta/wallets en moneda local si Stripe la soporta)
+// La decisión se toma en app/api/checkout/region/route.ts.
 // ============================================================
-export const LATAM_COUNTRIES = new Set([
-  'AR', 'BO', 'BR', 'CL', 'CO', 'CR', 'CU', 'DO', 'EC', 'GT',
-  'HN', 'MX', 'NI', 'PA', 'PY', 'PE', 'PR', 'SV', 'UY', 'VE',
-]);
-
-export function isLatamCountry(cc: string | null | undefined): boolean {
-  return cc ? LATAM_COUNTRIES.has(cc.toUpperCase()) : false;
-}
-
-// Stripe se reserva para Europa. País desconocido o fuera de Europa usa
-// pasarela-antigua como fallback, de modo que nunca desviamos LATAM a Stripe.
-export const EUROPE_COUNTRIES = new Set([
-  'AD', 'AL', 'AM', 'AT', 'AZ', 'BA', 'BE', 'BG', 'BY', 'CH', 'CY',
-  'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB', 'GE', 'GR', 'HR',
-  'HU', 'IE', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD', 'ME',
-  'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'RU', 'SE', 'SI',
-  'SK', 'SM', 'TR', 'UA', 'VA', 'XK',
-]);
-
-export function isEuropeanCountry(cc: string | null | undefined): boolean {
-  return cc ? EUROPE_COUNTRIES.has(cc.toUpperCase()) : false;
-}
-
-// ============================================================
-// Spread cambial de pasarela-antigua POR PAÍS (su tasa de cambio vs el mercado real).
-// pasarela-antigua no lo publica; se MIDE comparando su checkout con nuestra conversión
-// mid-market. Las monedas volátiles/controladas (ARS) tienen un spread mucho
-// mayor que las estables. Lo usamos para que el precio mostrado en la web cuadre
-// con el del checkout de pasarela-antigua. Calibrar con datos reales de cada país.
-//   AR: medido (web 17.280 vs checkout 18.200 → ~14%).
-//   Resto: estimado (pendiente de medir con VPN) — erramos ligeramente ALTO para
-//   que la web nunca muestre MENOS que el checkout (el cliente nunca paga "de más").
-// ============================================================
-const pasarela-antigua_SPREAD: Record<string, number> = {
-  AR: 0.14,
-  CL: 0.11,
-  MX: 0.11,
-  UY: 0.11,
-  PE: 0.08,
-  BR: 0.08,
-};
-const pasarela-antigua_SPREAD_DEFAULT = 0.1;
-
-export function pasarela-antiguaSpread(cc: string | null | undefined): number {
-  if (!cc) return pasarela-antigua_SPREAD_DEFAULT;
-  return pasarela-antigua_SPREAD[cc.toUpperCase()] ?? pasarela-antigua_SPREAD_DEFAULT;
-}

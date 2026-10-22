@@ -43,4 +43,4 @@ Hero → (Reveal) Por qué funciona → (Reveal) Prueba social/testimonios → (
 - `components/{Header,Footer,Reveal}.tsx`.
 - `components/home/{HeroSales,WhyChooseUs,SocialProof,FinalCTA}.tsx`.
 - `app/page.tsx`, `app/r/page.tsx`.
-- `components/payment/*` (modal coherente con la paleta; embeds de Stripe/MP/pasarela-antigua conservan su UI).
+- `components/payment/*` (modal coherente con la paleta; embeds de Stripe/MP conservan su UI).

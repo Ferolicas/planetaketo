@@ -5,12 +5,10 @@ import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { X, CheckCircle, ShieldCheck, Clock, AlertCircle } from 'lucide-react';
 import { useCheckoutRegion, regionDisplay } from '@/lib/hooks/useCheckoutRegion';
-import { getpasarela-antiguaCheckoutUrl } from '@/lib/payments/pasarela-antigua-checkouts';
 
 // Los SDKs de pago son de navegador: cargarlos solo en cliente (sin SSR).
 const StripeEmbedded = dynamic(() => import('./StripeEmbedded'), { ssr: false });
 const MercadoPagoBrick = dynamic(() => import('./MercadoPagoBrick'), { ssr: false });
-const pasarela-antiguaEmbed = dynamic(() => import('./pasarela-antiguaEmbed'), { ssr: false });
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -22,8 +20,8 @@ interface PaymentModalProps {
 type Status = 'paying' | 'success' | 'pending' | 'error';
 
 export default function PaymentModal({ isOpen, onClose, productSlug = null }: PaymentModalProps) {
-  // Detección automática: Colombia → Mercado Pago; Europa → Stripe; resto →
-  // pasarela-antigua. Los precios son los del producto si llega productSlug.
+  // Detección automática: Colombia → Mercado Pago; resto del mundo → Stripe.
+  // Los precios son los del producto si llega productSlug.
   const { region, loading } = useCheckoutRegion(undefined, productSlug);
   const [status, setStatus] = useState<Status>('paying');
   const [message, setMessage] = useState('');
@@ -54,10 +52,7 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
   if (!isOpen || !mounted) return null;
 
   const display = regionDisplay(region);
-  const provider = region?.provider ?? 'pasarela-antigua';
-  // Cada URL pasarela-antigua vende un producto concreto. La API regional devuelve 503
-  // si faltase una URL; nunca desviamos una compra LATAM a Stripe.
-  const pasarela-antiguaUrl = getpasarela-antiguaCheckoutUrl(productSlug);
+  const provider = region?.provider ?? 'stripe';
   // Colombia → Mercado Pago: el importe en COP es el precio local.
   const copAmount = provider === 'mercadopago' ? region?.prices.local.discount : undefined;
 
@@ -129,16 +124,6 @@ export default function PaymentModal({ isOpen, onClose, productSlug = null }: Pa
                 setMessage(traducirPendiente(m));
                 setStatus('pending');
               }}
-              onFailure={(m) => {
-                setMessage(traducirError(m));
-                setStatus('error');
-              }}
-            />
-          ) : provider === 'pasarela-antigua' ? (
-            <pasarela-antiguaEmbed
-              checkoutUrl={pasarela-antiguaUrl}
-              productSlug={productSlug}
-              onSuccess={() => setStatus('success')}
               onFailure={(m) => {
                 setMessage(traducirError(m));
                 setStatus('error');
@@ -229,8 +214,6 @@ function traducirError(code: string): string {
     invalid_response: 'La pasarela devolvió una respuesta inesperada. Inténtalo de nuevo.',
     payment_error: 'La pasarela no pudo iniciar el pago. Inténtalo de nuevo.',
     brick_error: 'No se pudo cargar el formulario de Mercado Pago. Inténtalo de nuevo.',
-    pasarela-antigua_timeout: 'pasarela-antigua tardó demasiado en cargar. Inténtalo de nuevo.',
-    pasarela-antigua_load_error: 'No se pudo cargar pasarela-antigua. Comprueba internet e inténtalo de nuevo.',
   };
   return map[code] || 'El pago fue rechazado. Inténtalo con otro método.';
 }

@@ -6,10 +6,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// Página de "obrigado"/agradecimiento configurada como thank-you page del
-// producto en pasarela-antigua. Tras la aprobación, el checkout (dentro de nuestro
-// iframe, en nuestro dominio) navega aquí; avisamos al modal padre por
-// postMessage. Si pasarela-antigua navega a nivel superior, se ve como página normal.
+// Página de agradecimiento: Stripe y Mercado Pago (PSE/Efecty) redirigen aquí
+// tras el pago. Si se abre dentro del modal, avisamos al padre por postMessage;
+// si no, se ve como página normal.
 export default function GraciasPage() {
   return <GraciasClient />;
 }
