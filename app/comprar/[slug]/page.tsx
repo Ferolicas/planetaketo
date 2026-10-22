@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import catalog from '@/data/catalog.json';
 import CheckoutButton from '@/components/checkout/CheckoutButton';
@@ -34,7 +35,7 @@ export default async function ComprarPage({ params }: { params: Promise<{ slug: 
   return (
     <main className="min-h-screen bg-[#faf6ef] text-[#2c3028] px-5 py-10">
       <div className="max-w-md mx-auto">
-        <a href="/catalogo" className="text-[#7a9b76] text-sm font-semibold">← Volver al catálogo</a>
+        <Link href="/" className="text-[#7a9b76] text-sm font-semibold">← Volver al catálogo</Link>
 
         <div className="mt-5 bg-white rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(45,74,62,.12)]">
           {!isBundle && (

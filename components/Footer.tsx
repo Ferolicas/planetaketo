@@ -63,7 +63,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/catalogo" className="hover:text-cta transition-colors">
+                <Link href="/" className="hover:text-cta transition-colors">
                   Método Keto 70 Días
                 </Link>
               </li>

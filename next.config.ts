@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
     ],
     formats: ['image/avif', 'image/webp'],
   },
+  // El catálogo ahora es la home: redirección PERMANENTE (308) para enlaces antiguos.
+  async redirects() {
+    return [{ source: '/catalogo', destination: '/', permanent: true }];
+  },
   experimental: {
     optimizePackageImports: ['lucide-react'],
     serverActions: {

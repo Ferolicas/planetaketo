@@ -153,7 +153,7 @@ export default function DietaKetoPage() {
             <p className="mt-2 font-semibold text-forest-dark">Calculadora de macros</p>
             <p className="text-sm text-gray-500">Tus gramos de grasa, proteína y carbos.</p>
           </a>
-          <Link href="/catalogo" className="group rounded-2xl bg-white p-4 shadow-soft ring-1 ring-forest/5 transition hover:ring-forest/20">
+          <Link href="/" className="group rounded-2xl bg-white p-4 shadow-soft ring-1 ring-forest/5 transition hover:ring-forest/20">
             <BookOpen className="h-6 w-6 text-forest" />
             <p className="mt-2 font-semibold text-forest-dark">Método 70 días</p>
             <p className="text-sm text-gray-500">El plan completo, paso a paso.</p>
@@ -289,7 +289,7 @@ export default function DietaKetoPage() {
             <li>
               <strong>Sigue un plan cerrado</strong> los primeros 70 días: menús, listas de
               compra y recetas ya decididos. Es exactamente lo que resuelve nuestro{' '}
-              <Link href="/catalogo">Método Keto 70 Días</Link>, para no tener que improvisar
+              <Link href="/">Método Keto 70 Días</Link>, para no tener que improvisar
               ninguna comida mientras creas el hábito.
             </li>
           </ol>
@@ -306,7 +306,7 @@ export default function DietaKetoPage() {
             Sin decidir nada, solo seguirlo.
           </p>
           <Link
-            href="/catalogo"
+            href="/"
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-cta px-7 py-3.5 font-semibold text-forest-dark transition hover:brightness-95"
           >
             Ver el método <ArrowRight className="h-5 w-5" />

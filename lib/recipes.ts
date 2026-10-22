@@ -144,34 +144,27 @@ export async function getSitemapRecipes(): Promise<{ slug: string; updatedAt: Da
   return rows.map((r) => ({ slug: r.slug, updatedAt: new Date(r.updated_at), image: r.image_url }));
 }
 
-/** Recetas relacionadas: misma categoría primero; si no llegan, rellena con recientes. */
+/**
+ * Recetas relacionadas: misma categoría primero, luego más palabras clave en común
+ * y, para desempatar, un orden estable distinto en cada receta. Así cada página
+ * enlaza a recetas parecidas pero DIFERENTES (antes todas mostraban las mismas
+ * tres más recientes, lo que repetía el mismo bloque en decenas de páginas).
+ */
 export async function getRelatedRecipes(
   category: string | null,
   excludeSlug: string,
   limit = 4
 ): Promise<Recipe[]> {
-  const sameCat = category
-    ? (
-        await query<Row>(
-          `${SELECT} WHERE is_published = true AND slug <> $1 AND category = $2
-           ORDER BY video_published_at DESC NULLS LAST LIMIT $3`,
-          [excludeSlug, category, limit]
-        )
-      ).rows.map(mapRow)
-    : [];
-  if (sameCat.length >= limit) return sameCat;
-
-  const have = new Set([excludeSlug, ...sameCat.map((r) => r.slug)]);
-  const recent = (
-    await query<Row>(
-      `${SELECT} WHERE is_published = true AND slug <> $1
-       ORDER BY video_published_at DESC NULLS LAST LIMIT $2`,
-      [excludeSlug, limit * 4]
-    )
-  ).rows
-    .map(mapRow)
-    .filter((r) => !have.has(r.slug));
-  return [...sameCat, ...recent].slice(0, limit);
+  const { rows } = await query<Row>(
+    `${SELECT} WHERE is_published = true AND slug <> $1
+     ORDER BY (category IS NOT DISTINCT FROM $2) DESC,
+              COALESCE((SELECT count(*) FROM unnest(keywords) k
+                         WHERE k = ANY(COALESCE((SELECT keywords FROM published_recipes WHERE slug = $1), '{}'))), 0) DESC,
+              md5(slug || $1)
+     LIMIT $3`,
+    [excludeSlug, category, limit]
+  );
+  return rows.map(mapRow);
 }
 
 /** Categorías que tienen al menos una receta publicada, con su conteo. */
