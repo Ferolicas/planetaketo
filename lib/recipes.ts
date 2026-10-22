@@ -136,6 +136,14 @@ export async function getPublishedSlugs(): Promise<string[]> {
   return rows.map((r) => r.slug);
 }
 
+/** Entradas del sitemap: slug + fecha real de modificación + imagen. */
+export async function getSitemapRecipes(): Promise<{ slug: string; updatedAt: Date; image: string | null }[]> {
+  const { rows } = await query<{ slug: string; updated_at: Date; image_url: string | null }>(
+    'SELECT slug, updated_at, image_url FROM published_recipes WHERE is_published = true ORDER BY updated_at DESC'
+  );
+  return rows.map((r) => ({ slug: r.slug, updatedAt: new Date(r.updated_at), image: r.image_url }));
+}
+
 /** Recetas relacionadas: misma categoría primero; si no llegan, rellena con recientes. */
 export async function getRelatedRecipes(
   category: string | null,

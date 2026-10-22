@@ -18,6 +18,15 @@ export const organizationSchema = {
   logo: site.logo,
   description: site.description,
   sameAs: [site.social.youtube, site.social.instagram],
+  availableLanguage: 'es',
+  knowsAbout: [
+    'Dieta cetogénica',
+    'Dieta baja en carbohidratos',
+    'Recetas keto',
+    'Menús keto',
+    'Cetosis',
+    'Cálculo de macronutrientes',
+  ],
 };
 
 export const websiteSchema = {
@@ -26,6 +35,7 @@ export const websiteSchema = {
   '@id': `${site.url}/#website`,
   url: site.url,
   name: site.name,
+  description: site.description,
   inLanguage: site.locale,
   publisher: { '@id': `${site.url}/#organization` },
 };

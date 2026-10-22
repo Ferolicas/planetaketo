@@ -108,6 +108,14 @@ export async function getPublishedBlogSlugs(): Promise<string[]> {
   return rows.map((r) => r.slug);
 }
 
+/** Entradas del sitemap: slug + fecha real de modificación + imagen. */
+export async function getSitemapPosts(): Promise<{ slug: string; updatedAt: Date; image: string | null }[]> {
+  const { rows } = await query<{ slug: string; updated_at: Date; published_at: Date | null; hero_image: string | null }>(
+    `SELECT slug, updated_at, published_at, hero_image FROM blog_posts WHERE status = 'published' ORDER BY updated_at DESC`
+  );
+  return rows.map((r) => ({ slug: r.slug, updatedAt: new Date(r.updated_at ?? r.published_at ?? Date.now()), image: r.hero_image }));
+}
+
 export async function getRelatedPosts(excludeSlug: string, limit = 3): Promise<BlogPost[]> {
   const { rows } = await query<Row>(
     `${SELECT} WHERE status = 'published' AND slug <> $1 ORDER BY published_at DESC NULLS LAST LIMIT $2`,

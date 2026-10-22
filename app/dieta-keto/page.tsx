@@ -18,7 +18,7 @@ import { site } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Dieta keto: qué es, qué comer y cómo empezar',
   description:
-    'La dieta keto (cetogénica) reduce los carbohidratos a 20-50 g al día para quemar grasa en cetosis. Qué comer, menú de ejemplo, errores típicos y cómo empezar hoy.',
+    'La dieta keto (cetogénica) limita los carbohidratos a 20-50 g al día. Qué comer, menú de ejemplo, errores típicos y cómo empezar hoy paso a paso.',
   keywords:
     'dieta keto, dieta cetogénica, keto para principiantes, qué es la dieta keto, alimentos keto, empezar dieta keto',
   alternates: { canonical: '/dieta-keto' },
@@ -283,7 +283,8 @@ export default function DietaKetoPage() {
             <li>
               <strong>Calcula tus macros</strong> con la{' '}
               <a href="https://olcas.app/calculadoras/macronutrientes">calculadora gratuita</a>{' '}
-              y elige 5-6 <Link href="/recetas">recetas</Link> para la primera semana.
+              y elige 5-6 <Link href="/recetas">recetas</Link> para la primera semana, o sigue
+              nuestro <Link href="/dieta-keto-gratis">menú keto gratis de 7 días</Link>.
             </li>
             <li>
               <strong>Sigue un plan cerrado</strong> los primeros 70 días: menús, listas de

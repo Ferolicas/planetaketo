@@ -9,9 +9,9 @@ import JsonLd from '@/components/seo/JsonLd';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Recetas Keto fáciles, sin azúcar ni harinas',
+  title: 'Recetas keto fáciles y gratis, con macros',
   description:
-    'Todas las recetas keto de Planeta Keto: desayunos, cenas, postres, panes y salsas. Paso a paso, con ingredientes que encuentras en cualquier supermercado.',
+    'Más de 60 recetas keto fáciles: desayunos, almuerzos, cenas, snacks y panes. Con ingredientes, pasos y macros por ración. Sin azúcar ni harinas.',
   alternates: { canonical: '/recetas' },
 };
 

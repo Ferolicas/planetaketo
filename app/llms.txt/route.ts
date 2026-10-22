@@ -33,6 +33,7 @@ export async function GET() {
     '## Empezar aquí',
     '',
     `- [Dieta keto: la guía completa](${site.url}/dieta-keto): qué es la cetosis, qué comer, menú de ejemplo, errores y cómo empezar.`,
+    `- [Dieta keto gratis: menú de 7 días](${site.url}/dieta-keto-gratis): menú keto de ejemplo para una semana con recetas, macros aproximados y lista de compras; incluye un planificador gratuito en PDF.`,
     `- [Recetas keto](${site.url}/recetas): recetario completo, gratis, con macros por ración.`,
     `- [Blog keto](${site.url}/blog): guías sobre macros, cetosis, gripe keto, estancamiento y más.`,
     `- [Método Keto 70 Días](${site.url}/catalogo): el plan de pago con menús diarios y listas de compra.`,
