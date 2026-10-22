@@ -46,8 +46,8 @@ const faq = [
     a: 'Los primeros 3-7 días es normal perder 1-3 kg, sobre todo de agua y glucógeno. A partir de ahí, una pérdida sostenible típica es de 0,5 a 1 kg por semana si mantienes un déficit calórico. Depende del punto de partida, la adherencia y el descanso.',
   },
   {
-    q: '¿Qué es la gripe keto y cómo se evita?',
-    a: 'Los primeros días algunos notan cansancio, dolor de cabeza o irritabilidad mientras el cuerpo se adapta. Se previene en gran parte bebiendo más agua y reponiendo electrolitos: sal, potasio y magnesio. Suele durar entre 2 y 5 días.',
+    q: '¿Qué es la gripe keto y qué se puede hacer?',
+    a: 'Los primeros días algunos notan cansancio, dolor de cabeza o irritabilidad mientras el cuerpo se adapta. Su causa no está demostrada y, según una revisión científica de 2025, la mayoría de los síntomas se resuelve en 2 a 4 semanas. Lo mejor respaldado es empezar de forma gradual; el caldo salado es un consejo habitual, pero se basa en la experiencia y no en ensayos. Si te encuentras muy mal, consulta con un profesional.',
   },
   {
     q: '¿Puedo hacer keto si tomo medicación o tengo una enfermedad?',
@@ -249,9 +249,9 @@ export default function DietaKetoPage() {
           <h2 className="font-serif text-2xl font-bold text-forest-dark sm:text-3xl">Efectos secundarios y precauciones</h2>
           <p>
             Los primeros días puede aparecer la <Link href="/blog/gripe-keto">gripe keto</Link>{' '}
-            (cansancio, dolor de cabeza): se previene con agua y{' '}
-            <Link href="/blog/electrolitos-keto">electrolitos</Link> — sal, potasio y
-            magnesio. El estreñimiento inicial se corrige con verdura y fibra.
+            (cansancio, dolor de cabeza): su causa no está demostrada y suele pasar en unas
+            semanas; lo mejor respaldado es empezar de forma gradual. Más en{' '}
+            <Link href="/blog/electrolitos-keto">electrolitos en keto</Link>. El estreñimiento inicial se corrige con verdura y fibra.
           </p>
           <p className="rounded-2xl bg-mint-pale/60 p-4 text-sm leading-relaxed">
             <strong>Importante:</strong> esta guía es divulgativa y no sustituye el consejo
@@ -264,7 +264,7 @@ export default function DietaKetoPage() {
           <h2 className="font-serif text-2xl font-bold text-forest-dark sm:text-3xl">Los 5 errores que arruinan la dieta keto</h2>
           <ol className="list-decimal space-y-2 pl-5">
             <li>Contar los carbohidratos «a ojo» en salsas, embutidos y productos light.</li>
-            <li>Comer poca sal y pocos electrolitos (de ahí viene casi toda la «gripe keto»).</li>
+            <li>Empezar de golpe y sin atender a las señales del cuerpo (la «gripe keto» es frecuente al inicio).</li>
             <li>Miedo a la grasa: sin grasa suficiente pasarás hambre y lo dejarás.</li>
             <li>Ignorar las calorías por completo: la cetosis ayuda, pero no anula un exceso crónico — más en <Link href="/blog/calorias-en-keto">calorías en keto</Link>.</li>
             <li>Rendirse en el <Link href="/blog/estancamiento-keto">estancamiento</Link>, que es normal y tiene solución.</li>

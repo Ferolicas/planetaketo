@@ -46,9 +46,17 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
       - name: Ejecutar deploy.sh en el servidor
+        # Dos intentos: el build descarga tipografías de Google y puede fallar por un corte de red puntual.
+        # El cambio de build es atómico, así que un intento fallido no afecta a la web en vivo.
         run: |
-          ssh -i ~/.ssh/deploy_key \
-            -o IdentitiesOnly=yes \
-            -o StrictHostKeyChecking=yes \
-            -o ServerAliveInterval=30 \
-            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}"
+          for intento in 1 2; do
+            if ssh -i ~/.ssh/deploy_key \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              -o ServerAliveInterval=30 \
+              "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}"; then
+              exit 0
+            fi
+            echo "Intento $intento fallido"; sleep 20
+          done
+          exit 1
