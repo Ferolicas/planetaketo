@@ -126,7 +126,7 @@ function Bullets({ items }: { items: string[] }) {
 
 function PriceRow({ price, regular }: { price: number; regular: number }) {
   return (
-    <div className="flex items-baseline gap-2.5 font-sans">
+    <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 font-sans">
       <span className="text-[#2d4a3e] font-extrabold text-[30px] leading-none tracking-[-0.01em]">{formatPrice(price)}</span>
       <span className="text-[#9aa39a] line-through text-lg">{formatPrice(regular)}</span>
       <span className="text-[#c97b5a] font-bold text-xs bg-[#f6e4dc] rounded-full px-2 py-0.5">-{pct(price, regular)}%</span>
@@ -149,7 +149,7 @@ function ProductCard({ p, featured = false }: { p: Product; featured?: boolean }
         <p className="text-[#b8895a] font-bold text-[15px] mt-1">{c.headline}</p>
         {c.desc && <p className="text-[#5d6b5a] text-[14px] mt-2 leading-snug">{c.desc}</p>}
         <Bullets items={c.includes} />
-        <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
           <PriceRow price={p.price} regular={p.regular} />
           <span className="text-[#7a9b76] text-[11px] font-bold uppercase tracking-wide bg-[#eef3ec] rounded-full px-2.5 py-1">Oferta de lanzamiento</span>
         </div>
@@ -284,7 +284,7 @@ export default function Landing() {
                     <li key={t} className="flex items-start gap-1.5"><Check />{t}</li>
                   ))}
                 </ul>
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-3">
                   <PriceRow price={b.price} regular={b.regular} />
                   <CheckoutButton productSlug={b.slug} cta={`comprar:${b.slug}`} className={`px-5 py-3 text-sm whitespace-nowrap ${CTA}`}>Lo quiero <Arrow /></CheckoutButton>
                 </div>
