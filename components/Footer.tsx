@@ -63,6 +63,36 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/dieta-keto-gratis" className="hover:text-cta transition-colors">
+                  Menú keto gratis de 7 días
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog/que-es-dieta-keto" className="hover:text-cta transition-colors">
+                  Qué es la dieta keto
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog/alimentos-keto-permitidos" className="hover:text-cta transition-colors">
+                  Alimentos keto permitidos
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog/pan-keto-sin-harina" className="hover:text-cta transition-colors">
+                  Pan keto: receta fácil
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog/desayunos-keto" className="hover:text-cta transition-colors">
+                  Desayunos keto
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog/snacks-keto" className="hover:text-cta transition-colors">
+                  Snacks keto
+                </Link>
+              </li>
+              <li>
                 <Link href="/" className="hover:text-cta transition-colors">
                   Método Keto 70 Días
                 </Link>

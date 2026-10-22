@@ -29,6 +29,19 @@ export const organizationSchema = {
   ],
 };
 
+/** Autor de los contenidos: persona real y enlazada con la organización (señal E-E-A-T). */
+export const authorSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': `${site.url}/#author`,
+  name: 'Ferney',
+  jobTitle: 'Creador de Planeta Keto',
+  worksFor: { '@id': `${site.url}/#organization` },
+  url: site.url,
+  sameAs: [site.social.youtube, site.social.instagram],
+  knowsAbout: ['Dieta cetogénica', 'Recetas keto', 'Alimentación baja en carbohidratos'],
+};
+
 export const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',

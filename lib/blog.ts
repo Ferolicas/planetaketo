@@ -116,9 +116,19 @@ export async function getSitemapPosts(): Promise<{ slug: string; updatedAt: Date
   return rows.map((r) => ({ slug: r.slug, updatedAt: new Date(r.updated_at ?? r.published_at ?? Date.now()), image: r.hero_image }));
 }
 
+/**
+ * Artículos relacionados: misma categoría primero, luego más palabras clave en
+ * común y, para desempatar, un orden estable distinto en cada artículo. Antes
+ * todos mostraban los 3 más recientes (el mismo bloque repetido en cada página).
+ */
 export async function getRelatedPosts(excludeSlug: string, limit = 3): Promise<BlogPost[]> {
   const { rows } = await query<Row>(
-    `${SELECT} WHERE status = 'published' AND slug <> $1 ORDER BY published_at DESC NULLS LAST LIMIT $2`,
+    `${SELECT} WHERE status = 'published' AND slug <> $1
+     ORDER BY (category IS NOT DISTINCT FROM (SELECT category FROM blog_posts WHERE slug = $1)) DESC,
+              COALESCE((SELECT count(*) FROM unnest(keywords) k
+                         WHERE k = ANY(COALESCE((SELECT keywords FROM blog_posts WHERE slug = $1), '{}'))), 0) DESC,
+              md5(slug || $1)
+     LIMIT $2`,
     [excludeSlug, limit]
   );
   return rows.map(mapRow);
@@ -134,7 +144,7 @@ export function articleJsonLd(p: BlogPost): Record<string, unknown> {
     image: [p.heroImage || site.bookImage],
     datePublished: p.publishedAt || undefined,
     dateModified: p.updatedAt || p.publishedAt || undefined,
-    author: { '@type': 'Organization', name: 'Planeta Keto', '@id': `${site.url}/#organization` },
+    author: { '@id': `${site.url}/#author` },
     publisher: { '@id': `${site.url}/#organization` },
     mainEntityOfPage: `${site.url}/blog/${p.slug}`,
     keywords: p.keywords.length ? p.keywords.join(', ') : undefined,

@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Analytics from '@/components/Analytics';
 import JsonLd from '@/components/seo/JsonLd';
-import { organizationSchema, websiteSchema } from '@/lib/seo';
+import { organizationSchema, websiteSchema, authorSchema } from '@/lib/seo';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 import { ConsentProvider } from '@/components/consent/ConsentProvider';
 import CookieConsent from '@/components/consent/CookieConsent';
@@ -77,6 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Datos estructurados de marca (en todas las páginas). */}
         <JsonLd data={organizationSchema} />
         <JsonLd data={websiteSchema} />
+        <JsonLd data={authorSchema} />
         <ConsentProvider>
           <AuthProvider>
             <div className="flex min-h-screen flex-col">

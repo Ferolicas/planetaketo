@@ -11,6 +11,7 @@ import ChannelBanner from '@/components/recipes/ChannelBanner';
 import YouTubeGallery from '@/components/recipes/YouTubeGallery';
 import BlogCard from '@/components/blog/BlogCard';
 import AdSlot from '@/components/ads/AdSlot';
+import { site } from '@/lib/site';
 
 export const revalidate = 3600;
 
@@ -52,6 +53,11 @@ export default async function BlogArticle({ params }: Params) {
     ? new Date(p.publishedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
     : '';
 
+  const updated =
+    p.updatedAt && p.publishedAt && new Date(p.updatedAt).getTime() - new Date(p.publishedAt).getTime() > 86_400_000
+      ? new Date(p.updatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '';
+
   // AdSense in-content: el artículo se parte por secciones (## ) y se intercala 1 anuncio
   // tras la intro y cada ~2 secciones (máx 3 in-content + 1 final = ≤30% de la página).
   const segments = p.content.split(/\n(?=## )/).map((s) => s.trim()).filter(Boolean);
@@ -77,7 +83,11 @@ export default async function BlogArticle({ params }: Params) {
             {cat.emoji} {cat.label}
           </span>
           <h1 className="mt-3 font-serif text-3xl font-bold leading-tight text-forest-dark sm:text-4xl">{p.title}</h1>
-          {date && <p className="mt-2 text-sm text-gray-400">{date} · Planeta Keto</p>}
+          <p className="mt-2 text-sm text-gray-500">
+            Por <strong className="font-semibold text-forest-dark">Ferney</strong>
+            {date && <> · Publicado el {date}</>}
+            {updated && <> · Actualizado el {updated}</>}
+          </p>
           {p.summary && <p className="mt-3 text-lg text-gray-600">{p.summary}</p>}
         </header>
 
@@ -113,6 +123,19 @@ export default async function BlogArticle({ params }: Params) {
             </p>
           </aside>
         )}
+
+        <aside className="mt-8 flex items-start gap-4 rounded-2xl bg-white p-5 shadow-soft ring-1 ring-forest/5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-forest text-lg font-bold text-white" aria-hidden="true">F</div>
+          <div className="text-sm text-gray-700">
+            <p className="font-semibold text-forest-dark">Sobre el autor: Ferney</p>
+            <p className="mt-1">
+              Creador de Planeta Keto y del canal de recetas keto en{' '}
+              <a href={site.social.youtube} target="_blank" rel="noopener noreferrer" className="text-forest underline">YouTube</a>.
+              Publica recetas y guías prácticas de alimentación baja en carbohidratos. Este artículo es informativo
+              y no sustituye el consejo de un médico o dietista.
+            </p>
+          </div>
+        </aside>
 
         <AdSlot />
 
